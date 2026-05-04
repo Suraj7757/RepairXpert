@@ -7,6 +7,7 @@ import { useEffect } from "react";
 
 import Landing from "@/features/dashboard/Landing";
 import Auth from "@/features/auth/Auth";
+import AuthCallback from "@/features/auth/AuthCallback";
 import TrackOrder from "@/features/jobs/TrackOrder";
 import Dashboard from "@/features/dashboard/Dashboard";
 import Customers from "@/features/customers/Customers";
@@ -119,6 +120,7 @@ function AppRoutes() {
               return <Auth />;
             })()}
           />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route
             path="/wholesale"
             element={

@@ -1,138 +1,63 @@
+# RepairXpert — Master Implementation Plan v3
 
-## Project Analysis (current state)
-
-**Site ka core:** RepairXpert — ek SaaS jo 4 user-types ko jodti hai:
-`Customer ↔ Shopkeeper (repair shop) ↔ Wholesaler ↔ Super-Admin (krs715665@gmail.com)`
-
-**Kya already bana hai (working):**
-- Auth (email/password + Google), 7-day trial, RBAC, account types
-- Shopkeeper CRM: jobs, payments, inventory, sells, expenses, branches, settlements
-- Customer dashboard: shop browse + repair/buy request submit + order tracking
-- Wholesale dashboard: catalog + incoming orders
-- Public booking page `/book/:slug`, public order tracking `/track`
-- Reviews, i18n (EN/HI/BN), barcode scanner, WhatsApp Business config
-- AI repair assistant (Lovable AI), notifications, loyalty, wallet, ads
-- Super-Admin god-mode RLS + admin RPCs
+> Aim: site ko phone + PC dono pe blazing fast, offline-capable, error-free, sundar animation aur smart AI ke saath chalana. Vercel + Supabase ke saath full sync.
 
 ---
 
-## Issues / Breaks Identified (must-fix before new features)
+## 🩹 Phase 0 — Critical Fixes (RUNNING NOW)
 
-### Critical — Security
-1. **Wallet self-update vulnerability (ERROR level)** — `wallets` table par user khud apna `balance` update kar sakta hai. Ye paise se related table hai → exploit ka risk.
-2. **Leaked password protection disabled** (warn) — HIBP enable karna hai.
+| # | Issue | Fix |
+|---|-------|-----|
+| 0.1 | Google OAuth Vercel pe blank/redirect-loop | `redirectTo` ko `/auth/callback` dedicated route → URL hash parse → home pe push. Site URL + Redirect URLs Lovable Cloud me whitelist. |
+| 0.2 | Auth context me `TOKEN_REFRESHED` event ko logout treat karta hai | Sirf `SIGNED_OUT` pe redirect, `TOKEN_REFRESHED` skip. |
+| 0.3 | AI assistant 2x round-trip (tool-call + stream) → slow | Single-pass smart routing: tool-detection regex → skip if not needed. Default `gemini-3-flash-preview` (fastest). |
+| 0.4 | Sidebar/Header lazy import → flicker | Route-level `lazy()` + Suspense skeleton |
+| 0.5 | Console errors / 404 routes audit | Add `/auth/callback`, fix marketplace nav |
+| 0.6 | Wallet RLS self-update (already done in earlier phase) | Verified |
 
-### Functional gaps (likely break user flow)
-3. **Customer → Wholesaler order placement** ka koi UI nahi hai. `customer_orders` table to hai but customer kahin se bhi browse/buy nahi kar sakta wholesale items.
-4. **Customer dashboard "Buy Item"** request bas `booking_requests` me jaata hai — wholesaler ko nahi pahunchta.
-5. **Wholesale catalog discoverability zero** — koi public marketplace page nahi.
-6. **Booking → Job conversion** RPC banaa hai (`convert_booking_to_job`) but customer-buy-request alag flow chahiye.
-7. **Shop discovery search/filter** customer ke liye nahi (sirf 20 shops list).
-8. **Customer ke "buy request"** ka data wholesaler ko nahi milta — sab shopkeeper-side jaata hai.
+## 🧠 Phase 1 — Multi-AI Smart Gateway
 
----
+Edge function `ai-assistant` ko upgrade:
+- **Auto-routing**: short Q → `gemini-2.5-flash-lite` (fastest, cheap), code/repair → `gemini-3-flash-preview`, complex reasoning → `openai/gpt-5-mini`, image → `gemini-3.1-flash-image-preview`.
+- **Skip tool-call hop** when message has no tracking-ID/help keyword → 50% latency cut.
+- **Streaming-first** response.
+- New edge function `ai-vision` for photo-based diagnosis (AC/phone screen photo upload → fault).
 
-## Plan: Fix + Marketplace Expansion (10 phases)
+## 📴 Phase 2 — Offline-First Sync (PWA + IndexedDB)
 
-Aap chahein to ek-ek phase approve karein, ya saare ek saath bolein.
+- `idb-keyval` ya custom Dexie wrapper se local cache: jobs, customers, inventory, sells, settings.
+- **Outbox pattern**: offline create/edit → write queue → online aate hi auto-flush.
+- Service worker: stale-while-revalidate for API GETs, network-first for mutations.
+- "Saved locally — syncing…" toast + green tick on success.
+- Conflict resolution: last-write-wins with `updated_at` compare.
 
-### Phase 0 — Critical Fixes (MUST do first)
-- Wallet UPDATE policy hatake `admin_adjust_wallet` jaisi RPC route force karna
-- Leaked password protection enable karna
-- RLS policies ke `WITH CHECK` clauses tighten karna
-- AI assistant streaming errors silent-fail handling
+## ⚡ Phase 3 — Daily-Use Power Features
 
-### Phase 1 — Marketplace Backbone (Customer ↔ Wholesaler ↔ Shopkeeper bridge)
-**New tables / changes:**
-- `marketplace_listings` (unified: shopkeepers + wholesalers dono products list kar sakein)
-  - fields: `seller_id, seller_type (shop|wholesale), title, category, price, mrp, stock, moq, images[], description, location, active, featured, rating_avg`
-- `marketplace_orders` (`customer_orders` ko extend / replace)
-  - fields: `buyer_id, seller_id, items jsonb, subtotal, shipping, total, address, payment_status, fulfillment_status, tracking_id`
-- `cart_items` (per-user cart, persistent)
-- `wishlists`
-- RPC: `place_marketplace_order()` — atomic stock decrement + order creation
+- **FAB (Floating Action Button)**: 1-tap → New Job / Sell / Payment / Expense
+- **Cmd/Ctrl + K** global command palette (kbar) — search jobs/customers/inventory + quick actions
+- **Voice input** (Web Speech API) — Hindi/English customer name + problem dictate
+- **Daily summary** push (PWA) — subah pending jobs, shaam earnings recap
+- **WhatsApp 1-click receipt** every job/sell/payment
 
-**New pages:**
-- `/marketplace` — public + logged-in browse with category, search, location filter
-- `/marketplace/:id` — product detail, add-to-cart, buy-now
-- `/cart`, `/checkout`, `/orders/:id`
+## 🎨 Phase 4 — UI Polish + Animations
 
-### Phase 2 — Service Booking Marketplace (Repair services)
-- `service_offerings` table: shopkeepers list services with fixed prices (Screen replace ₹1500, Battery ₹800…)
-- `/services` public page — customer apne area me service price compare kare
-- "Book Now" → existing `booking_requests` me jaata hai with `service_id`
-- Auto-quote generation
+- Page transitions via framer-motion (already), add card stagger
+- Skeleton loaders on every list
+- Mobile bottom-nav improved (5 icons + active glow)
+- Dark/Light auto-theme by OS preference
+- Hero gradient animations on Landing
+- Reduce bundle: route-level code-split + image lazy
 
-### Phase 3 — Quote / RFQ System (Bulk inquiries)
-- `quote_requests` — customer or shopkeeper RFQ post kare ("Need 50 iPhone 12 batteries")
-- Multiple wholesalers competitive quotes submit karein
-- `quote_responses` table
-- Auto-notify matching wholesalers via WhatsApp/Email
-- Best quote accept → `marketplace_order` ban jaata hai
+## 🛣️ Phase 5 — Routing Audit & Hardening
 
-### Phase 4 — Chat / Messaging
-- `conversations` + `messages` tables (realtime via Supabase channels)
-- Customer ↔ Shopkeeper, Customer ↔ Wholesaler, Shopkeeper ↔ Wholesaler
-- Per-order thread + general inquiry thread
-- File/image attachments via storage bucket
-
-### Phase 5 — Payments & Escrow
-- Razorpay/UPI deep-link integration for marketplace orders
-- Manual UTR upload fallback (already exists)
-- Optional escrow: payment hold till delivery confirm
-- Auto-payout to seller wallet on order completion
-- Platform commission (configurable, default 2%)
-
-### Phase 6 — Logistics / Delivery
-- `delivery_options` per seller: Self-pickup | Local courier | Shiprocket integration
-- Pin-code serviceability check
-- Tracking webhook → status updates
-- Customer side delivery timeline UI
-
-### Phase 7 — Trust & Safety
-- Seller verification badges (KYC docs upload)
-- `seller_verifications` table with admin approval flow
-- Buyer protection policy page
-- Dispute / Return request system (`disputes` table)
-- Auto-refund on dispute resolution
-
-### Phase 8 — Discovery & Marketing
-- Featured listings (paid promotion → wallet debit)
-- Banner ads on `/marketplace` (using existing `ads` table)
-- Email/WA campaigns to past customers
-- Coupon engine extend → marketplace coupons
-- "Shops near me" geolocation
-
-### Phase 9 — Analytics for all roles
-- Wholesaler: top-selling SKU, revenue trend, customer cohorts
-- Shopkeeper: marketplace vs walk-in revenue split
-- Customer: spending insights, points balance, savings
-- Super-Admin: GMV, take-rate, top sellers leaderboard
-
-### Phase 10 — Mobile-first polish
-- PWA install prompt (already), push notifications via FCM
-- Bottom-nav for `/marketplace`, `/cart`, `/orders`, `/chat`, `/account`
-- Offline cart cache
-- Skeleton loaders + image lazy-loading
+- Add `<NotFound>` catch + log to Sentry-lite
+- All `<Link>` instead of `window.location`
+- Vercel `vercel.json` rewrite verified ✓
+- 404 page CTA → `/dashboard` or `/`
 
 ---
 
-## Suggested Order of Execution
+## Order of execution (auto)
+Phase 0 → 1 → 2 → 3 → 4 → 5. Aap "next" bolein to agla phase chalu.
 
-```text
-Sprint 1 → Phase 0 (security fixes)        [1 step]
-Sprint 2 → Phase 1 (marketplace + cart)    [biggest, most value]
-Sprint 3 → Phase 4 (chat) + Phase 2 (services)
-Sprint 4 → Phase 5 (payments) + Phase 6 (logistics)
-Sprint 5 → Phase 3 (RFQ) + Phase 7 (trust)
-Sprint 6 → Phase 8, 9, 10 polish
-```
-
----
-
-## Approval
-
-Bataiye:
-1. **Phase 0 + Phase 1 dono ek saath** start karein (recommended)?  
-2. Ya sirf Phase 0 fix karein pehle, fir aap aage decide karein?  
-3. Ya kisi specific phase ko priority dein?
+Aaj Phase 0 + Phase 1 deliver ho rahe hain.

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { supabase } from "@/services/supabase";
 import { SUPER_ADMIN_EMAIL } from "@/lib/accountType";
-import { toast } from "sonner";
+
 
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -128,14 +128,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => fetchRole(session.user.id, session.user.email), 0);
       } else {
         setRole(null);
-        // Auto-redirect on session loss / token refresh failure
-        if (
-          hadUser &&
-          (event === "SIGNED_OUT" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED")
-        ) {
+        // Only redirect on EXPLICIT sign-out, not on token refresh hiccups
+        if (hadUser && event === "SIGNED_OUT") {
           hadUser = false;
-          if (!window.location.pathname.startsWith("/auth")) {
-            toast.error("Session expired. Please sign in again.");
+          const path = window.location.pathname;
+          const onPublic =
+            path.startsWith("/auth") ||
+            path === "/" ||
+            path.startsWith("/track") ||
+            path.startsWith("/book/") ||
+            path.startsWith("/marketplace") ||
+            path.startsWith("/reset-password");
+          if (!onPublic) {
             window.location.replace("/auth");
           }
         }
@@ -231,16 +235,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    // Dedicated callback route handles hash → session cleanly across Vercel + custom domains
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth`,
-        queryParams: { prompt: "select_account" },
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: "select_account", access_type: "offline" },
       },
     });
-    if (error) {
-      return { error: error.message };
-    }
+    if (error) return { error: error.message };
     return { error: null };
   };
 
