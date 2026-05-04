@@ -120,6 +120,7 @@ function AppRoutes() {
               return <Auth />;
             })()}
           />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route
             path="/wholesale"
             element={
