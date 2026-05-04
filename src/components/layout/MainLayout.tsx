@@ -7,6 +7,7 @@ import { WhatsAppButton } from "@/components/common/WhatsAppButton";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { InstallPWAPrompt } from "@/components/common/InstallPWAPrompt";
 import { OfflineBanner } from "@/components/common/OfflineBanner";
+import { SyncStatus } from "@/components/common/SyncStatus";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,6 +48,7 @@ export function MainLayout({ children, title }: LayoutProps) {
           {/* Chatbot mounted globally in App.tsx */}
           <WhatsAppButton />
           <InstallPWAPrompt />
+          <SyncStatus />
           <MobileBottomNav />
         </div>
       </div>
