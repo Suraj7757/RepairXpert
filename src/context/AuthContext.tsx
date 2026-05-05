@@ -235,16 +235,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    // Dedicated callback route handles hash → session cleanly across Vercel + custom domains
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: { prompt: "select_account", access_type: "offline" },
-      },
-    });
-    if (error) return { error: error.message };
-    return { error: null };
+    try {
+      const { lovable } = await import("@/integrations/lovable/index");
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
+        extraParams: { prompt: "select_account", access_type: "offline" },
+      } as any);
+      if ((result as any)?.error) return { error: String((result as any).error.message || (result as any).error) };
+      return { error: null };
+    } catch (e: any) {
+      // Fallback to direct Supabase OAuth if Lovable module unavailable
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { prompt: "select_account", access_type: "offline" },
+        },
+      });
+      if (error) return { error: error.message };
+      return { error: null };
+    }
   };
 
   const signOut = async () => {
