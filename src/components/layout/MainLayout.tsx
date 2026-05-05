@@ -10,6 +10,7 @@ import { OfflineBanner } from "@/components/common/OfflineBanner";
 import { SyncStatus } from "@/components/common/SyncStatus";
 import { CommandPalette } from "@/components/common/CommandPalette";
 import { QuickActionFAB } from "@/components/common/QuickActionFAB";
+import { DailySummaryNotifier } from "@/components/common/DailySummaryNotifier";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -53,6 +54,7 @@ export function MainLayout({ children, title }: LayoutProps) {
           <SyncStatus />
           <CommandPalette />
           <QuickActionFAB />
+          <DailySummaryNotifier />
           <MobileBottomNav />
         </div>
       </div>
