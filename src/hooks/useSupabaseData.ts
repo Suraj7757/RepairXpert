@@ -31,9 +31,13 @@ type TableName =
   | "whatsapp_config";
 
 import { useQuery } from "@tanstack/react-query";
+import { get as idbGet, set as idbSet, createStore } from "idb-keyval";
+
+const offlineStore = createStore("rx-supabase-cache", "kv");
 
 export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
   const { user } = useAuth();
+  const cacheKey = `${table}:${user?.id || "anon"}:${includeDeleted ? 1 : 0}`;
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: [table, user?.id, includeDeleted],
@@ -66,15 +70,25 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
         query = query.eq("deleted", false);
       }
       query = query.order("created_at", { ascending: false });
-      const { data: result, error } = await query;
-
-      if (error) {
-        if (error.code !== "PGRST116") {
-          console.error(`Query error on ${table}:`, error);
+      try {
+        const { data: result, error } = await query;
+        if (error) {
+          if (error.code !== "PGRST116") {
+            console.error(`Query error on ${table}:`, error);
+          }
+          // fall back to cached
+          const cached = (await idbGet(cacheKey, offlineStore)) as T[] | undefined;
+          return cached ?? [];
         }
-        return [];
+        const rows = (result as T[]) ?? [];
+        // persist to offline cache (fire-and-forget)
+        idbSet(cacheKey, rows, offlineStore).catch(() => {});
+        return rows;
+      } catch (e) {
+        const cached = (await idbGet(cacheKey, offlineStore)) as T[] | undefined;
+        if (cached) return cached;
+        throw e;
       }
-      return (result as T[]) ?? [];
     },
     enabled: !!user,
   });
