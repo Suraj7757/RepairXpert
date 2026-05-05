@@ -8,6 +8,8 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import { InstallPWAPrompt } from "@/components/common/InstallPWAPrompt";
 import { OfflineBanner } from "@/components/common/OfflineBanner";
 import { SyncStatus } from "@/components/common/SyncStatus";
+import { CommandPalette } from "@/components/common/CommandPalette";
+import { QuickActionFAB } from "@/components/common/QuickActionFAB";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -49,6 +51,8 @@ export function MainLayout({ children, title }: LayoutProps) {
           <WhatsAppButton />
           <InstallPWAPrompt />
           <SyncStatus />
+          <CommandPalette />
+          <QuickActionFAB />
           <MobileBottomNav />
         </div>
       </div>
