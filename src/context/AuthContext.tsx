@@ -7,7 +7,7 @@ import {
   ReactNode,
 } from "react";
 import { supabase } from "@/services/supabase";
-import { SUPER_ADMIN_EMAIL } from "@/lib/accountType";
+import { SUPER_ADMIN_EMAIL, isSuperAdminEmail } from "@/lib/accountType";
 
 
 import type { User, Session } from "@supabase/supabase-js";
