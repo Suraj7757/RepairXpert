@@ -7,7 +7,7 @@ import {
   ReactNode,
 } from "react";
 import { supabase } from "@/services/supabase";
-import { SUPER_ADMIN_EMAIL, isSuperAdminEmail } from "@/lib/accountType";
+import { isSuperAdminEmail } from "@/lib/accountType";
 
 
 import type { User, Session } from "@supabase/supabase-js";
@@ -76,9 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle() as any,
     ]);
 
+    const dbRole = (rolesRes.data?.role as AppRole) || "staff";
     const currentRole = isSuper
       ? ("admin" as AppRole)
-      : ((rolesRes.data?.role as AppRole) || "staff");
+      : dbRole === "admin"
+        ? ("shopkeeper" as AppRole)
+        : dbRole;
     setRole(currentRole);
     setAccountType(
       (profileRes.data?.account_type as AccountType) || "shopkeeper",
@@ -87,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isMaint = configRes.data?.value?.enabled === true;
     setIsMaintenance(isMaint);
 
-    if (isMaint && currentRole !== "admin") {
+    if (isMaint && !isSuper) {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
@@ -98,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (
       profileRes.data?.plan_expires_at &&
       new Date(profileRes.data.plan_expires_at) < new Date() &&
-      currentRole !== "admin"
+      !isSuper
     ) {
       setIsPlanExpired(true);
     } else {
@@ -193,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
 
     if (data?.user) {
-      const [profileRes, configRes, roleRes] = await Promise.all([
+      const [profileRes, configRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("is_banned, plan_expires_at")
@@ -204,17 +207,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select("value")
           .eq("id", "maintenance")
           .maybeSingle() as any,
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .maybeSingle(),
       ]);
 
       const isMaint = configRes.data?.value?.enabled === true;
-      const userRole = roleRes.data?.role;
+      const isSuper = isSuperAdminEmail(data.user.email);
 
-      if (isMaint && userRole !== "admin") {
+      if (isMaint && !isSuper) {
         await supabase.auth.signOut();
         setIsMaintenance(true);
         return {

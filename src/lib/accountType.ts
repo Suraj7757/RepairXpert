@@ -20,10 +20,6 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   return email.trim().toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 }
 
-export function isSuperAdmin(role?: string | null): boolean {
-  return role === "admin";
-}
-
 export function homePathFor(
   accountType: AccountType | null | undefined,
   isSuper: boolean,

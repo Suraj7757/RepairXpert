@@ -1573,6 +1573,7 @@ export type Database = {
         Returns: boolean
       }
       is_not_banned: { Args: never; Returns: boolean }
+      is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
       next_job_id: {
         Args: { _brand?: string; _user_id: string }
         Returns: string
