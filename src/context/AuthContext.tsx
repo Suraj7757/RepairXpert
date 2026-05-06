@@ -196,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
 
     if (data?.user) {
-      const [profileRes, configRes, roleRes] = await Promise.all([
+      const [profileRes, configRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("is_banned, plan_expires_at")
@@ -207,7 +207,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select("value")
           .eq("id", "maintenance")
           .maybeSingle() as any,
-        Promise.resolve({ data: null }),
       ]);
 
       const isMaint = configRes.data?.value?.enabled === true;
