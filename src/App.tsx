@@ -47,7 +47,7 @@ import Cart from "@/features/marketplace/Cart";
 import Checkout from "@/features/marketplace/Checkout";
 import MyOrders from "@/features/marketplace/MyOrders";
 import SellerListings from "@/features/marketplace/SellerListings";
-import { homePathFor, isSuperAdmin } from "@/lib/accountType";
+import { homePathFor } from "@/lib/accountType";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Chatbot } from "@/components/common/Chatbot";
@@ -71,23 +71,23 @@ function ProtectedRoute({
       </div>
     );
   if (!user) return <Navigate to="/auth" replace />;
-  if (isMaintenance && role !== "admin" && !isSuperAdmin) return <Navigate to="/auth" replace />;
+  if (isMaintenance && !isSuperAdmin) return <Navigate to="/auth" replace />;
   if (isBanned && !isSuperAdmin) return <Navigate to="/auth" replace />;
-  if (isPlanExpired && !allowExpired && role !== "admin" && !isSuperAdmin) {
+  if (isPlanExpired && !allowExpired && !isSuperAdmin) {
     return <Navigate to="/subscription" replace />;
   }
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { user, role, loading, accountType } = useAuth();
+  const { user, role, loading, accountType, isSuperAdmin } = useAuth();
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
-  const home = user ? homePathFor(accountType, role === "admin") : "/";
+  const home = user ? homePathFor(accountType, isSuperAdmin) : "/";
 
   return (
     <ErrorBoundary>
@@ -143,7 +143,7 @@ function AppRoutes() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Dashboard />
@@ -155,7 +155,7 @@ function AppRoutes() {
             path="/customers"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Customers />
@@ -167,7 +167,7 @@ function AppRoutes() {
             path="/jobs"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <RepairJobs />
@@ -179,7 +179,7 @@ function AppRoutes() {
             path="/payments"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Payments />
@@ -191,7 +191,7 @@ function AppRoutes() {
             path="/settlements"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Settlements />
@@ -203,7 +203,7 @@ function AppRoutes() {
             path="/inventory"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Inventory />
@@ -215,7 +215,7 @@ function AppRoutes() {
             path="/sells"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Sells />
@@ -227,7 +227,7 @@ function AppRoutes() {
             path="/reports"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Reports />
@@ -239,7 +239,7 @@ function AppRoutes() {
             path="/analytics"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Analytics />
@@ -259,7 +259,7 @@ function AppRoutes() {
             path="/trash"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Trash />
@@ -271,7 +271,7 @@ function AppRoutes() {
             path="/wallet"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <WalletPage />
@@ -283,7 +283,7 @@ function AppRoutes() {
             path="/subscription"
             element={
               <ProtectedRoute allowExpired>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Subscription />
@@ -295,7 +295,7 @@ function AppRoutes() {
             path="/services"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <ServicesManagement />
@@ -307,7 +307,7 @@ function AppRoutes() {
             path="/enterprise"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <EnterpriseModules />
@@ -319,7 +319,7 @@ function AppRoutes() {
             path="/ai-diagnostics"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <AiDiagnosticCenter />
@@ -331,7 +331,7 @@ function AppRoutes() {
             path="/marketing"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <MarketingDashboard />
@@ -343,7 +343,7 @@ function AppRoutes() {
             path="/staff"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <StaffManagement />
@@ -355,7 +355,7 @@ function AppRoutes() {
             path="/financials"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Financials />
@@ -367,7 +367,7 @@ function AppRoutes() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <AdminPanel />
+                {isSuperAdmin ? <AdminPanel /> : <Navigate to={home} replace />}
               </ProtectedRoute>
             }
           />
@@ -375,7 +375,7 @@ function AppRoutes() {
             path="/dev-panel"
             element={
               <ProtectedRoute>
-                <DevPanel />
+                {isSuperAdmin ? <DevPanel /> : <Navigate to={home} replace />}
               </ProtectedRoute>
             }
           />
@@ -383,7 +383,7 @@ function AppRoutes() {
             path="/branches"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Branches />
@@ -395,7 +395,7 @@ function AppRoutes() {
             path="/expenses"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Expenses />
@@ -407,7 +407,7 @@ function AppRoutes() {
             path="/loyalty"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Loyalty />
@@ -419,7 +419,7 @@ function AppRoutes() {
             path="/bookings"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <BookingsAdmin />

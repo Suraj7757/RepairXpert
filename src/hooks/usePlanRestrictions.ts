@@ -69,7 +69,7 @@ export const PLAN_LIMITS = {
 };
 
 export function usePlanRestrictions() {
-  const { user, role } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   // We can fetch the plan from profiles or subscriptions
   const { data: profiles } = useSupabaseQuery<any>("profiles");
 
@@ -82,7 +82,7 @@ export function usePlanRestrictions() {
   const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.free;
 
   const isFeatureLocked = (feature: keyof typeof PLAN_LIMITS.free) => {
-    if (role === "admin") return false;
+    if (isSuperAdmin) return false;
     return !limits[feature];
   };
 

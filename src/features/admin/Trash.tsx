@@ -185,7 +185,7 @@ export default function Trash() {
     Settlement: "bg-success/10 text-success",
   };
 
-  const isAdmin = role === "admin";
+  const isAdmin = isSuperAdmin;
 
   return (
     <MainLayout title="🗑️ Trash">

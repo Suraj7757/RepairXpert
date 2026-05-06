@@ -62,7 +62,7 @@ import { toast } from "sonner";
 import { SUPER_ADMIN_EMAIL } from "@/lib/accountType";
 
 export default function AdminPanel() {
-  const { user, role, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [wallets, setWallets] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
@@ -108,7 +108,7 @@ export default function AdminPanel() {
   const [editPlan, setEditPlan] = useState("free");
   const [editPlanExpiry, setEditPlanExpiry] = useState("");
 
-  const isAdmin = role === "admin";
+  const isAdmin = isSuperAdmin;
 
   useEffect(() => {
     if (isAdmin) fetchAll();
@@ -402,7 +402,7 @@ export default function AdminPanel() {
     setBroadcastMsg("");
   };
 
-  if (!isAdmin && !isSuperAdmin) {
+  if (!isSuperAdmin) {
     return (
       <MainLayout title="Admin Panel">
         <Card className="shadow-card">
@@ -410,7 +410,7 @@ export default function AdminPanel() {
             <Shield className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
             <p className="text-muted-foreground mt-2">
-              Only admin users can access this panel.
+              Only the main super-admin can access this panel.
             </p>
           </CardContent>
         </Card>

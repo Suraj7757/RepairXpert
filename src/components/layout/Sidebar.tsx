@@ -91,9 +91,9 @@ export function Sidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, isSuperAdmin, signOut } = useAuth();
+  const { isSuperAdmin, signOut } = useAuth();
   const collapsed = state === "collapsed";
-  const isAdmin = role === "admin";
+  const isAdmin = isSuperAdmin;
   const [createOpen, setCreateOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 

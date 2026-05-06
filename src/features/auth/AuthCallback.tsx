@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/services/supabase";
-import { homePathFor } from "@/lib/accountType";
+import { homePathFor, isSuperAdminEmail } from "@/lib/accountType";
 import { toast } from "sonner";
 import { Wrench } from "lucide-react";
 
@@ -44,20 +44,13 @@ export default function AuthCallback() {
         let acct: string = "shopkeeper";
         let isAdmin = false;
         if (user) {
-          const [{ data: prof }, { data: roleRow }] = await Promise.all([
-            supabase
-              .from("profiles")
-              .select("account_type")
-              .eq("user_id", user.id)
-              .maybeSingle() as any,
-            supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", user.id)
-              .maybeSingle(),
-          ]);
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("account_type")
+            .eq("user_id", user.id)
+            .maybeSingle() as any;
           acct = prof?.account_type || "shopkeeper";
-          isAdmin = roleRow?.role === "admin";
+          isAdmin = isSuperAdminEmail(user.email);
         }
 
         toast.success("Signed in successfully");
