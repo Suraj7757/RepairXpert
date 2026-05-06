@@ -28,7 +28,7 @@ interface TrashItem {
 }
 
 export default function Trash() {
-  const { user, role } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { restore, permanentDelete } = useSoftDelete();
   const [items, setItems] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);

@@ -207,16 +207,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select("value")
           .eq("id", "maintenance")
           .maybeSingle() as any,
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .maybeSingle(),
+        Promise.resolve({ data: null }),
       ]);
 
       const isMaint = configRes.data?.value?.enabled === true;
       const isSuper = isSuperAdminEmail(data.user.email);
-      const userRole = isSuper ? "admin" : roleRes.data?.role === "admin" ? "shopkeeper" : roleRes.data?.role;
 
       if (isMaint && !isSuper) {
         await supabase.auth.signOut();

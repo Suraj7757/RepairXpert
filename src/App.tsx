@@ -62,7 +62,7 @@ function ProtectedRoute({
   children: React.ReactNode;
   allowExpired?: boolean;
 }) {
-  const { user, role, loading, isPlanExpired, isBanned, isMaintenance, isSuperAdmin } =
+  const { user, loading, isPlanExpired, isBanned, isMaintenance, isSuperAdmin } =
     useAuth();
   if (loading)
     return (
@@ -80,7 +80,7 @@ function ProtectedRoute({
 }
 
 function AppRoutes() {
-  const { user, role, loading, accountType, isSuperAdmin } = useAuth();
+  const { user, loading, accountType, isSuperAdmin } = useAuth();
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
