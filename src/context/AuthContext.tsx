@@ -56,7 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchRole = useCallback(async (userId: string, userEmail?: string) => {
-    setIsSuperAdmin(userEmail === SUPER_ADMIN_EMAIL);
+    const isSuper = isSuperAdminEmail(userEmail);
+    setIsSuperAdmin(isSuper);
     const [rolesRes, profileRes, configRes] = await Promise.all([
       supabase
         .from("user_roles")
@@ -75,7 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle() as any,
     ]);
 
-    const isSuper = userEmail === SUPER_ADMIN_EMAIL;
     const currentRole = isSuper
       ? ("admin" as AppRole)
       : ((rolesRes.data?.role as AppRole) || "staff");
