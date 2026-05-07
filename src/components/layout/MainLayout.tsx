@@ -9,7 +9,6 @@ import { InstallPWAPrompt } from "@/components/common/InstallPWAPrompt";
 import { OfflineBanner } from "@/components/common/OfflineBanner";
 import { SyncStatus } from "@/components/common/SyncStatus";
 import { CommandPalette } from "@/components/common/CommandPalette";
-import { QuickActionFAB } from "@/components/common/QuickActionFAB";
 import { DailySummaryNotifier } from "@/components/common/DailySummaryNotifier";
 
 interface LayoutProps {
