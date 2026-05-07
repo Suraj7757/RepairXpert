@@ -52,7 +52,6 @@ export function MainLayout({ children, title }: LayoutProps) {
           <InstallPWAPrompt />
           <SyncStatus />
           <CommandPalette />
-          <QuickActionFAB />
           <DailySummaryNotifier />
           <MobileBottomNav />
         </div>
