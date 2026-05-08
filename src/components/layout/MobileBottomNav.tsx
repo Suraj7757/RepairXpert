@@ -74,28 +74,45 @@ export function MobileBottomNav() {
 
   return (
     <>
+      {/* Overlay behind popup */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden fixed bottom-24 left-4 right-4 z-50 flex flex-col items-center gap-2"
+            className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="md:hidden fixed bottom-24 left-0 right-0 z-50 flex flex-col items-center gap-3 px-6"
           >
-            {QUICK_ITEMS.map((it) => {
+            {QUICK_ITEMS.map((it, idx) => {
               const Icon = it.icon;
               return (
                 <motion.button
                   key={it.path}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.06 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     setMenuOpen(false);
                     navigate(it.path);
                   }}
-                  className="flex items-center gap-3 rounded-full bg-card border shadow-xl pl-4 pr-5 py-2.5 text-sm font-semibold hover:bg-accent transition w-fit"
+                  className="flex items-center gap-3 rounded-full bg-card border shadow-2xl pl-4 pr-6 py-3 text-sm font-semibold hover:bg-accent transition w-fit"
                 >
-                  <span className={`h-8 w-8 rounded-full ${it.color} text-white grid place-items-center`}>
+                  <span className={`h-9 w-9 rounded-full ${it.color} text-white grid place-items-center shrink-0`}>
                     <Icon className="h-4 w-4" />
                   </span>
                   {it.label}
@@ -103,15 +120,18 @@ export function MobileBottomNav() {
               );
             })}
             <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: QUICK_ITEMS.length * 0.06 }}
               whileTap={{ scale: 0.95 }}
               onClick={startVoice}
-              className={`flex items-center gap-3 rounded-full border shadow-xl pl-4 pr-5 py-2.5 text-sm font-semibold transition w-fit ${
+              className={`flex items-center gap-3 rounded-full border shadow-2xl pl-4 pr-6 py-3 text-sm font-semibold transition w-fit ${
                 listening
                   ? "bg-red-500 text-white animate-pulse"
                   : "bg-card hover:bg-accent"
               }`}
             >
-              <span className="h-8 w-8 rounded-full bg-purple-500 text-white grid place-items-center">
+              <span className="h-9 w-9 rounded-full bg-purple-500 text-white grid place-items-center shrink-0">
                 <Mic className="h-4 w-4" />
               </span>
               {listening ? "Listening…" : "Voice"}
@@ -120,7 +140,7 @@ export function MobileBottomNav() {
         )}
       </AnimatePresence>
 
-      <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 rounded-3xl glass shadow-2xl border border-white/20 dark:border-white/10 h-16 flex items-center justify-around px-2 backdrop-blur-xl bg-background/70 dark:bg-background/50 supports-[backdrop-filter]:bg-background/40">
+      <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 rounded-3xl glass shadow-2xl border border-white/20 dark:border-white/10 h-[4.5rem] grid grid-cols-5 items-center px-1 backdrop-blur-xl bg-background/70 dark:bg-background/50 supports-[backdrop-filter]:bg-background/40">
         {items.map((item) => {
           const active = location.pathname === item.to.split("?")[0] && !item.isMenu && !item.primary;
           const Icon = item.icon;
@@ -130,19 +150,17 @@ export function MobileBottomNav() {
               <button
                 key={item.label}
                 onClick={() => setMenuOpen((v) => !v)}
-                className="relative -top-5 flex flex-col items-center justify-center group outline-none"
+                className="relative -top-4 flex flex-col items-center justify-center group outline-none mx-auto"
                 aria-label={item.label}
               >
                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <motion.div
-                  whileTap={{ scale: 0.9 }}
-                  className="h-14 w-14 rounded-full bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center shadow-xl ring-4 ring-background text-white hover:shadow-primary/30 transition-all z-10"
+                  whileTap={{ scale: 0.88 }}
+                  animate={menuOpen ? { rotate: 135 } : { rotate: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="h-[3.75rem] w-[3.75rem] rounded-full bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center shadow-2xl ring-[5px] ring-background text-white hover:shadow-primary/40 transition-all z-10"
                 >
-                  {menuOpen ? (
-                    <X className="h-7 w-7" strokeWidth={2.5} />
-                  ) : (
-                    <Icon className="h-7 w-7" strokeWidth={2.5} />
-                  )}
+                  <Plus className="h-7 w-7" strokeWidth={2.5} />
                 </motion.div>
               </button>
             );
@@ -153,11 +171,11 @@ export function MobileBottomNav() {
               <button
                 key={item.label}
                 onClick={() => setOpenMobile(true)}
-                className="relative flex flex-col items-center justify-center w-14 h-14 outline-none"
+                className="relative flex flex-col items-center justify-center w-full h-full outline-none"
                 aria-label="Menu"
               >
                 <motion.div whileTap={{ scale: 0.9 }} className="flex flex-col items-center text-muted-foreground hover:text-foreground transition-colors">
-                  <Icon className="h-6 w-6 mb-1" strokeWidth={2} />
+                  <Icon className="h-[1.35rem] w-[1.35rem] mb-1" strokeWidth={2} />
                   <span className="text-[10px] font-semibold tracking-wide">More</span>
                 </motion.div>
               </button>
@@ -168,12 +186,12 @@ export function MobileBottomNav() {
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative flex flex-col items-center justify-center w-14 h-14 outline-none"
+              className="relative flex flex-col items-center justify-center w-full h-full outline-none"
             >
               {active && (
                 <motion.div
                   layoutId="bottom-nav-indicator"
-                  className="absolute inset-0 bg-primary/10 dark:bg-primary/20 rounded-2xl z-0"
+                  className="absolute inset-x-1 inset-y-1 bg-primary/10 dark:bg-primary/20 rounded-2xl z-0"
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 />
               )}
@@ -181,7 +199,7 @@ export function MobileBottomNav() {
                 "flex flex-col items-center z-10 transition-colors duration-300",
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}>
-                <Icon className={cn("h-6 w-6 mb-1", active && "drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]")} strokeWidth={active ? 2.5 : 2} />
+                <Icon className={cn("h-[1.35rem] w-[1.35rem] mb-1", active && "drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]")} strokeWidth={active ? 2.5 : 2} />
                 <span className={cn("text-[10px] tracking-wide", active ? "font-bold" : "font-semibold")}>
                   {item.label}
                 </span>
