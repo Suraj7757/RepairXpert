@@ -436,6 +436,7 @@ function AppRoutes() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/my-listings" element={<ProtectedRoute><SellerListings /></ProtectedRoute>} />
+          <Route path="/seller-orders" element={<ProtectedRoute><SellerOrders /></ProtectedRoute>} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsConditions />} />
           <Route
