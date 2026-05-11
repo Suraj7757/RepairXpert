@@ -47,6 +47,7 @@ import Cart from "@/features/marketplace/Cart";
 import Checkout from "@/features/marketplace/Checkout";
 import MyOrders from "@/features/marketplace/MyOrders";
 import SellerListings from "@/features/marketplace/SellerListings";
+import SellerOrders from "@/features/marketplace/SellerOrders";
 import { homePathFor } from "@/lib/accountType";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
