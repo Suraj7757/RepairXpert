@@ -34,14 +34,29 @@ export default function Marketplace() {
   const [category, setCategory] = useState("all");
   const [cartCount, setCartCount] = useState(0);
 
+  const [shops, setShops] = useState<Record<string, { shop_name?: string; address?: string; phone?: string }>>({});
+
   const load = async () => {
     setLoading(true);
     let q = (supabase as any).from("marketplace_listings").select("*").eq("active", true).order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(60);
     if (category !== "all") q = q.eq("category", category);
     if (search) q = q.ilike("title", `%${search}%`);
     const { data } = await q;
-    setListings(data || []);
+    const rows = data || [];
+    setListings(rows);
     setLoading(false);
+
+    // fetch shop info for unique sellers
+    const ids = Array.from(new Set(rows.map((r: any) => r.seller_id)));
+    if (ids.length) {
+      const { data: shopRows } = await (supabase as any)
+        .from("shop_settings")
+        .select("user_id, shop_name, address, phone")
+        .in("user_id", ids);
+      const map: Record<string, any> = {};
+      (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
+      setShops(map);
+    }
   };
 
   const loadCart = async () => {
