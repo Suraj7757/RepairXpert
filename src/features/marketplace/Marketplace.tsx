@@ -176,6 +176,18 @@ export default function Marketplace() {
                   <div className="text-xs text-muted-foreground">
                     {l.stock > 0 ? `${l.stock} in stock` : "Out of stock"}
                   </div>
+                  {shops[l.seller_id] && (
+                    <div className="text-[11px] text-muted-foreground border-t pt-1.5 space-y-0.5">
+                      <div className="flex items-center gap-1 font-medium text-foreground/80 line-clamp-1">
+                        <Store className="h-3 w-3 shrink-0" /> {shops[l.seller_id].shop_name || "Shop"}
+                      </div>
+                      {(shops[l.seller_id].address || l.location) && (
+                        <div className="flex items-center gap-1 line-clamp-1">
+                          <MapPin className="h-3 w-3 shrink-0" /> {shops[l.seller_id].address || l.location}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex gap-1">
                     <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => addToCart(l.id)} disabled={l.stock === 0}>
                       <ShoppingCart className="h-3 w-3 mr-1" /> Add
