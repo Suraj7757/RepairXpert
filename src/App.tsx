@@ -47,6 +47,7 @@ import Cart from "@/features/marketplace/Cart";
 import Checkout from "@/features/marketplace/Checkout";
 import MyOrders from "@/features/marketplace/MyOrders";
 import SellerListings from "@/features/marketplace/SellerListings";
+import SellerOrders from "@/features/marketplace/SellerOrders";
 import { homePathFor } from "@/lib/accountType";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -435,6 +436,7 @@ function AppRoutes() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/my-listings" element={<ProtectedRoute><SellerListings /></ProtectedRoute>} />
+          <Route path="/seller-orders" element={<ProtectedRoute><SellerOrders /></ProtectedRoute>} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsConditions />} />
           <Route

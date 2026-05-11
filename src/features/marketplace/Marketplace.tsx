@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ShoppingCart, Heart, Store, Package } from "lucide-react";
+import { Search, ShoppingCart, Heart, Store, Package, MapPin } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -34,14 +34,29 @@ export default function Marketplace() {
   const [category, setCategory] = useState("all");
   const [cartCount, setCartCount] = useState(0);
 
+  const [shops, setShops] = useState<Record<string, { shop_name?: string; address?: string; phone?: string }>>({});
+
   const load = async () => {
     setLoading(true);
     let q = (supabase as any).from("marketplace_listings").select("*").eq("active", true).order("featured", { ascending: false }).order("created_at", { ascending: false }).limit(60);
     if (category !== "all") q = q.eq("category", category);
     if (search) q = q.ilike("title", `%${search}%`);
     const { data } = await q;
-    setListings(data || []);
+    const rows = data || [];
+    setListings(rows);
     setLoading(false);
+
+    // fetch shop info for unique sellers
+    const ids = Array.from(new Set(rows.map((r: any) => r.seller_id)));
+    if (ids.length) {
+      const { data: shopRows } = await (supabase as any)
+        .from("shop_settings")
+        .select("user_id, shop_name, address, phone")
+        .in("user_id", ids);
+      const map: Record<string, any> = {};
+      (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
+      setShops(map);
+    }
   };
 
   const loadCart = async () => {
@@ -161,6 +176,18 @@ export default function Marketplace() {
                   <div className="text-xs text-muted-foreground">
                     {l.stock > 0 ? `${l.stock} in stock` : "Out of stock"}
                   </div>
+                  {shops[l.seller_id] && (
+                    <div className="text-[11px] text-muted-foreground border-t pt-1.5 space-y-0.5">
+                      <div className="flex items-center gap-1 font-medium text-foreground/80 line-clamp-1">
+                        <Store className="h-3 w-3 shrink-0" /> {shops[l.seller_id].shop_name || "Shop"}
+                      </div>
+                      {(shops[l.seller_id].address || l.location) && (
+                        <div className="flex items-center gap-1 line-clamp-1">
+                          <MapPin className="h-3 w-3 shrink-0" /> {shops[l.seller_id].address || l.location}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex gap-1">
                     <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => addToCart(l.id)} disabled={l.stock === 0}>
                       <ShoppingCart className="h-3 w-3 mr-1" /> Add
