@@ -144,11 +144,31 @@ export default function Checkout() {
       <main className="max-w-4xl mx-auto px-4 py-6 grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-lg">Delivery Details</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg">Fulfillment</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {[
+                { v: "delivery", l: "Home Delivery (drop at my address)" },
+                { v: "pickup", l: "Pickup from shop" },
+              ].map((p) => (
+                <label key={p.v} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+                  <input type="radio" name="fm" checked={form.fulfillment_method === p.v} onChange={() => setForm({ ...form, fulfillment_method: p.v as any })} />
+                  <span className="text-sm">{p.l}</span>
+                </label>
+              ))}
+              {form.fulfillment_method === "pickup" && (
+                <div><Label>Preferred Pickup Date *</Label><Input type="date" value={form.pickup_date} onChange={(e) => setForm({ ...form, pickup_date: e.target.value })} /></div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Customer Details</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div><Label>Full Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
               <div><Label>Mobile Number *</Label><Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="10-digit mobile" /></div>
-              <div><Label>Delivery Address *</Label><Textarea rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              {form.fulfillment_method === "delivery" && (
+                <div><Label>Delivery Address *</Label><Textarea rows={3} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              )}
               <div><Label>Notes (optional)</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </CardContent>
           </Card>
