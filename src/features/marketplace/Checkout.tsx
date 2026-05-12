@@ -78,7 +78,17 @@ export default function Checkout() {
           _notes: form.notes,
         });
         if (error) { toast.error(error.message); continue; }
-        if (data) created.push(data);
+        if (data) {
+          // attach fulfillment fields (column added in migration)
+          await (supabase as any)
+            .from("marketplace_orders")
+            .update({
+              fulfillment_method: form.fulfillment_method,
+              pickup_date: form.fulfillment_method === "pickup" ? form.pickup_date : null,
+            })
+            .eq("id", data);
+          created.push(data);
+        }
       }
       if (created.length > 0) {
         setOrderIds(created);
