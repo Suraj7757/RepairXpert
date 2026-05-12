@@ -22,6 +22,8 @@ export default function Checkout() {
     mobile: "",
     address: "",
     payment_method: "cod",
+    fulfillment_method: "delivery" as "delivery" | "pickup",
+    pickup_date: "",
     notes: "",
   });
 
@@ -48,8 +50,16 @@ export default function Checkout() {
   const totalAmount = items.reduce((s, i) => s + (i.marketplace_listings?.price || 0) * i.quantity, 0);
 
   const placeOrders = async () => {
-    if (!form.name || !form.mobile || !form.address) {
-      toast.error("Please fill name, mobile and address");
+    if (!form.name || !form.mobile) {
+      toast.error("Please fill name and mobile");
+      return;
+    }
+    if (form.fulfillment_method === "delivery" && !form.address) {
+      toast.error("Delivery address is required");
+      return;
+    }
+    if (form.fulfillment_method === "pickup" && !form.pickup_date) {
+      toast.error("Please choose a pickup date");
       return;
     }
     setPlacing(true);
