@@ -591,6 +591,7 @@ export type Database = {
           featured: boolean
           id: string
           images: string[] | null
+          inventory_item_id: string | null
           location: string | null
           moq: number
           mrp: number | null
@@ -611,6 +612,7 @@ export type Database = {
           featured?: boolean
           id?: string
           images?: string[] | null
+          inventory_item_id?: string | null
           location?: string | null
           moq?: number
           mrp?: number | null
@@ -631,6 +633,7 @@ export type Database = {
           featured?: boolean
           id?: string
           images?: string[] | null
+          inventory_item_id?: string | null
           location?: string | null
           moq?: number
           mrp?: number | null
@@ -652,6 +655,7 @@ export type Database = {
           buyer_mobile: string | null
           buyer_name: string | null
           created_at: string
+          fulfillment_method: string
           fulfillment_status: string | null
           id: string
           items: Json
@@ -659,6 +663,7 @@ export type Database = {
           order_number: string
           payment_method: string | null
           payment_status: string | null
+          pickup_date: string | null
           seller_id: string
           shipping: number
           subtotal: number
@@ -672,6 +677,7 @@ export type Database = {
           buyer_mobile?: string | null
           buyer_name?: string | null
           created_at?: string
+          fulfillment_method?: string
           fulfillment_status?: string | null
           id?: string
           items?: Json
@@ -679,6 +685,7 @@ export type Database = {
           order_number?: string
           payment_method?: string | null
           payment_status?: string | null
+          pickup_date?: string | null
           seller_id: string
           shipping?: number
           subtotal?: number
@@ -692,6 +699,7 @@ export type Database = {
           buyer_mobile?: string | null
           buyer_name?: string | null
           created_at?: string
+          fulfillment_method?: string
           fulfillment_status?: string | null
           id?: string
           items?: Json
@@ -699,6 +707,7 @@ export type Database = {
           order_number?: string
           payment_method?: string | null
           payment_status?: string | null
+          pickup_date?: string | null
           seller_id?: string
           shipping?: number
           subtotal?: number
