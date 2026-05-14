@@ -34,7 +34,7 @@ export default function Marketplace() {
   const [category, setCategory] = useState("all");
   const [cartCount, setCartCount] = useState(0);
 
-  const [shops, setShops] = useState<Record<string, { shop_name?: string; address?: string; phone?: string }>>({});
+  const [shops, setShops] = useState<Record<string, { shop_name?: string; address?: string; phone?: string; map_url?: string; map_lat?: number; map_lng?: number }>>({});
 
   const load = async () => {
     setLoading(true);
