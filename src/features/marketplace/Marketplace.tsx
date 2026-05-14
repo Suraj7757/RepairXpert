@@ -34,7 +34,7 @@ export default function Marketplace() {
   const [category, setCategory] = useState("all");
   const [cartCount, setCartCount] = useState(0);
 
-  const [shops, setShops] = useState<Record<string, { shop_name?: string; address?: string; phone?: string }>>({});
+  const [shops, setShops] = useState<Record<string, { shop_name?: string; address?: string; phone?: string; map_url?: string; map_lat?: number; map_lng?: number }>>({});
 
   const load = async () => {
     setLoading(true);
@@ -51,7 +51,7 @@ export default function Marketplace() {
     if (ids.length) {
       const { data: shopRows } = await (supabase as any)
         .from("shop_settings")
-        .select("user_id, shop_name, address, phone")
+        .select("user_id, shop_name, address, phone, map_url, map_lat, map_lng")
         .in("user_id", ids);
       const map: Record<string, any> = {};
       (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
@@ -185,6 +185,16 @@ export default function Marketplace() {
                         <div className="flex items-center gap-1 line-clamp-1">
                           <MapPin className="h-3 w-3 shrink-0" /> {shops[l.seller_id].address || l.location}
                         </div>
+                      )}
+                      {(shops[l.seller_id].map_url || (shops[l.seller_id].map_lat && shops[l.seller_id].map_lng)) && (
+                        <a
+                          href={shops[l.seller_id].map_url || `https://www.google.com/maps?q=${shops[l.seller_id].map_lat},${shops[l.seller_id].map_lng}`}
+                          target="_blank" rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MapPin className="h-3 w-3" /> View on map
+                        </a>
                       )}
                     </div>
                   )}

@@ -1206,6 +1206,9 @@ export type Database = {
           created_at: string
           gstin: string
           id: string
+          map_lat: number | null
+          map_lng: number | null
+          map_url: string | null
           phone: string
           qr_receivers: string[]
           revenue_split_enabled: boolean | null
@@ -1223,6 +1226,9 @@ export type Database = {
           created_at?: string
           gstin?: string
           id?: string
+          map_lat?: number | null
+          map_lng?: number | null
+          map_url?: string | null
           phone?: string
           qr_receivers?: string[]
           revenue_split_enabled?: boolean | null
@@ -1240,6 +1246,9 @@ export type Database = {
           created_at?: string
           gstin?: string
           id?: string
+          map_lat?: number | null
+          map_lng?: number | null
+          map_url?: string | null
           phone?: string
           qr_receivers?: string[]
           revenue_split_enabled?: boolean | null
