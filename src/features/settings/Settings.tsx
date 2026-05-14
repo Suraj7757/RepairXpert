@@ -440,6 +440,47 @@ export default function Settings() {
                 onChange={(e) => setAddress(e.target.value)}
               />
             </div>
+            <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
+              <Label className="text-sm font-semibold">📍 Shop Location (Map Pin)</Label>
+              <p className="text-xs text-muted-foreground">Customers will see your exact location and directions on the marketplace.</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Latitude</Label>
+                  <Input value={mapLat} onChange={(e) => setMapLat(e.target.value)} placeholder="e.g. 25.5941" />
+                </div>
+                <div>
+                  <Label className="text-xs">Longitude</Label>
+                  <Input value={mapLng} onChange={(e) => setMapLng(e.target.value)} placeholder="e.g. 85.1376" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Google Maps Link (optional)</Label>
+                <Input value={mapUrl} onChange={(e) => setMapUrl(e.target.value)} placeholder="https://maps.google.com/..." />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (!navigator.geolocation) return toast.error("Geolocation not supported");
+                  toast.info("Fetching your location...");
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      const lat = pos.coords.latitude.toFixed(6);
+                      const lng = pos.coords.longitude.toFixed(6);
+                      setMapLat(lat);
+                      setMapLng(lng);
+                      setMapUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+                      toast.success("Location pinned!");
+                    },
+                    (err) => toast.error(err.message),
+                    { enableHighAccuracy: true },
+                  );
+                }}
+              >
+                📌 Use My Current Location
+              </Button>
+            </div>
             <div>
               <Label>Business UPI ID (for Customer Payments)</Label>
               <Input
