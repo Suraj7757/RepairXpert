@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import TrackOrder from "@/features/jobs/TrackOrder";
 import MultiServiceShowcase from "@/features/dashboard/MultiServiceShowcase";
+import LiveMarketplaceShowcase from "@/features/dashboard/LiveMarketplaceShowcase";
 import {
   DropdownMenu,
   DropdownMenuContent,
