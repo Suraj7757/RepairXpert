@@ -51,7 +51,7 @@ export default function Marketplace() {
     if (ids.length) {
       const { data: shopRows } = await (supabase as any)
         .from("shop_settings")
-        .select("user_id, shop_name, address, phone")
+        .select("user_id, shop_name, address, phone, map_url, map_lat, map_lng")
         .in("user_id", ids);
       const map: Record<string, any> = {};
       (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
