@@ -103,6 +103,9 @@ export default function Settings() {
       revenue_split_enabled: splitEnabled,
       qr_receivers: qrReceivers.filter((q) => q.trim()),
       upi_id: upiId,
+      map_lat: mapLat ? parseFloat(mapLat) : null,
+      map_lng: mapLng ? parseFloat(mapLng) : null,
+      map_url: mapUrl,
     });
     if (ok) toast.success("Shop settings saved");
   };
