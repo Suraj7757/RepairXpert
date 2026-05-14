@@ -41,6 +41,9 @@ export default function Settings() {
   const [splitEnabled, setSplitEnabled] = useState(false);
   const [upiId, setUpiId] = useState("");
   const [qrReceivers, setQrReceivers] = useState<string[]>(["Admin QR"]);
+  const [mapLat, setMapLat] = useState("");
+  const [mapLng, setMapLng] = useState("");
+  const [mapUrl, setMapUrl] = useState("");
 
   // Profile
   const [displayName, setDisplayName] = useState("");
