@@ -69,6 +69,9 @@ export default function Settings() {
           ? settings.qr_receivers
           : ["Admin QR"],
       );
+      setMapLat(settings.map_lat != null ? String(settings.map_lat) : "");
+      setMapLng(settings.map_lng != null ? String(settings.map_lng) : "");
+      setMapUrl((settings as any).map_url || "");
     }
   }, [settings]);
 
