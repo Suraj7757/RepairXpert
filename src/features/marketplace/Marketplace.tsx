@@ -186,6 +186,16 @@ export default function Marketplace() {
                           <MapPin className="h-3 w-3 shrink-0" /> {shops[l.seller_id].address || l.location}
                         </div>
                       )}
+                      {(shops[l.seller_id].map_url || (shops[l.seller_id].map_lat && shops[l.seller_id].map_lng)) && (
+                        <a
+                          href={shops[l.seller_id].map_url || `https://www.google.com/maps?q=${shops[l.seller_id].map_lat},${shops[l.seller_id].map_lng}`}
+                          target="_blank" rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MapPin className="h-3 w-3" /> View on map
+                        </a>
+                      )}
                     </div>
                   )}
                   <div className="flex gap-1">
