@@ -560,6 +560,9 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Live Marketplace from registered shops */}
+      <LiveMarketplaceShowcase />
+
       {/* Multi Services Management Showcase */}
       <MultiServiceShowcase />
 
