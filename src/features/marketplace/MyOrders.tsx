@@ -4,17 +4,53 @@ import { supabase } from "@/services/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, ExternalLink, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+
+const STATUS_FLOW = ["placed", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"];
+const STATUS_LABEL: Record<string, string> = {
+  placed: "Placed",
+  confirmed: "Confirmed",
+  packed: "Packed",
+  shipped: "Shipped",
+  out_for_delivery: "Out for Delivery",
+  delivered: "Delivered",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
 
 const STATUS_COLOR: Record<string, string> = {
   placed: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-  accepted: "bg-purple-500/10 text-purple-600 border-purple-500/30",
+  confirmed: "bg-purple-500/10 text-purple-600 border-purple-500/30",
   packed: "bg-orange-500/10 text-orange-600 border-orange-500/30",
   shipped: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30",
+  out_for_delivery: "bg-amber-500/10 text-amber-600 border-amber-500/30",
   delivered: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
+  completed: "bg-emerald-600/10 text-emerald-700 border-emerald-600/30",
   cancelled: "bg-destructive/10 text-destructive border-destructive/30",
 };
+
+function Timeline({ status }: { status: string }) {
+  if (status === "cancelled") {
+    return <div className="text-xs text-destructive font-medium">Order cancelled</div>;
+  }
+  const currentIdx = STATUS_FLOW.indexOf(status === "completed" ? "delivered" : status);
+  return (
+    <div className="flex items-center gap-1 mt-2">
+      {STATUS_FLOW.map((s, i) => {
+        const done = i <= currentIdx;
+        return (
+          <div key={s} className="flex-1 flex flex-col items-center">
+            <div className={`w-full h-1 rounded ${done ? "bg-primary" : "bg-muted"}`} />
+            <span className={`text-[9px] mt-1 ${done ? "text-foreground font-medium" : "text-muted-foreground"} text-center leading-tight`}>
+              {STATUS_LABEL[s]}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function MyOrders() {
   const { user } = useAuth();
@@ -22,7 +58,7 @@ export default function MyOrders() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
     (async () => {
       const { data } = await (supabase as any)
         .from("marketplace_orders")
@@ -72,23 +108,37 @@ export default function MyOrders() {
                     <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</p>
                   </div>
                   <Badge variant="outline" className={STATUS_COLOR[o.fulfillment_status] || ""}>
-                    {o.fulfillment_status}
+                    {STATUS_LABEL[o.fulfillment_status] || o.fulfillment_status}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 {Array.isArray(o.items) && o.items.map((it: any, i: number) => (
                   <div key={i} className="flex justify-between text-sm">
-                    <span>{it.title} × {it.quantity}</span>
-                    <span>₹{it.line_total}</span>
+                    <span className="line-clamp-1">{it.title} × {it.quantity}</span>
+                    <span className="shrink-0">₹{it.line_total}</span>
                   </div>
                 ))}
                 <div className="border-t pt-2 flex justify-between font-bold">
                   <span>Total</span>
                   <span className="text-primary">₹{o.total}</span>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Payment: {o.payment_method.toUpperCase()} · {o.payment_status}
+                <div className="text-xs text-muted-foreground flex flex-wrap gap-3">
+                  <span>Payment: <b className="text-foreground">{o.payment_method?.toUpperCase()}</b> · {o.payment_status}</span>
+                  <span>Fulfillment: <b className="text-foreground capitalize">{o.fulfillment_method || "delivery"}</b></span>
+                </div>
+                <Timeline status={o.fulfillment_status} />
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button asChild size="sm" variant="outline">
+                    <Link to={`/track?id=${encodeURIComponent(o.order_number)}`}>
+                      <ExternalLink className="h-3 w-3 mr-1" /> Track Order
+                    </Link>
+                  </Button>
+                  {o.fulfillment_status === "delivered" && (
+                    <Badge variant="outline" className="text-emerald-600 border-emerald-500/30">
+                      <CheckCircle2 className="h-3 w-3 mr-1" /> Delivered
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
