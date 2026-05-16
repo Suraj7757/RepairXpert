@@ -119,7 +119,7 @@ export default function ListingDetail() {
                 )}
                 {s.booking_slug && (
                   <Button asChild size="sm" variant="outline" className="w-full mt-2">
-                    <Link to={`/book/${s.booking_slug}`}>Visit Shop Page</Link>
+                    <Link to={`/shop/${s.booking_slug}`}>Visit Shop Page</Link>
                   </Button>
                 )}
               </CardContent>
