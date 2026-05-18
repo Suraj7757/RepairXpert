@@ -591,6 +591,7 @@ export type Database = {
           featured: boolean
           id: string
           images: string[] | null
+          inventory_item_id: string | null
           location: string | null
           moq: number
           mrp: number | null
@@ -611,6 +612,7 @@ export type Database = {
           featured?: boolean
           id?: string
           images?: string[] | null
+          inventory_item_id?: string | null
           location?: string | null
           moq?: number
           mrp?: number | null
@@ -631,6 +633,7 @@ export type Database = {
           featured?: boolean
           id?: string
           images?: string[] | null
+          inventory_item_id?: string | null
           location?: string | null
           moq?: number
           mrp?: number | null
@@ -652,6 +655,7 @@ export type Database = {
           buyer_mobile: string | null
           buyer_name: string | null
           created_at: string
+          fulfillment_method: string
           fulfillment_status: string | null
           id: string
           items: Json
@@ -659,6 +663,7 @@ export type Database = {
           order_number: string
           payment_method: string | null
           payment_status: string | null
+          pickup_date: string | null
           seller_id: string
           shipping: number
           subtotal: number
@@ -672,6 +677,7 @@ export type Database = {
           buyer_mobile?: string | null
           buyer_name?: string | null
           created_at?: string
+          fulfillment_method?: string
           fulfillment_status?: string | null
           id?: string
           items?: Json
@@ -679,6 +685,7 @@ export type Database = {
           order_number?: string
           payment_method?: string | null
           payment_status?: string | null
+          pickup_date?: string | null
           seller_id: string
           shipping?: number
           subtotal?: number
@@ -692,6 +699,7 @@ export type Database = {
           buyer_mobile?: string | null
           buyer_name?: string | null
           created_at?: string
+          fulfillment_method?: string
           fulfillment_status?: string | null
           id?: string
           items?: Json
@@ -699,12 +707,43 @@ export type Database = {
           order_number?: string
           payment_method?: string | null
           payment_status?: string | null
+          pickup_date?: string | null
           seller_id?: string
           shipping?: number
           subtotal?: number
           total?: number
           tracking_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      order_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          order_id: string
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          to_status?: string
         }
         Relationships: []
       }
@@ -1197,6 +1236,9 @@ export type Database = {
           created_at: string
           gstin: string
           id: string
+          map_lat: number | null
+          map_lng: number | null
+          map_url: string | null
           phone: string
           qr_receivers: string[]
           revenue_split_enabled: boolean | null
@@ -1214,6 +1256,9 @@ export type Database = {
           created_at?: string
           gstin?: string
           id?: string
+          map_lat?: number | null
+          map_lng?: number | null
+          map_url?: string | null
           phone?: string
           qr_receivers?: string[]
           revenue_split_enabled?: boolean | null
@@ -1231,6 +1276,9 @@ export type Database = {
           created_at?: string
           gstin?: string
           id?: string
+          map_lat?: number | null
+          map_lng?: number | null
+          map_url?: string | null
           phone?: string
           qr_receivers?: string[]
           revenue_split_enabled?: boolean | null
@@ -1573,6 +1621,7 @@ export type Database = {
         Returns: boolean
       }
       is_not_banned: { Args: never; Returns: boolean }
+      is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
       next_job_id: {
         Args: { _brand?: string; _user_id: string }
         Returns: string
@@ -1599,6 +1648,10 @@ export type Database = {
         Returns: Json
       }
       track_order: { Args: { _tracking_id: string }; Returns: Json }
+      update_marketplace_order_status: {
+        Args: { _note?: string; _order_id: string; _status: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "staff" | "customer" | "shopkeeper" | "wholesaler"

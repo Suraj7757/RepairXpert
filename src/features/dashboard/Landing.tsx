@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import TrackOrder from "@/features/jobs/TrackOrder";
 import MultiServiceShowcase from "@/features/dashboard/MultiServiceShowcase";
+import LiveMarketplaceShowcase from "@/features/dashboard/LiveMarketplaceShowcase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -558,6 +559,9 @@ export default function Landing() {
           </span>
         </div>
       </section>
+
+      {/* Live Marketplace from registered shops */}
+      <LiveMarketplaceShowcase />
 
       {/* Multi Services Management Showcase */}
       <MultiServiceShowcase />

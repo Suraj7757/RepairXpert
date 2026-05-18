@@ -10,8 +10,14 @@ export type AppRole =
   | "shopkeeper"
   | "wholesaler";
 
-export function isSuperAdmin(role?: string | null): boolean {
-  return role === "admin";
+/**
+ * STRICT super-admin check. Only the single hard-coded email
+ * (krs715665@gmail.com) is treated as super admin. All other
+ * "admin" role users are normal shop admins with no god-mode access.
+ */
+export function isSuperAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  return email.trim().toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 }
 
 export function homePathFor(

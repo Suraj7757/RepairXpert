@@ -28,7 +28,7 @@ interface TrashItem {
 }
 
 export default function Trash() {
-  const { user, role } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { restore, permanentDelete } = useSoftDelete();
   const [items, setItems] = useState<TrashItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,7 +185,7 @@ export default function Trash() {
     Settlement: "bg-success/10 text-success",
   };
 
-  const isAdmin = role === "admin";
+  const isAdmin = isSuperAdmin;
 
   return (
     <MainLayout title="🗑️ Trash">

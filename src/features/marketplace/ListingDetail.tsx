@@ -108,9 +108,18 @@ export default function ListingDetail() {
                 <div className="flex items-center gap-2 font-semibold"><Store className="h-4 w-4" /> {s.shop_name || "Seller"}</div>
                 {s.address && <div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {s.address}</div>}
                 {s.phone && <div className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> {s.phone}</div>}
+                {(s.map_url || (s.map_lat && s.map_lng)) && (
+                  <a
+                    href={s.map_url || `https://www.google.com/maps?q=${s.map_lat},${s.map_lng}`}
+                    target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <MapPin className="h-3 w-3" /> Open in Google Maps
+                  </a>
+                )}
                 {s.booking_slug && (
                   <Button asChild size="sm" variant="outline" className="w-full mt-2">
-                    <Link to={`/book/${s.booking_slug}`}>Visit Shop Page</Link>
+                    <Link to={`/shop/${s.booking_slug}`}>Visit Shop Page</Link>
                   </Button>
                 )}
               </CardContent>

@@ -48,7 +48,56 @@ const Checkout = lazy(() => import("@/features/marketplace/Checkout"));
 const MyOrders = lazy(() => import("@/features/marketplace/MyOrders"));
 const SellerListings = lazy(() => import("@/features/marketplace/SellerListings"));
 
+<<<<<<< HEAD
 import { homePathFor, isSuperAdmin } from "@/lib/accountType";
+=======
+import Landing from "@/features/dashboard/Landing";
+import Auth from "@/features/auth/Auth";
+import AuthCallback from "@/features/auth/AuthCallback";
+import TrackOrder from "@/features/jobs/TrackOrder";
+import Dashboard from "@/features/dashboard/Dashboard";
+import Customers from "@/features/customers/Customers";
+import RepairJobs from "@/features/jobs/RepairJobs";
+import Payments from "@/features/payments/Payments";
+import Settlements from "@/features/payments/Settlements";
+import Inventory from "@/features/inventory/Inventory";
+import Sells from "@/features/inventory/Sells";
+import Reports from "@/features/dashboard/Reports";
+import Settings from "@/features/settings/Settings";
+import Trash from "@/features/admin/Trash";
+import ResetPassword from "@/features/auth/ResetPassword";
+import AdminPanel from "@/features/admin/AdminPanel";
+import DevPanel from "@/features/admin/DevPanel";
+import WalletPage from "@/features/wallet/WalletPage";
+import Subscription from "@/features/settings/Subscription";
+import ServicesManagement from "@/features/services/ServicesManagement";
+import EnterpriseModules from "@/features/enterprise/EnterpriseModules";
+import StaffManagement from "@/features/staff/StaffManagement";
+import Financials from "@/features/dashboard/Financials";
+import Analytics from "@/features/dashboard/Analytics";
+import PrivacyPolicy from "@/features/dashboard/PrivacyPolicy";
+import TermsConditions from "@/features/dashboard/TermsConditions";
+import NotFound from "@/components/common/NotFound";
+import Branches from "@/features/branches/Branches";
+import Expenses from "@/features/expenses/Expenses";
+import Loyalty from "@/features/loyalty/Loyalty";
+import BookingsAdmin from "@/features/booking/BookingsAdmin";
+import PublicBooking from "@/features/booking/PublicBooking";
+import WholesaleDashboard from "@/features/wholesale/WholesaleDashboard";
+import CustomerDashboard from "@/features/customer/CustomerDashboard";
+import AiDiagnosticCenter from "@/features/ai/AiDiagnosticCenter";
+import MarketingDashboard from "@/features/marketing/MarketingDashboard";
+import Marketplace from "@/features/marketplace/Marketplace";
+import ListingDetail from "@/features/marketplace/ListingDetail";
+import Cart from "@/features/marketplace/Cart";
+import Checkout from "@/features/marketplace/Checkout";
+import MyOrders from "@/features/marketplace/MyOrders";
+import SellerListings from "@/features/marketplace/SellerListings";
+import SellerOrders from "@/features/marketplace/SellerOrders";
+import ShopPublicPage from "@/features/marketplace/ShopPublicPage";
+import { homePathFor } from "@/lib/accountType";
+
+>>>>>>> adb66d97eda956e83b75ff43fba00c4ef757189f
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Chatbot } from "@/components/common/Chatbot";
 
@@ -70,7 +119,7 @@ function ProtectedRoute({
   children: React.ReactNode;
   allowExpired?: boolean;
 }) {
-  const { user, role, loading, isPlanExpired, isBanned, isMaintenance, isSuperAdmin } =
+  const { user, loading, isPlanExpired, isBanned, isMaintenance, isSuperAdmin } =
     useAuth();
   if (loading)
     return (
@@ -79,9 +128,9 @@ function ProtectedRoute({
       </div>
     );
   if (!user) return <Navigate to="/auth" replace />;
-  if (isMaintenance && role !== "admin" && !isSuperAdmin) return <Navigate to="/auth" replace />;
+  if (isMaintenance && !isSuperAdmin) return <Navigate to="/auth" replace />;
   if (isBanned && !isSuperAdmin) return <Navigate to="/auth" replace />;
-  if (isPlanExpired && !allowExpired && role !== "admin" && !isSuperAdmin) {
+  if (isPlanExpired && !allowExpired && !isSuperAdmin) {
     return <Navigate to="/subscription" replace />;
   }
   return <>{children}</>;
@@ -102,14 +151,14 @@ function AuthRoute({ home }: { home: string }) {
 }
 
 function AppRoutes() {
-  const { user, role, loading, accountType } = useAuth();
+  const { user, loading, accountType, isSuperAdmin } = useAuth();
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
-  const home = user ? homePathFor(accountType, role === "admin") : "/";
+  const home = user ? homePathFor(accountType, isSuperAdmin) : "/";
 
   return (
     <ErrorBoundary>
@@ -152,7 +201,7 @@ function AppRoutes() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Dashboard />
@@ -164,7 +213,7 @@ function AppRoutes() {
             path="/customers"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Customers />
@@ -176,7 +225,7 @@ function AppRoutes() {
             path="/jobs"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <RepairJobs />
@@ -188,7 +237,7 @@ function AppRoutes() {
             path="/payments"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Payments />
@@ -200,7 +249,7 @@ function AppRoutes() {
             path="/settlements"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Settlements />
@@ -212,7 +261,7 @@ function AppRoutes() {
             path="/inventory"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Inventory />
@@ -224,7 +273,7 @@ function AppRoutes() {
             path="/sells"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Sells />
@@ -236,7 +285,7 @@ function AppRoutes() {
             path="/reports"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Reports />
@@ -248,7 +297,7 @@ function AppRoutes() {
             path="/analytics"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Analytics />
@@ -268,7 +317,7 @@ function AppRoutes() {
             path="/trash"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Trash />
@@ -280,7 +329,7 @@ function AppRoutes() {
             path="/wallet"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <WalletPage />
@@ -292,7 +341,7 @@ function AppRoutes() {
             path="/subscription"
             element={
               <ProtectedRoute allowExpired>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Subscription />
@@ -304,7 +353,7 @@ function AppRoutes() {
             path="/services"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <ServicesManagement />
@@ -316,7 +365,7 @@ function AppRoutes() {
             path="/enterprise"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <EnterpriseModules />
@@ -328,7 +377,7 @@ function AppRoutes() {
             path="/ai-diagnostics"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <AiDiagnosticCenter />
@@ -340,7 +389,7 @@ function AppRoutes() {
             path="/marketing"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <MarketingDashboard />
@@ -352,7 +401,7 @@ function AppRoutes() {
             path="/staff"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <StaffManagement />
@@ -364,7 +413,7 @@ function AppRoutes() {
             path="/financials"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Financials />
@@ -376,7 +425,7 @@ function AppRoutes() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <AdminPanel />
+                {isSuperAdmin ? <AdminPanel /> : <Navigate to={home} replace />}
               </ProtectedRoute>
             }
           />
@@ -384,7 +433,7 @@ function AppRoutes() {
             path="/dev-panel"
             element={
               <ProtectedRoute>
-                <DevPanel />
+                {isSuperAdmin ? <DevPanel /> : <Navigate to={home} replace />}
               </ProtectedRoute>
             }
           />
@@ -392,7 +441,7 @@ function AppRoutes() {
             path="/branches"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Branches />
@@ -404,7 +453,7 @@ function AppRoutes() {
             path="/expenses"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Expenses />
@@ -416,7 +465,7 @@ function AppRoutes() {
             path="/loyalty"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <Loyalty />
@@ -428,7 +477,7 @@ function AppRoutes() {
             path="/bookings"
             element={
               <ProtectedRoute>
-                {role === "admin" ? (
+                {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
                   <BookingsAdmin />
@@ -444,6 +493,8 @@ function AppRoutes() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/my-listings" element={<ProtectedRoute><SellerListings /></ProtectedRoute>} />
+          <Route path="/seller-orders" element={<ProtectedRoute><SellerOrders /></ProtectedRoute>} />
+          <Route path="/shop/:slug" element={<ShopPublicPage />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsConditions />} />
           <Route

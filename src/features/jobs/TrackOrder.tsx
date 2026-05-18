@@ -325,8 +325,42 @@ export default function TrackOrder({ isModal = false }: { isModal?: boolean }) {
           </Card>
         )}
 
+        {/* Marketplace order result */}
+        {!loading && result && result.type === "marketplace" && (
+          <Card className="border-0 shadow-xl overflow-hidden">
+            <div className="p-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs opacity-75 font-medium">Order #</p>
+                  <p className="font-black text-lg font-mono">{result.tracking_id}</p>
+                </div>
+                <Badge className="bg-white/20 text-white border-0 font-bold capitalize">{String(result.status).replace(/_/g, " ")}</Badge>
+              </div>
+            </div>
+            <CardContent className="p-4 space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <InfoBox label="Customer" value={result.customer_name || "—"} />
+                <InfoBox label="Shop" value={result.shop_name || "—"} />
+                <InfoBox label="Total" value={`₹${Number(result.total).toLocaleString()}`} highlight />
+                <InfoBox label="Payment" value={`${String(result.payment_method).toUpperCase()} · ${result.payment_status}`} />
+                <InfoBox label="Fulfillment" value={String(result.fulfillment_method || "delivery")} />
+                <InfoBox label="Placed" value={new Date(result.created_at).toLocaleDateString("en-IN")} />
+              </div>
+              <div className="border-t pt-3 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Items</p>
+                {Array.isArray(result.items) && result.items.map((it: any, i: number) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="line-clamp-1">{it.title} × {it.quantity}</span>
+                    <span>₹{it.line_total}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Result */}
-        {!loading && result && (
+        {!loading && result && result.type !== "marketplace" && (
           <div className="space-y-4">
             {/* Status Card */}
             <Card className="border-0 shadow-xl overflow-hidden">
