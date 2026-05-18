@@ -3,57 +3,65 @@ import { Toaster } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 
-import Landing from "@/features/dashboard/Landing";
-import Auth from "@/features/auth/Auth";
-import AuthCallback from "@/features/auth/AuthCallback";
-import TrackOrder from "@/features/jobs/TrackOrder";
-import Dashboard from "@/features/dashboard/Dashboard";
-import Customers from "@/features/customers/Customers";
-import RepairJobs from "@/features/jobs/RepairJobs";
-import Payments from "@/features/payments/Payments";
-import Settlements from "@/features/payments/Settlements";
-import Inventory from "@/features/inventory/Inventory";
-import Sells from "@/features/inventory/Sells";
-import Reports from "@/features/dashboard/Reports";
-import Settings from "@/features/settings/Settings";
-import Trash from "@/features/admin/Trash";
-import ResetPassword from "@/features/auth/ResetPassword";
-import AdminPanel from "@/features/admin/AdminPanel";
-import DevPanel from "@/features/admin/DevPanel";
-import WalletPage from "@/features/wallet/WalletPage";
-import Subscription from "@/features/settings/Subscription";
-import ServicesManagement from "@/features/services/ServicesManagement";
-import EnterpriseModules from "@/features/enterprise/EnterpriseModules";
-import StaffManagement from "@/features/staff/StaffManagement";
-import Financials from "@/features/dashboard/Financials";
-import Analytics from "@/features/dashboard/Analytics";
-import PrivacyPolicy from "@/features/dashboard/PrivacyPolicy";
-import TermsConditions from "@/features/dashboard/TermsConditions";
-import NotFound from "@/components/common/NotFound";
-import Branches from "@/features/branches/Branches";
-import Expenses from "@/features/expenses/Expenses";
-import Loyalty from "@/features/loyalty/Loyalty";
-import BookingsAdmin from "@/features/booking/BookingsAdmin";
-import PublicBooking from "@/features/booking/PublicBooking";
-import WholesaleDashboard from "@/features/wholesale/WholesaleDashboard";
-import CustomerDashboard from "@/features/customer/CustomerDashboard";
-import AiDiagnosticCenter from "@/features/ai/AiDiagnosticCenter";
-import MarketingDashboard from "@/features/marketing/MarketingDashboard";
-import Marketplace from "@/features/marketplace/Marketplace";
-import ListingDetail from "@/features/marketplace/ListingDetail";
-import Cart from "@/features/marketplace/Cart";
-import Checkout from "@/features/marketplace/Checkout";
-import MyOrders from "@/features/marketplace/MyOrders";
-import SellerListings from "@/features/marketplace/SellerListings";
+const Landing = lazy(() => import("@/features/dashboard/Landing"));
+const Auth = lazy(() => import("@/features/auth/Auth"));
+const AuthCallback = lazy(() => import("@/features/auth/AuthCallback"));
+const TrackOrder = lazy(() => import("@/features/jobs/TrackOrder"));
+const Dashboard = lazy(() => import("@/features/dashboard/Dashboard"));
+const Customers = lazy(() => import("@/features/customers/Customers"));
+const RepairJobs = lazy(() => import("@/features/jobs/RepairJobs"));
+const Payments = lazy(() => import("@/features/payments/Payments"));
+const Settlements = lazy(() => import("@/features/payments/Settlements"));
+const Inventory = lazy(() => import("@/features/inventory/Inventory"));
+const Sells = lazy(() => import("@/features/inventory/Sells"));
+const Reports = lazy(() => import("@/features/dashboard/Reports"));
+const Settings = lazy(() => import("@/features/settings/Settings"));
+const Trash = lazy(() => import("@/features/admin/Trash"));
+const ResetPassword = lazy(() => import("@/features/auth/ResetPassword"));
+const AdminPanel = lazy(() => import("@/features/admin/AdminPanel"));
+const DevPanel = lazy(() => import("@/features/admin/DevPanel"));
+const WalletPage = lazy(() => import("@/features/wallet/WalletPage"));
+const Subscription = lazy(() => import("@/features/settings/Subscription"));
+const ServicesManagement = lazy(() => import("@/features/services/ServicesManagement"));
+const EnterpriseModules = lazy(() => import("@/features/enterprise/EnterpriseModules"));
+const StaffManagement = lazy(() => import("@/features/staff/StaffManagement"));
+const Financials = lazy(() => import("@/features/dashboard/Financials"));
+const Analytics = lazy(() => import("@/features/dashboard/Analytics"));
+const PrivacyPolicy = lazy(() => import("@/features/dashboard/PrivacyPolicy"));
+const TermsConditions = lazy(() => import("@/features/dashboard/TermsConditions"));
+const NotFound = lazy(() => import("@/components/common/NotFound"));
+const Branches = lazy(() => import("@/features/branches/Branches"));
+const Expenses = lazy(() => import("@/features/expenses/Expenses"));
+const Loyalty = lazy(() => import("@/features/loyalty/Loyalty"));
+const BookingsAdmin = lazy(() => import("@/features/booking/BookingsAdmin"));
+const PublicBooking = lazy(() => import("@/features/booking/PublicBooking"));
+const WholesaleDashboard = lazy(() => import("@/features/wholesale/WholesaleDashboard"));
+const CustomerDashboard = lazy(() => import("@/features/customer/CustomerDashboard"));
+const AiDiagnosticCenter = lazy(() => import("@/features/ai/AiDiagnosticCenter"));
+const MarketingDashboard = lazy(() => import("@/features/marketing/MarketingDashboard"));
+const Marketplace = lazy(() => import("@/features/marketplace/Marketplace"));
+const ListingDetail = lazy(() => import("@/features/marketplace/ListingDetail"));
+const Cart = lazy(() => import("@/features/marketplace/Cart"));
+const Checkout = lazy(() => import("@/features/marketplace/Checkout"));
+const MyOrders = lazy(() => import("@/features/marketplace/MyOrders"));
+const SellerListings = lazy(() => import("@/features/marketplace/SellerListings"));
+
 import { homePathFor, isSuperAdmin } from "@/lib/accountType";
-
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Chatbot } from "@/components/common/Chatbot";
-import { Suspense } from "react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function ProtectedRoute({
   children,
@@ -77,6 +85,20 @@ function ProtectedRoute({
     return <Navigate to="/subscription" replace />;
   }
   return <>{children}</>;
+}
+
+// Extracted from IIFE to fix Rules of Hooks violation
+function AuthRoute({ home }: { home: string }) {
+  const { user, isBanned, isMaintenance } = useAuth();
+  const hash = typeof window !== "undefined" ? window.location.hash : "";
+  const hashParams = new URLSearchParams(hash.replace("#", "?"));
+  const isEmailConfirm =
+    hashParams.get("type") === "signup" ||
+    hashParams.get("type") === "magiclink";
+
+  if (user && !isEmailConfirm && !isBanned && !isMaintenance)
+    return <Navigate to={home} replace />;
+  return <Auth />;
 }
 
 function AppRoutes() {
@@ -105,20 +127,7 @@ function AppRoutes() {
           />
           <Route
             path="/auth"
-            element={(() => {
-              const hash =
-                typeof window !== "undefined" ? window.location.hash : "";
-              const hashParams = new URLSearchParams(hash.replace("#", "?"));
-              const isEmailConfirm =
-                hashParams.get("type") === "signup" ||
-                hashParams.get("type") === "magiclink";
-              
-              const { isBanned, isMaintenance } = useAuth();
-              
-              if (user && !isEmailConfirm && !isBanned && !isMaintenance)
-                return <Navigate to={home} replace />;
-              return <Auth />;
-            })()}
+            element={<AuthRoute home={home} />}
           />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route
