@@ -72,7 +72,7 @@ export default function Auth() {
   const [couponCode, setCouponCode] = useState("");
   const [accountType, setAccountType] = useState<
     "shopkeeper" | "wholesaler" | "customer"
-  >("shopkeeper");
+  >("customer");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -187,6 +187,11 @@ export default function Auth() {
   };
 
   const handleGoogle = async () => {
+    if (mode === "signup" && accountType) {
+      localStorage.setItem("rx_pending_account_type", accountType);
+    } else {
+      localStorage.removeItem("rx_pending_account_type");
+    }
     setLoading(true);
     const { error } = await signInWithGoogle();
     if (error) {
@@ -385,46 +390,16 @@ export default function Auth() {
               <form onSubmit={handleAuth} className="space-y-4">
                 {mode === "signup" && (
                   <>
+                    {/* Name field */}
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                        I am a
-                      </Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(
-                          [
-                            { v: "shopkeeper", label: "Shopkeeper" },
-                            { v: "wholesaler", label: "Wholesaler" },
-                            { v: "customer", label: "Customer" },
-                          ] as const
-                        ).map((o) => (
-                          <button
-                            type="button"
-                            key={o.v}
-                            onClick={() => setAccountType(o.v)}
-                            className={`h-10 rounded-lg text-xs font-bold uppercase tracking-wider border-2 transition-all ${accountType === o.v ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-muted/30 text-muted-foreground border-transparent hover:border-primary/30"}`}
-                          >
-                            {o.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
-                        {accountType === "customer"
-                          ? "Full Name"
-                          : accountType === "wholesaler"
-                            ? "Wholesale Business Name"
-                            : "Business Name"}
+                        Full Name
                       </Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/50" />
                         <Input
                           className="pl-10 h-11 bg-muted/30 border-0 focus-visible:ring-1"
-                          placeholder={
-                            accountType === "customer"
-                              ? "Your name"
-                              : "E.g. Mobile Hub"
-                          }
+                          placeholder="Your full name"
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
                           required
@@ -440,6 +415,8 @@ export default function Auth() {
                         <Input
                           className="pl-10 h-11 bg-muted/30 border-0 focus-visible:ring-1"
                           placeholder="10-digit mobile"
+                          inputMode="numeric"
+                          maxLength={10}
                           value={mobile}
                           onChange={(e) =>
                             setMobile(
@@ -448,6 +425,11 @@ export default function Auth() {
                           }
                           required
                         />
+                        {mobile.length > 0 && (
+                          <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold ${mobile.length === 10 ? "text-green-500" : "text-orange-400"}`}>
+                            {mobile.length}/10
+                          </span>
+                        )}
                       </div>
                     </div>
                   </>
@@ -631,6 +613,18 @@ export default function Auth() {
                     </button>
                   )}
                 </div>
+                {/* Become a Shopkeeper CTA */}
+                {mode === "signup" && (
+                  <div className="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-center">
+                    <p className="text-xs text-muted-foreground mb-1">Own a repair shop?</p>
+                    <a
+                      href="/become-shopkeeper"
+                      className="text-xs font-black text-amber-600 dark:text-amber-400 hover:text-amber-700 uppercase tracking-wider flex items-center gap-1 mx-auto"
+                    >
+                      🏪 Become a Shopkeeper →
+                    </a>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

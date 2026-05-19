@@ -55,6 +55,7 @@ import {
   Ban,
   RotateCcw,
   ToggleLeft,
+  Store,
 } from "lucide-react";
 import AdminRefunds from "./AdminRefunds";
 import BroadcastMessage from "./BroadcastMessage";
@@ -76,6 +77,8 @@ export default function AdminPanel() {
   const [features, setFeatures] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [shopApplications, setShopApplications] = useState<any[]>([]);
+  const [appFilter, setAppFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
 
   // Ad dialog
   const [adOpen, setAdOpen] = useState(false);
@@ -179,6 +182,9 @@ export default function AdminPanel() {
       setMaintenance(configRes.data.value?.enabled || false);
     }
     setFeatures(featuresRes.data || []);
+    // Load shop applications
+    const { data: appsData } = await (supabase as any).from("shopkeeper_applications").select("*").order("created_at", { ascending: false });
+    setShopApplications(appsData || []);
     setLoading(false);
   };
 
@@ -483,8 +489,16 @@ export default function AdminPanel() {
           </Card>
         </div>
 
-        <Tabs defaultValue="analytics">
-          <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full">
+        <Tabs defaultValue="applications">
+          <TabsList className="grid grid-cols-4 md:grid-cols-9 w-full">
+            <TabsTrigger value="applications" className="flex items-center gap-1 relative">
+              <Store className="h-3 w-3" /> Shop Apps
+              {shopApplications.filter((a) => a.status === "pending").length > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 text-white text-[9px] flex items-center justify-center font-black">
+                  {shopApplications.filter((a) => a.status === "pending").length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="payments">Sub Payments</TabsTrigger>
             <TabsTrigger value="promos">Promos</TabsTrigger>
@@ -504,6 +518,100 @@ export default function AdminPanel() {
             </TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
+
+          {/* Shop Applications Tab */}
+          <TabsContent value="applications" className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="text-lg font-bold">Shopkeeper Applications</h3>
+                <p className="text-sm text-muted-foreground">Review and approve shop registrations</p>
+              </div>
+              <div className="flex gap-2">
+                {(["all", "pending", "approved", "rejected"] as const).map((f) => (
+                  <button key={f} onClick={() => setAppFilter(f)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all capitalize ${
+                      appFilter === f ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-transparent hover:border-border"
+                    }`}>
+                    {f} ({f === "all" ? shopApplications.length : shopApplications.filter((a) => a.status === f).length})
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-3">
+              {shopApplications
+                .filter((a) => appFilter === "all" || a.status === appFilter)
+                .map((app) => {
+                  const profile = users.find((u: any) => u.user_id === app.user_id);
+                  return (
+                    <Card key={app.id} className={`shadow-sm ${
+                      app.status === "pending" ? "border-amber-200 bg-amber-50/30" :
+                      app.status === "approved" ? "border-emerald-200 bg-emerald-50/30" :
+                      "border-rose-200 bg-rose-50/30"
+                    }`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div>
+                            <p className="font-bold text-base">{app.shop_name}</p>
+                            <p className="text-sm text-muted-foreground">{app.owner_name} · {app.phone}</p>
+                            <p className="text-xs text-muted-foreground">{app.city}{app.state ? `, ${app.state}` : ""} · {app.business_type}</p>
+                            {app.email && <p className="text-xs text-blue-600">{app.email}</p>}
+                            {profile && <p className="text-xs text-muted-foreground mt-1">Account: {profile.display_name}</p>}
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant={app.status === "pending" ? "secondary" : app.status === "approved" ? "default" : "destructive"}>
+                              {app.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{new Date(app.created_at).toLocaleDateString("en-IN")}</span>
+                          </div>
+                        </div>
+                        {app.address && <p className="text-xs text-muted-foreground mt-2">📍 {app.address}</p>}
+                        {app.gst_number && <p className="text-xs text-muted-foreground">GST: {app.gst_number}</p>}
+                        {app.rejection_reason && (
+                          <p className="text-xs text-rose-600 mt-1">Reason: {app.rejection_reason}</p>
+                        )}
+                        {app.status === "pending" && (
+                          <div className="flex gap-2 mt-3 flex-wrap">
+                            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs"
+                              onClick={async () => {
+                                await (supabase as any).from("shopkeeper_applications").update({
+                                  status: "approved",
+                                  reviewed_by: user!.id,
+                                  reviewed_at: new Date().toISOString(),
+                                }).eq("id", app.id);
+                                await supabase.from("profiles").update({ account_type: "shopkeeper" } as any).eq("user_id", app.user_id);
+                                toast.success(`${app.shop_name} approved!`);
+                                fetchAll();
+                              }}>
+                              <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                            </Button>
+                            <Button size="sm" variant="destructive" className="h-8 text-xs"
+                              onClick={async () => {
+                                const reason = prompt("Rejection reason (optional):") || "";
+                                await (supabase as any).from("shopkeeper_applications").update({
+                                  status: "rejected",
+                                  rejection_reason: reason,
+                                  reviewed_by: user!.id,
+                                  reviewed_at: new Date().toISOString(),
+                                }).eq("id", app.id);
+                                toast.success("Application rejected");
+                                fetchAll();
+                              }}>
+                              <XCircle className="h-3 w-3 mr-1" /> Reject
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              {shopApplications.filter((a) => appFilter === "all" || a.status === appFilter).length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Store className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                  <p>No {appFilter === "all" ? "" : appFilter} applications</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
           {/* Deep Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">

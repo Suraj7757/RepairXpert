@@ -29,7 +29,7 @@ export function homePathFor(
     case "wholesaler":
       return "/wholesale";
     case "customer":
-      return "/customer";
+      return "/marketplace";
     default:
       return "/dashboard";
   }

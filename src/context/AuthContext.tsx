@@ -167,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     displayName: string,
     mobile: string,
-    accountType: AccountType = "shopkeeper",
+    accountType: AccountType = "customer",
   ) => {
     const { data, error } = await supabase.auth.signUp({
       email,

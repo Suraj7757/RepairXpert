@@ -347,8 +347,11 @@ export type Database = {
           created_at: string;
           deleted: boolean;
           deleted_at: string | null;
+          description: string | null;
           gst_percent: number;
           id: string;
+          image_url: string | null;
+          is_marketplace_listed: boolean | null;
           min_stock: number;
           name: string;
           quantity: number;
@@ -363,8 +366,11 @@ export type Database = {
           created_at?: string;
           deleted?: boolean;
           deleted_at?: string | null;
+          description?: string | null;
           gst_percent?: number;
           id?: string;
+          image_url?: string | null;
+          is_marketplace_listed?: boolean | null;
           min_stock?: number;
           name: string;
           quantity?: number;
@@ -379,8 +385,11 @@ export type Database = {
           created_at?: string;
           deleted?: boolean;
           deleted_at?: string | null;
+          description?: string | null;
           gst_percent?: number;
           id?: string;
+          image_url?: string | null;
+          is_marketplace_listed?: boolean | null;
           min_stock?: number;
           name?: string;
           quantity?: number;
@@ -704,11 +713,13 @@ export type Database = {
       };
       profiles: {
         Row: {
+          account_type: string | null;
           avatar_url: string | null;
           created_at: string;
           display_name: string;
           id: string;
           is_banned: boolean | null;
+          mobile: string | null;
           plan_expires_at: string | null;
           plan_type: string | null;
           referral_code: string | null;
@@ -718,11 +729,13 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          account_type?: string | null;
           avatar_url?: string | null;
           created_at?: string;
           display_name?: string;
           id?: string;
           is_banned?: boolean | null;
+          mobile?: string | null;
           plan_expires_at?: string | null;
           plan_type?: string | null;
           referral_code?: string | null;
@@ -732,11 +745,13 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          account_type?: string | null;
           avatar_url?: string | null;
           created_at?: string;
           display_name?: string;
           id?: string;
           is_banned?: boolean | null;
+          mobile?: string | null;
           plan_expires_at?: string | null;
           plan_type?: string | null;
           referral_code?: string | null;
@@ -982,6 +997,57 @@ export type Database = {
           },
         ];
       };
+      service_bookings: {
+        Row: {
+          created_at: string | null;
+          customer_user_id: string | null;
+          device_brand: string | null;
+          device_model: string | null;
+          device_type: string;
+          id: string;
+          preferred_date: string | null;
+          preferred_time: string | null;
+          problem_description: string;
+          repair_job_id: string | null;
+          shop_notes: string | null;
+          shop_user_id: string | null;
+          status: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          customer_user_id?: string | null;
+          device_brand?: string | null;
+          device_model?: string | null;
+          device_type: string;
+          id?: string;
+          preferred_date?: string | null;
+          preferred_time?: string | null;
+          problem_description: string;
+          repair_job_id?: string | null;
+          shop_notes?: string | null;
+          shop_user_id?: string | null;
+          status?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          customer_user_id?: string | null;
+          device_brand?: string | null;
+          device_model?: string | null;
+          device_type?: string;
+          id?: string;
+          preferred_date?: string | null;
+          preferred_time?: string | null;
+          problem_description?: string;
+          repair_job_id?: string | null;
+          shop_notes?: string | null;
+          shop_user_id?: string | null;
+          status?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       settlement_cycles: {
         Row: {
           admin_share: number;
@@ -1075,6 +1141,129 @@ export type Database = {
           updated_at?: string;
           upi_id?: string | null;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      staff_job_assignments: {
+        Row: {
+          assigned_at: string | null;
+          completed_at: string | null;
+          earnings_credited: number | null;
+          id: string;
+          repair_job_id: string | null;
+          shop_user_id: string | null;
+          staff_member_id: string | null;
+        };
+        Insert: {
+          assigned_at?: string | null;
+          completed_at?: string | null;
+          earnings_credited?: number | null;
+          id?: string;
+          repair_job_id?: string | null;
+          shop_user_id?: string | null;
+          staff_member_id?: string | null;
+        };
+        Update: {
+          assigned_at?: string | null;
+          completed_at?: string | null;
+          earnings_credited?: number | null;
+          id?: string;
+          repair_job_id?: string | null;
+          shop_user_id?: string | null;
+          staff_member_id?: string | null;
+        };
+        Relationships: [];
+      };
+      staff_members: {
+        Row: {
+          commission_percent: number | null;
+          created_at: string | null;
+          email: string | null;
+          fixed_salary: number | null;
+          id: string;
+          is_active: boolean | null;
+          joined_at: string | null;
+          name: string;
+          phone: string | null;
+          role: string | null;
+          salary_type: string | null;
+          shop_user_id: string;
+        };
+        Insert: {
+          commission_percent?: number | null;
+          created_at?: string | null;
+          email?: string | null;
+          fixed_salary?: number | null;
+          id?: string;
+          is_active?: boolean | null;
+          joined_at?: string | null;
+          name: string;
+          phone?: string | null;
+          role?: string | null;
+          salary_type?: string | null;
+          shop_user_id: string;
+        };
+        Update: {
+          commission_percent?: number | null;
+          created_at?: string | null;
+          email?: string | null;
+          fixed_salary?: number | null;
+          id?: string;
+          is_active?: boolean | null;
+          joined_at?: string | null;
+          name?: string;
+          phone?: string | null;
+          role?: string | null;
+          salary_type?: string | null;
+          shop_user_id?: string;
+        };
+        Relationships: [];
+      };
+      staff_salary_records: {
+        Row: {
+          created_at: string | null;
+          deductions: number | null;
+          gross_earnings: number | null;
+          id: string;
+          net_salary: number | null;
+          notes: string | null;
+          paid_at: string | null;
+          payment_method: string | null;
+          period_end: string;
+          period_start: string;
+          shop_user_id: string | null;
+          staff_member_id: string | null;
+          total_jobs: number | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          deductions?: number | null;
+          gross_earnings?: number | null;
+          id?: string;
+          net_salary?: number | null;
+          notes?: string | null;
+          paid_at?: string | null;
+          payment_method?: string | null;
+          period_end: string;
+          period_start: string;
+          shop_user_id?: string | null;
+          staff_member_id?: string | null;
+          total_jobs?: number | null;
+        };
+        Update: {
+          created_at?: string | null;
+          deductions?: number | null;
+          gross_earnings?: number | null;
+          id?: string;
+          net_salary?: number | null;
+          notes?: string | null;
+          paid_at?: string | null;
+          payment_method?: string | null;
+          period_end?: string;
+          period_start?: string;
+          shop_user_id?: string | null;
+          staff_member_id?: string | null;
+          total_jobs?: number | null;
         };
         Relationships: [];
       };

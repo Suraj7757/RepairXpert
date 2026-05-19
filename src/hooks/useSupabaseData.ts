@@ -28,7 +28,12 @@ type TableName =
   | "erp_tasks"
   | "user_roles"
   | "features"
-  | "whatsapp_config";
+  | "whatsapp_config"
+  | "staff_members"
+  | "staff_job_assignments"
+  | "staff_salary_records"
+  | "service_bookings"
+  | "system_config";
 
 import { useQuery } from "@tanstack/react-query";
 import { get as idbGet, set as idbSet, createStore } from "idb-keyval";
@@ -44,7 +49,10 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
     queryFn: async () => {
       if (!user) return [];
       let query = (supabase as any).from(table).select("*") as any;
-      if (!["customer_feedback", "system_config", "features"].includes(table)) {
+      const shopUserIdTables = ["staff_members", "staff_job_assignments", "staff_salary_records"];
+      if (shopUserIdTables.includes(table)) {
+        query = query.eq("shop_user_id", user.id);
+      } else if (!["customer_feedback", "system_config", "features"].includes(table)) {
         query = query.eq("user_id", user.id);
       }
       if (
@@ -65,6 +73,15 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
           "notifications",
           "features",
           "whatsapp_config",
+          "staff_members",
+          "staff_job_assignments",
+          "staff_salary_records",
+          "service_bookings",
+          "system_config",
+          "erp_expenses",
+          "erp_leads",
+          "erp_tasks",
+          "user_roles",
         ].includes(table)
       ) {
         query = query.eq("deleted", false);

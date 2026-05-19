@@ -20,6 +20,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { useSupabaseQuery, useSoftDelete } from "@/hooks/useSupabaseData";
 import { supabase } from "@/services/supabase";
@@ -54,6 +56,9 @@ export default function Inventory() {
     costPrice: "",
     sellPrice: "",
     gstPercent: "18",
+    is_marketplace_listed: false,
+    description: "",
+    image_url: "",
   });
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,6 +84,9 @@ export default function Inventory() {
         costPrice: "",
         sellPrice: "",
         gstPercent: "18",
+        is_marketplace_listed: false,
+        description: "",
+        image_url: "",
       });
       setOpen(true);
     }
@@ -111,6 +119,9 @@ export default function Inventory() {
         cost_price: parseFloat(form.costPrice) || 0,
         sell_price: parseFloat(form.sellPrice) || 0,
         gst_percent: parseFloat(form.gstPercent) || 18,
+        is_marketplace_listed: form.is_marketplace_listed,
+        description: form.description,
+        image_url: form.image_url,
       };
 
       if (editingItem) {
@@ -137,6 +148,9 @@ export default function Inventory() {
         costPrice: "",
         sellPrice: "",
         gstPercent: "18",
+        is_marketplace_listed: false,
+        description: "",
+        image_url: "",
       });
     } catch (error: any) {
       console.error(error);
@@ -157,6 +171,9 @@ export default function Inventory() {
       costPrice: String(item.cost_price),
       sellPrice: String(item.sell_price),
       gstPercent: String(item.gst_percent),
+      is_marketplace_listed: item.is_marketplace_listed || false,
+      description: item.description || "",
+      image_url: item.image_url || "",
     });
     setOpen(true);
   };
@@ -223,6 +240,9 @@ export default function Inventory() {
                   costPrice: "",
                   sellPrice: "",
                   gstPercent: "18",
+                  is_marketplace_listed: false,
+                  description: "",
+                  image_url: "",
                 });
                 setOpen(true);
               }}
@@ -520,6 +540,42 @@ export default function Inventory() {
                     className="h-12 rounded-xl font-bold"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold">List on Marketplace</Label>
+                    <p className="text-xs text-muted-foreground">Make this item available for customers to buy online.</p>
+                  </div>
+                  <Switch
+                    checked={form.is_marketplace_listed}
+                    onCheckedChange={(checked) => setForm({ ...form, is_marketplace_listed: checked })}
+                  />
+                </div>
+                
+                {form.is_marketplace_listed && (
+                  <div className="grid grid-cols-1 gap-4 animate-fade-in">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Image URL</Label>
+                      <Input
+                        value={form.image_url}
+                        onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                        className="h-12 rounded-xl"
+                        placeholder="https://example.com/image.png"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Product Description</Label>
+                      <Textarea
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className="rounded-xl"
+                        placeholder="Describe the product for customers..."
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="bg-primary/5 p-4 rounded-2xl flex items-start gap-3 border border-primary/10">

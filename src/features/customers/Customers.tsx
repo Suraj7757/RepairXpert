@@ -286,10 +286,13 @@ export default function Customers() {
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
-                <Label>Mobile *</Label>
+                <Label>Mobile * <span className="text-[10px] text-muted-foreground">(10 digits)</span></Label>
                 <Input
                   value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="9876543210"
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 />
               </div>
               <div>

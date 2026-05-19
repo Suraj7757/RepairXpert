@@ -44,6 +44,13 @@ export default function AuthCallback() {
         let acct: string = "shopkeeper";
         let isAdmin = false;
         if (user) {
+          const pendingAccountType = localStorage.getItem("rx_pending_account_type");
+          if (pendingAccountType) {
+            // Update the profile with the requested account type
+            await supabase.from("profiles").update({ account_type: pendingAccountType } as any).eq("user_id", user.id);
+            localStorage.removeItem("rx_pending_account_type");
+          }
+
           const { data: prof } = await supabase
             .from("profiles")
             .select("account_type")

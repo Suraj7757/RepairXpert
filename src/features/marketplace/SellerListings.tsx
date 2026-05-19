@@ -29,9 +29,10 @@ export default function SellerListings() {
     if (!user) return;
     setLoading(true);
     const { data } = await (supabase as any)
-      .from("marketplace_listings")
+      .from("inventory")
       .select("*")
-      .eq("seller_id", user.id)
+      .eq("user_id", user.id)
+      .eq("is_marketplace_listed", true)
       .order("created_at", { ascending: false });
     setItems(data || []);
     setLoading(false);
@@ -42,21 +43,34 @@ export default function SellerListings() {
   const submit = async () => {
     if (!form.title || !form.price) return toast.error("Title and price required");
     const payload = {
-      seller_id: user!.id,
-      seller_type: sellerType,
-      title: form.title,
+      user_id: user!.id,
+      name: form.title,
       category: form.category,
       description: form.description,
-      price: Number(form.price) || 0,
-      mrp: Number(form.mrp) || 0,
-      stock: Number(form.stock) || 0,
-      moq: Number(form.moq) || 1,
-      images: form.images ? form.images.split(",").map((s) => s.trim()).filter(Boolean) : [],
-      location: form.location,
+      sell_price: Number(form.price) || 0,
+      cost_price: Number(form.mrp) || 0,
+      quantity: Number(form.stock) || 0,
+      min_stock: Number(form.moq) || 1,
+      image_url: form.images ? form.images.split(",")[0].trim() : "",
+      is_marketplace_listed: true,
+      sku: "MK-" + Date.now().toString().slice(-6),
     };
+    
+    // If editing, use the existing sku if available, otherwise it updates
     const { error } = editing
-      ? await (supabase as any).from("marketplace_listings").update(payload).eq("id", editing.id)
-      : await (supabase as any).from("marketplace_listings").insert(payload);
+      ? await (supabase as any).from("inventory").update({
+          name: payload.name,
+          category: payload.category,
+          description: payload.description,
+          sell_price: payload.sell_price,
+          cost_price: payload.cost_price,
+          quantity: payload.quantity,
+          min_stock: payload.min_stock,
+          image_url: payload.image_url,
+          is_marketplace_listed: true,
+        }).eq("id", editing.id)
+      : await (supabase as any).from("inventory").insert(payload);
+      
     if (error) return toast.error(error.message);
     toast.success(editing ? "Updated" : "Added");
     setOpen(false);
@@ -66,22 +80,22 @@ export default function SellerListings() {
   };
 
   const toggleActive = async (id: string, active: boolean) => {
-    await (supabase as any).from("marketplace_listings").update({ active: !active }).eq("id", id);
+    await (supabase as any).from("inventory").update({ is_marketplace_listed: !active }).eq("id", id);
     load();
   };
 
   const del = async (id: string) => {
     if (!confirm("Delete listing?")) return;
-    await (supabase as any).from("marketplace_listings").delete().eq("id", id);
+    await (supabase as any).from("inventory").update({ deleted: true }).eq("id", id);
     load();
   };
 
   const startEdit = (it: any) => {
     setEditing(it);
     setForm({
-      title: it.title, category: it.category, description: it.description || "",
-      price: String(it.price), mrp: String(it.mrp || ""), stock: String(it.stock),
-      moq: String(it.moq), images: (it.images || []).join(", "), location: it.location || "",
+      title: it.name, category: it.category, description: it.description || "",
+      price: String(it.sell_price), mrp: String(it.cost_price || ""), stock: String(it.quantity),
+      moq: String(it.min_stock || "1"), images: it.image_url || "", location: "",
     });
     setOpen(true);
   };
@@ -113,19 +127,19 @@ export default function SellerListings() {
               <Card key={it.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-base line-clamp-1">{it.title}</CardTitle>
-                    <Badge variant={it.active ? "default" : "outline"}>{it.active ? "Active" : "Hidden"}</Badge>
+                    <CardTitle className="text-base line-clamp-1">{it.name}</CardTitle>
+                    <Badge variant={it.is_marketplace_listed ? "default" : "outline"}>{it.is_marketplace_listed ? "Active" : "Hidden"}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-primary">₹{it.price}</span>
-                    {it.mrp > it.price && <span className="text-xs line-through text-muted-foreground">₹{it.mrp}</span>}
+                    <span className="text-lg font-bold text-primary">₹{it.sell_price}</span>
+                    {it.cost_price > it.sell_price && <span className="text-xs line-through text-muted-foreground">₹{it.cost_price}</span>}
                   </div>
-                  <div className="text-xs text-muted-foreground">{it.category} · Stock: {it.stock}</div>
+                  <div className="text-xs text-muted-foreground">{it.category} · Stock: {it.quantity}</div>
                   <div className="flex gap-1 pt-2">
                     <Button size="sm" variant="outline" className="flex-1" onClick={() => startEdit(it)}><Pencil className="h-3 w-3 mr-1" /> Edit</Button>
-                    <Button size="sm" variant="outline" onClick={() => toggleActive(it.id, it.active)}>{it.active ? "Hide" : "Show"}</Button>
+                    <Button size="sm" variant="outline" onClick={() => toggleActive(it.id, it.is_marketplace_listed)}>{it.is_marketplace_listed ? "Hide" : "Show"}</Button>
                     <Button size="sm" variant="ghost" onClick={() => del(it.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </CardContent>

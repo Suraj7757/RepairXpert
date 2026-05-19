@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AutomationBanner } from "@/components/common/AutomationBanner";
 import { Link } from "react-router-dom";
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSupabaseQuery, useShopSettings } from "@/hooks/useSupabaseData";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/services/supabase";
 import {
   Wrench,
   AlertTriangle,
@@ -19,6 +21,8 @@ import {
   Trash2,
   ConciergeBell,
   Building2,
+  CalendarCheck,
+  Bell,
 } from "lucide-react";
 import {
   BarChart,
@@ -43,6 +47,7 @@ const COLORS = [
 ];
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { data: jobs } = useSupabaseQuery<any>("repair_jobs");
   const { data: payments } = useSupabaseQuery<any>("payments");
   const { data: settlements } = useSupabaseQuery<any>("settlement_cycles");
@@ -50,6 +55,22 @@ export default function Dashboard() {
   const { data: deletedCustomers } = useSupabaseQuery<any>("customers", true);
   const { data: deletedJobs } = useSupabaseQuery<any>("repair_jobs", true);
   const { settings } = useShopSettings();
+  const [pendingBookings, setPendingBookings] = useState(0);
+  const [totalBookings, setTotalBookings] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("booking_requests")
+      .select("id, status")
+      .eq("user_id", user.id)
+      .then(({ data }: any) => {
+        if (data) {
+          setTotalBookings(data.length);
+          setPendingBookings(data.filter((b: any) => b.status === "pending").length);
+        }
+      });
+  }, [user]);
 
   const splitEnabled = settings?.revenue_split_enabled !== false;
 
@@ -188,6 +209,20 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Pending Bookings Alert */}
+        {pendingBookings > 0 && (
+          <Link to="/bookings">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-300 hover:bg-amber-500/20 transition-colors cursor-pointer">
+              <Bell className="h-5 w-5 text-amber-600 animate-bounce" />
+              <div className="flex-1">
+                <p className="font-bold text-amber-800">{pendingBookings} new online booking request{pendingBookings > 1 ? "s" : ""} waiting!</p>
+                <p className="text-xs text-amber-600">Customers submitted repair requests — Accept or Reject now</p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-500 text-white text-xs font-black">View Now</span>
+            </div>
+          </Link>
+        )}
+
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
           <StatCard
             icon={Wrench}
@@ -228,6 +263,14 @@ export default function Dashboard() {
             sub="Manage all services"
             variant="info"
             link="/services"
+          />
+          <StatCard
+            icon={CalendarCheck}
+            label="Bookings"
+            value={totalBookings}
+            sub={`${pendingBookings} pending`}
+            variant={pendingBookings > 0 ? "warning" : "info"}
+            link="/bookings"
           />
           <StatCard
             icon={AlertTriangle}

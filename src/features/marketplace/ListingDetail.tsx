@@ -18,9 +18,21 @@ export default function ListingDetail() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await (supabase as any).rpc("get_marketplace_listing", { _id: id });
-      if (error || !data) { toast.error("Listing not found"); nav("/marketplace"); return; }
-      setData(data);
+      const { data: itemData, error } = await supabase
+        .from("inventory")
+        .select("*")
+        .eq("id", id)
+        .single();
+        
+      if (error || !itemData) { toast.error("Listing not found"); nav("/marketplace"); return; }
+      
+      const { data: sellerData } = await supabase
+        .from("shop_settings")
+        .select("shop_name, address, phone, map_url, map_lat, map_lng, booking_slug")
+        .eq("user_id", itemData.user_id)
+        .maybeSingle();
+        
+      setData({ listing: itemData, seller: sellerData });
       setLoading(false);
     })();
   }, [id]);
@@ -55,8 +67,8 @@ export default function ListingDetail() {
 
       <main className="max-w-6xl mx-auto px-4 py-6 grid md:grid-cols-2 gap-8">
         <div className="aspect-square bg-muted rounded-2xl overflow-hidden flex items-center justify-center">
-          {l.images?.[0] ? (
-            <img src={l.images[0]} alt={l.title} className="w-full h-full object-cover" />
+          {l.image_url ? (
+            <img src={l.image_url} alt={l.name} className="w-full h-full object-cover" />
           ) : (
             <Package className="h-24 w-24 text-muted-foreground" />
           )}
@@ -64,22 +76,20 @@ export default function ListingDetail() {
 
         <div className="space-y-5">
           <div>
-            {l.featured && <Badge className="mb-2">Featured</Badge>}
-            <h1 className="text-3xl font-bold">{l.title}</h1>
-            <p className="text-sm text-muted-foreground capitalize mt-1">{l.category} · {l.seller_type}</p>
+            <h1 className="text-3xl font-bold">{l.name}</h1>
+            <p className="text-sm text-muted-foreground capitalize mt-1">{l.category}</p>
           </div>
 
           <div className="flex items-baseline gap-3">
-            <span className="text-4xl font-bold text-primary">₹{l.price}</span>
-            {l.mrp > l.price && <span className="text-lg line-through text-muted-foreground">₹{l.mrp}</span>}
-            {l.mrp > l.price && <Badge variant="secondary">{Math.round((1 - l.price / l.mrp) * 100)}% off</Badge>}
+            <span className="text-4xl font-bold text-primary">₹{l.sell_price}</span>
+            {l.cost_price > l.sell_price && <span className="text-lg line-through text-muted-foreground">₹{l.cost_price}</span>}
+            {l.cost_price > l.sell_price && <Badge variant="secondary">{Math.round((1 - l.sell_price / l.cost_price) * 100)}% off</Badge>}
           </div>
 
           <div className="text-sm">
-            <span className={l.stock > 0 ? "text-emerald-600" : "text-destructive"}>
-              {l.stock > 0 ? `In stock (${l.stock} available)` : "Out of stock"}
+            <span className={l.quantity > 0 ? "text-emerald-600" : "text-destructive"}>
+              {l.quantity > 0 ? `In stock (${l.quantity} available)` : "Out of stock"}
             </span>
-            {l.moq > 1 && <span className="text-muted-foreground ml-2">· MOQ: {l.moq}</span>}
           </div>
 
           {l.description && <p className="text-sm text-muted-foreground whitespace-pre-line">{l.description}</p>}
@@ -87,17 +97,17 @@ export default function ListingDetail() {
           <div className="flex items-center gap-3">
             <span className="text-sm">Quantity:</span>
             <div className="flex items-center border rounded-lg">
-              <Button size="sm" variant="ghost" onClick={() => setQty(Math.max(l.moq || 1, qty - 1))}>-</Button>
+              <Button size="sm" variant="ghost" onClick={() => setQty(Math.max(1, qty - 1))}>-</Button>
               <span className="px-4 font-semibold">{qty}</span>
-              <Button size="sm" variant="ghost" onClick={() => setQty(Math.min(l.stock, qty + 1))}>+</Button>
+              <Button size="sm" variant="ghost" onClick={() => setQty(Math.min(l.quantity, qty + 1))}>+</Button>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <Button size="lg" className="flex-1" onClick={addToCart} disabled={l.stock === 0}>
+            <Button size="lg" className="flex-1" onClick={addToCart} disabled={l.quantity === 0}>
               <ShoppingCart className="h-4 w-4 mr-2" /> Add to Cart
             </Button>
-            <Button size="lg" variant="default" className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={buyNow} disabled={l.stock === 0}>
+            <Button size="lg" variant="default" className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={buyNow} disabled={l.quantity === 0}>
               Buy Now
             </Button>
           </div>

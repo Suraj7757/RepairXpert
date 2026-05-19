@@ -171,6 +171,7 @@ const nextStatuses: Record<JobStatus, JobStatus[]> = {
 export default function RepairJobs() {
   const { user } = useAuth();
   const { data: jobs, refetch } = useSupabaseQuery<any>("repair_jobs");
+  const { data: staffMembers } = useSupabaseQuery<any>("staff_members");
   const { data: payments, refetch: refetchPayments } =
     useSupabaseQuery<any>("payments");
   const { softDelete } = useSoftDelete();
@@ -291,6 +292,9 @@ export default function RepairJobs() {
 
     setIsCreating(true);
     try {
+      const selectedStaff = staffMembers?.find((s: any) => s.id === technician);
+      const techName = selectedStaff ? selectedStaff.name : (technician === "none" ? null : technician || null);
+
       // Use the optimized RPC to create the job in a single round-trip
       const { data: jobId, error: rpcError } = await supabase.rpc(
         "create_repair_job",
@@ -301,7 +305,7 @@ export default function RepairJobs() {
           p_device_brand: formState.device_brand,
           p_device_model: formState.device_model || null,
           p_problem_description: formState.problem_description,
-          p_technician_name: technician || null,
+          p_technician_name: techName,
           p_estimated_cost: parseFloat(formState.estimated_cost) || 0,
           p_service_category: formState.service_category,
           p_device_details: formState.device_details,
@@ -309,6 +313,22 @@ export default function RepairJobs() {
       );
 
       if (rpcError) throw rpcError;
+
+      if (selectedStaff) {
+        const { data: jobData } = await supabase
+          .from("repair_jobs")
+          .select("id")
+          .eq("job_id", jobId)
+          .single();
+          
+        if (jobData) {
+          await supabase.from("staff_job_assignments").insert({
+            repair_job_id: jobData.id,
+            staff_member_id: selectedStaff.id,
+            shop_user_id: user.id,
+          });
+        }
+      }
 
       toast.success(`Job ${jobId} created`);
       refetch();
@@ -337,7 +357,8 @@ export default function RepairJobs() {
     setSelectedJob(job);
     setEditName(job.customer_name);
     setEditMobile(job.customer_mobile);
-    setEditTech(job.technician_name || "");
+    const matchedStaff = staffMembers?.find((s: any) => s.name === job.technician_name);
+    setEditTech(matchedStaff ? matchedStaff.id : (job.technician_name || "none"));
     setFormState({
       device_brand: job.device_brand,
       device_model: job.device_model || "",
@@ -362,6 +383,9 @@ export default function RepairJobs() {
     }
     setIsEditing(true);
     try {
+      const selectedStaff = staffMembers?.find((s: any) => s.id === editTech);
+      const techName = selectedStaff ? selectedStaff.name : (editTech === "none" ? null : editTech || null);
+
       const { error } = await supabase
         .from("repair_jobs")
         .update({
@@ -370,7 +394,7 @@ export default function RepairJobs() {
           device_brand: formState.device_brand,
           device_model: formState.device_model || null,
           problem_description: formState.problem_description,
-          technician_name: editTech || null,
+          technician_name: techName,
           estimated_cost: parseFloat(formState.estimated_cost) || 0,
           service_category: formState.service_category,
           device_details: formState.device_details,
@@ -378,6 +402,26 @@ export default function RepairJobs() {
         .eq("id", selectedJob.id);
 
       if (error) throw error;
+
+      if (selectedStaff) {
+        const { data: existingAssignment } = await supabase
+          .from("staff_job_assignments")
+          .select("id")
+          .eq("repair_job_id", selectedJob.id)
+          .maybeSingle();
+          
+        if (existingAssignment) {
+          await supabase.from("staff_job_assignments").update({
+            staff_member_id: selectedStaff.id
+          }).eq("id", existingAssignment.id);
+        } else {
+          await supabase.from("staff_job_assignments").insert({
+            repair_job_id: selectedJob.id,
+            staff_member_id: selectedStaff.id,
+            shop_user_id: user.id,
+          });
+        }
+      }
 
       toast.success(`Job ${selectedJob.job_id} updated`);
       refetch();
@@ -1036,12 +1080,19 @@ export default function RepairJobs() {
                     <Label className="text-xs font-bold uppercase text-muted-foreground">
                       Assigned Technician
                     </Label>
-                    <Input
-                      className="mt-1"
-                      placeholder="Optional"
-                      value={technician}
-                      onChange={(e) => setTechnician(e.target.value)}
-                    />
+                    <Select value={technician || "none"} onValueChange={setTechnician}>
+                      <SelectTrigger className="mt-1 bg-background">
+                        <SelectValue placeholder="Select staff..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None / Auto</SelectItem>
+                        {staffMembers?.filter((s: any) => s.is_active).map((staff: any) => (
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {staff.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -1185,10 +1236,19 @@ export default function RepairJobs() {
                   <Label className="text-xs font-bold uppercase text-muted-foreground">
                     Technician
                   </Label>
-                  <Input
-                    value={editTech}
-                    onChange={(e) => setEditTech(e.target.value)}
-                  />
+                  <Select value={editTech || "none"} onValueChange={setEditTech}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Select staff..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {staffMembers?.filter((s: any) => s.is_active).map((staff: any) => (
+                        <SelectItem key={staff.id} value={staff.id}>
+                          {staff.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
