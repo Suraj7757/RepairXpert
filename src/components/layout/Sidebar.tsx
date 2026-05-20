@@ -16,6 +16,8 @@ import {
   ArrowLeftRight,
   Package,
   ShoppingCart,
+  ShoppingBag,
+  Heart,
   FileText,
   Settings,
   Trash2,
@@ -35,6 +37,7 @@ import {
   BrainCircuit,
   Megaphone,
   LogOut,
+  Home,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
