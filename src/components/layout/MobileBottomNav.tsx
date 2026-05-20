@@ -9,11 +9,16 @@ import {
   Mic,
   Menu,
   X,
+  Home,
+  ShoppingBag,
+  Package,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 const QUICK_ITEMS = [
   { label: "New Job", icon: Wrench, path: "/jobs?new=1", color: "bg-blue-500" },
@@ -25,16 +30,27 @@ export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
+  const { accountType } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [listening, setListening] = useState(false);
+  const isCustomer = accountType === "customer";
 
-  const items = [
-    { to: "/dashboard", icon: LayoutDashboard, label: "Home" },
-    { to: "/jobs", icon: Wrench, label: "Jobs" },
-    { to: "#add", icon: Plus, label: "Add", primary: true },
-    { to: "/sells", icon: ShoppingCart, label: "Sells" },
-    { to: "#menu", icon: Menu, label: "More", isMenu: true },
-  ];
+  const items = isCustomer
+    ? [
+        { to: "/customer", icon: Home, label: "Home" },
+        { to: "/marketplace", icon: ShoppingBag, label: "Shop" },
+        { to: "/cart", icon: ShoppingCart, label: "Cart", primary: true },
+        { to: "/my-orders", icon: Package, label: "Orders" },
+        { to: "#menu", icon: Menu, label: "More", isMenu: true },
+      ]
+    : [
+        { to: "/dashboard", icon: LayoutDashboard, label: "Home" },
+        { to: "/jobs", icon: Wrench, label: "Jobs" },
+        { to: "#add", icon: Plus, label: "Add", primary: true },
+        { to: "/sells", icon: ShoppingCart, label: "Sells" },
+        { to: "#menu", icon: Menu, label: "More", isMenu: true },
+      ];
+
 
   const startVoice = () => {
     const SR =
