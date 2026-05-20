@@ -9,11 +9,16 @@ import {
   Mic,
   Menu,
   X,
+  Home,
+  ShoppingBag,
+  Package,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 const QUICK_ITEMS = [
   { label: "New Job", icon: Wrench, path: "/jobs?new=1", color: "bg-blue-500" },
@@ -25,16 +30,27 @@ export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
+  const { accountType } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [listening, setListening] = useState(false);
+  const isCustomer = accountType === "customer";
 
-  const items = [
-    { to: "/dashboard", icon: LayoutDashboard, label: "Home" },
-    { to: "/jobs", icon: Wrench, label: "Jobs" },
-    { to: "#add", icon: Plus, label: "Add", primary: true },
-    { to: "/sells", icon: ShoppingCart, label: "Sells" },
-    { to: "#menu", icon: Menu, label: "More", isMenu: true },
-  ];
+  const items = isCustomer
+    ? [
+        { to: "/customer", icon: Home, label: "Home" },
+        { to: "/marketplace", icon: ShoppingBag, label: "Shop" },
+        { to: "/cart", icon: ShoppingCart, label: "Cart", primary: true },
+        { to: "/my-orders", icon: Package, label: "Orders" },
+        { to: "#menu", icon: Menu, label: "More", isMenu: true },
+      ]
+    : [
+        { to: "/dashboard", icon: LayoutDashboard, label: "Home" },
+        { to: "/jobs", icon: Wrench, label: "Jobs" },
+        { to: "#add", icon: Plus, label: "Add", primary: true },
+        { to: "/sells", icon: ShoppingCart, label: "Sells" },
+        { to: "#menu", icon: Menu, label: "More", isMenu: true },
+      ];
+
 
   const startVoice = () => {
     const SR =
@@ -149,22 +165,23 @@ export function MobileBottomNav() {
             return (
               <button
                 key={item.label}
-                onClick={() => setMenuOpen((v) => !v)}
+                onClick={() => isCustomer ? navigate(item.to) : setMenuOpen((v) => !v)}
                 className="relative -top-4 flex flex-col items-center justify-center group outline-none mx-auto"
                 aria-label={item.label}
               >
                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <motion.div
                   whileTap={{ scale: 0.88 }}
-                  animate={menuOpen ? { rotate: 135 } : { rotate: 0 }}
+                  animate={!isCustomer && menuOpen ? { rotate: 135 } : { rotate: 0 }}
                   transition={{ duration: 0.3 }}
                   className="h-[3.75rem] w-[3.75rem] rounded-full bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center shadow-2xl ring-[5px] ring-background text-white hover:shadow-primary/40 transition-all z-10"
                 >
-                  <Plus className="h-7 w-7" strokeWidth={2.5} />
+                  <Icon className="h-7 w-7" strokeWidth={2.5} />
                 </motion.div>
               </button>
             );
           }
+
 
           if (item.isMenu) {
             return (

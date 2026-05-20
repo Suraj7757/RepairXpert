@@ -16,6 +16,8 @@ import {
   ArrowLeftRight,
   Package,
   ShoppingCart,
+  ShoppingBag,
+  Heart,
   FileText,
   Settings,
   Trash2,
@@ -35,6 +37,7 @@ import {
   BrainCircuit,
   Megaphone,
   LogOut,
+  Home,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -88,13 +91,23 @@ const secondaryItems = [
   { title: "Trash", url: "/trash", icon: Trash2 },
 ];
 
+const customerItems = [
+  { title: "Home", url: "/customer", icon: Home },
+  { title: "Browse Shop", url: "/marketplace", icon: ShoppingBag },
+  { title: "My Cart", url: "/cart", icon: ShoppingCart },
+  { title: "My Orders", url: "/my-orders", icon: Package },
+  { title: "Track Order", url: "/track", icon: Smartphone },
+  { title: "Settings", url: "/settings", icon: Settings },
+];
+
 export function Sidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isSuperAdmin, signOut } = useAuth();
+  const { isSuperAdmin, accountType, signOut } = useAuth();
   const collapsed = state === "collapsed";
   const isAdmin = isSuperAdmin;
+  const isCustomer = accountType === "customer";
   const [createOpen, setCreateOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
@@ -149,7 +162,29 @@ export function Sidebar() {
             )}
           </div>
 
-          {!isAdmin && (
+          {/* Role-aware menu */}
+
+          {!isAdmin && isCustomer && (
+            <SidebarGroup className="mt-2">
+              <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                Customer Menu
+              </SidebarGroupLabel>
+              <SidebarMenu className="px-3">
+                {customerItems.map((item) => (
+                  <SidebarNavLink
+                    key={item.url}
+                    to={item.url}
+                    icon={item.icon}
+                    label={item.title}
+                    active={location.pathname === item.url}
+                    collapsed={collapsed}
+                  />
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
+
+          {!isAdmin && !isCustomer && (
             <>
               {/* Create Button */}
               <SidebarGroup>
