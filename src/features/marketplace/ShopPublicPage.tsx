@@ -32,12 +32,35 @@ export default function ShopPublicPage() {
       setReviews(revs || []);
       setLoading(false);
 
-      // SEO
-      document.title = `${shopData.shop_name} — RepairXpert`;
-      const meta = document.querySelector('meta[name="description"]');
-      if (meta) meta.setAttribute("content", `${shopData.shop_name} on RepairXpert. Browse products, book repairs and contact the shop directly.`);
+      // SEO: title, description, canonical, Open Graph
+      const url = `${window.location.origin}/shop/${slug}`;
+      const title = `${shopData.shop_name} — RepairXpert`;
+      const desc = `${shopData.shop_name}${shopData.address ? ` at ${shopData.address}` : ""}. Browse products, book repairs and contact the shop directly on RepairXpert.`;
+      const image = (ls && ls[0]?.images?.[0]) || `${window.location.origin}/placeholder.svg`;
+
+      document.title = title;
+      const upsert = (selector: string, attrs: Record<string, string>) => {
+        let el = document.head.querySelector(selector) as HTMLElement | null;
+        if (!el) {
+          el = document.createElement(selector.startsWith("link") ? "link" : "meta");
+          document.head.appendChild(el);
+        }
+        Object.entries(attrs).forEach(([k, v]) => el!.setAttribute(k, v));
+      };
+      upsert('meta[name="description"]', { name: "description", content: desc });
+      upsert('link[rel="canonical"]', { rel: "canonical", href: url });
+      upsert('meta[property="og:title"]', { property: "og:title", content: title });
+      upsert('meta[property="og:description"]', { property: "og:description", content: desc });
+      upsert('meta[property="og:url"]', { property: "og:url", content: url });
+      upsert('meta[property="og:type"]', { property: "og:type", content: "website" });
+      upsert('meta[property="og:image"]', { property: "og:image", content: image });
+      upsert('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
+      upsert('meta[name="twitter:title"]', { name: "twitter:title", content: title });
+      upsert('meta[name="twitter:description"]', { name: "twitter:description", content: desc });
+      upsert('meta[name="twitter:image"]', { name: "twitter:image", content: image });
     })();
   }, [slug]);
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
   if (!shop) return (
