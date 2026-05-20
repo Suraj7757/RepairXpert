@@ -220,8 +220,37 @@ export default function Checkout() {
                   <span className="text-sm">{p.l}</span>
                 </label>
               ))}
+
+              {form.payment_method === "upi" && Object.keys(bySeller).length > 0 && (
+                <div className="space-y-3 pt-3 mt-2 border-t">
+                  <Label className="text-sm font-semibold">Choose QR receiver per seller *</Label>
+                  {Object.keys(bySeller).map((sid) => {
+                    const sellerItems = bySeller[sid];
+                    const list = sellerQrMap[sid] || ["Shop QR"];
+                    const sellerLabel = sellerItems[0]?.marketplace_listings?.title ? `Seller ${sid.slice(0, 6)}…` : sid;
+                    return (
+                      <div key={sid} className="rounded-md border p-2 space-y-1">
+                        <p className="text-xs text-muted-foreground">{sellerLabel}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {list.map((qr) => (
+                            <button
+                              key={qr}
+                              type="button"
+                              onClick={() => setSelectedQrBySeller({ ...selectedQrBySeller, [sid]: qr })}
+                              className={`text-xs px-2.5 py-1 rounded-full border transition ${selectedQrBySeller[sid] === qr ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+                            >
+                              {qr}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
+
         </div>
 
         <div>
