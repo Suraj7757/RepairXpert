@@ -16,6 +16,8 @@ import {
   ArrowLeftRight,
   Package,
   ShoppingCart,
+  ShoppingBag,
+  Heart,
   FileText,
   Settings,
   Trash2,
@@ -34,10 +36,23 @@ import {
   TrendingDown,
   BrainCircuit,
   Megaphone,
+  LogOut,
+  Home,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -58,6 +73,9 @@ const secondaryItems = [
   { title: "Marketing", url: "/marketing", icon: Megaphone },
   { title: "Inventory", url: "/inventory", icon: Package },
   { title: "Sells", url: "/sells", icon: ShoppingCart },
+  { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
+  { title: "My Listings", url: "/my-listings", icon: Package },
+  { title: "Seller Orders", url: "/seller-orders", icon: ShoppingCart },
   { title: "Bookings", url: "/bookings", icon: CalendarCheck },
   { title: "Loyalty", url: "/loyalty", icon: Gift },
   { title: "Branches", url: "/branches", icon: Building2 },
@@ -73,14 +91,118 @@ const secondaryItems = [
   { title: "Trash", url: "/trash", icon: Trash2 },
 ];
 
-export function Sidebar() {
+const customerItems = [
+  { title: "Home", url: "/customer", icon: Home },
+  { title: "Browse Shop", url: "/marketplace", icon: ShoppingBag },
+  { title: "My Cart", url: "/cart", icon: ShoppingCart },
+  { title: "My Orders", url: "/my-orders", icon: Package },
+  { title: "Track Order", url: "/track", icon: Smartphone },
+  { title: "Settings", url: "/settings", icon: Settings },
+];
+
+interface SidebarLink {
+  to: string;
+  label: string;
+  icon?: any;
+}
+
+interface SidebarProps {
+  links?: SidebarLink[];
+}
+
+export function Sidebar({ links = [] }: SidebarProps) {
   const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, isSuperAdmin } = useAuth();
+  const { role, signOut } = useAuth();
   const collapsed = state === "collapsed";
-  const isAdmin = role === "admin";
   const [createOpen, setCreateOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  const getGroupedLinks = () => {
+    if (role === "super_admin") {
+      return [
+        {
+          label: "Administration",
+          items: [
+            { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+            { to: "/dev-panel", label: "Developer Panel", icon: Settings },
+          ],
+        },
+      ];
+    } else if (role === "customer") {
+      return [
+        {
+          label: "Customer Hub",
+          items: [
+            { to: "/customer", label: "Dashboard", icon: Home },
+            { to: "/marketplace", label: "Browse Shop", icon: ShoppingBag },
+            { to: "/cart", label: "My Cart", icon: ShoppingCart },
+            { to: "/my-orders", label: "My Orders", icon: Package },
+            { to: "/track", label: "Track Order", icon: Smartphone },
+            { to: "/settings", label: "Settings", icon: Settings },
+          ],
+        },
+      ];
+    } else {
+      // shopkeeper
+      return [
+        {
+          label: "Core Operations",
+          items: [
+            { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { to: "/jobs", label: "Jobs", icon: Wrench },
+            { to: "/customers", label: "Customers", icon: Users },
+          ],
+        },
+        {
+          label: "Sales & Stock",
+          items: [
+            { to: "/inventory", label: "Inventory", icon: Package },
+            { to: "/sells", label: "Sells", icon: ShoppingCart },
+            { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
+          ],
+        },
+        {
+          label: "Financials & Wallet",
+          items: [
+            { to: "/payments", label: "Payments", icon: IndianRupee },
+            { to: "/settlements", label: "Settlements", icon: ArrowLeftRight },
+            { to: "/expenses", label: "Expenses", icon: TrendingDown },
+            { to: "/wallet", label: "Wallet", icon: Wallet },
+          ],
+        },
+        {
+          label: "Smart Tools",
+          items: [
+            { to: "/ai-diagnostics", label: "AI Diagnostic", icon: BrainCircuit },
+            { to: "/bookings", label: "Bookings", icon: CalendarCheck },
+            { to: "/loyalty", label: "Loyalty Points", icon: Gift },
+          ],
+        },
+        {
+          label: "System & Admin",
+          items: [
+            { to: "/staff", label: "Staff Management", icon: Users },
+            { to: "/branches", label: "Branches", icon: Building2 },
+            { to: "/subscription", label: "Subscription", icon: Crown },
+            { to: "/settings", label: "Settings", icon: Settings },
+            { to: "/trash", label: "Trash", icon: Trash2 },
+          ],
+        },
+      ];
+    }
+  };
+
+  const performLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Logged out successfully");
+      navigate("/auth", { replace: true });
+    } catch {
+      toast.error("Logout failed. Please try again.");
+    }
+  };
 
   const openWhatsApp = () => {
     window.open(
@@ -91,17 +213,17 @@ export function Sidebar() {
 
   const handleCreate = (type: "job" | "sell" | "customer" | "inventory") => {
     setCreateOpen(false);
-    if (type === "job") navigate("/jobs#new");
-    else if (type === "sell") navigate("/sells#new");
-    else if (type === "customer") navigate("/customers#new");
-    else if (type === "inventory") navigate("/inventory#new");
+    if (type === "job") navigate("/shop/jobs#new");
+    else if (type === "sell") navigate("/shop/sells#new");
+    else if (type === "customer") navigate("/shop/customers#new");
+    else if (type === "inventory") navigate("/shop/inventory#new");
   };
 
   return (
     <>
       <BaseSidebar
         collapsible="icon"
-        className="border-r-0 shadow-xl ring-1 ring-white/5"
+        className="border-r border-white/10 dark:border-white/5 bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.2)]"
       >
         <SidebarContent className="bg-sidebar pt-6">
           {/* Logo */}
@@ -123,101 +245,49 @@ export function Sidebar() {
             )}
           </div>
 
-          {!isAdmin && (
-            <>
-              {/* Create Button */}
-              <SidebarGroup>
-                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
-                  Quick Action
-                </SidebarGroupLabel>
-                <div className="px-3 mb-1">
-                  <button
-                    onClick={() => setCreateOpen(true)}
-                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md shadow-primary/20 hover:bg-primary/90 transition-all ${collapsed ? "justify-center" : ""}`}
-                  >
-                    <PlusCircle className="h-5 w-5 shrink-0" />
-                    {!collapsed && <span>+ Create New</span>}
-                  </button>
-                </div>
-              </SidebarGroup>
-
-              <SidebarGroup className="mt-2">
-                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
-                  Main Menu
-                </SidebarGroupLabel>
-                <SidebarMenu className="px-3">
-                  {mainItems.map((item) => (
-                    <SidebarNavLink
-                      key={item.url}
-                      to={item.url}
-                      icon={item.icon}
-                      label={item.title}
-                      active={location.pathname === item.url}
-                      collapsed={collapsed}
-                    />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroup>
-
-              <SidebarGroup className="mt-4">
-                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
-                  Management
-                </SidebarGroupLabel>
-                <SidebarMenu className="px-3">
-                  {secondaryItems.map((item) => (
-                    <SidebarNavLink
-                      key={item.url}
-                      to={item.url}
-                      icon={item.icon}
-                      label={item.title}
-                      active={location.pathname === item.url}
-                      collapsed={collapsed}
-                    />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroup>
-            </>
-          )}
-
-          {isAdmin && (
-            <SidebarGroup className="mt-4">
+          {/* Quick Action for Shopkeepers */}
+          {role === "shopkeeper" && (
+            <SidebarGroup>
               <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
-                Admin Dashboard
+                Quick Action
               </SidebarGroupLabel>
-              <SidebarMenu className="px-3">
-                <SidebarNavLink
-                  to="/admin"
-                  icon={Shield}
-                  label="Admin Panel"
-                  active={location.pathname === "/admin"}
-                  collapsed={collapsed}
-                />
-                <SidebarNavLink
-                  to="/track"
-                  icon={Smartphone}
-                  label="Track Order"
-                  active={location.pathname === "/track"}
-                  collapsed={collapsed}
-                />
-                <SidebarNavLink
-                  to="/settings"
-                  icon={Settings}
-                  label="Settings"
-                  active={location.pathname === "/settings"}
-                  collapsed={collapsed}
-                />
-                {isSuperAdmin && (
-                  <SidebarNavLink
-                    to="/dev-panel"
-                    icon={Shield}
-                    label="Dev Control Center"
-                    active={location.pathname === "/dev-panel"}
-                    collapsed={collapsed}
-                  />
-                )}
-              </SidebarMenu>
+              <div className="px-3 mb-1">
+                <button
+                  onClick={() => setCreateOpen(true)}
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md shadow-primary/20 hover:bg-primary/90 transition-all ${collapsed ? "justify-center" : ""}`}
+                >
+                  <PlusCircle className="h-5 w-5 shrink-0" />
+                  {!collapsed && <span>+ Create New</span>}
+                </button>
+              </div>
             </SidebarGroup>
           )}
+
+          {/* Render Dynamic Grouped Links */}
+          {(() => {
+            const groups = getGroupedLinks();
+            return groups.map((group, gIdx) => (
+              <SidebarGroup key={group.label} className={gIdx > 0 ? "mt-4" : "mt-2"}>
+                {!collapsed && (
+                  <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                    {group.label}
+                  </SidebarGroupLabel>
+                )}
+                <SidebarMenu className="px-3">
+                  {group.items.map((item) => (
+                    <SidebarNavLink
+                      key={item.to}
+                      to={item.to}
+                      icon={item.icon}
+                      label={item.label}
+                      active={location.pathname === item.to}
+                      collapsed={collapsed}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroup>
+            ));
+          })()}
 
           <SidebarGroup className="mt-auto pb-8">
             <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
@@ -225,8 +295,19 @@ export function Sidebar() {
             </SidebarGroupLabel>
             <SidebarMenu className="px-3">
               <button
-                onClick={openWhatsApp}
+                onClick={() => window.dispatchEvent(new Event("open-rx-chatbot"))}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 group w-full ${collapsed ? "justify-center" : ""}`}
+              >
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <BrainCircuit className="h-4 w-4 text-primary" />
+                </div>
+                {!collapsed && (
+                  <span className="font-medium">AI Support Chat</span>
+                )}
+              </button>
+              <button
+                onClick={openWhatsApp}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 group w-full mt-1 ${collapsed ? "justify-center" : ""}`}
               >
                 <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
                   <MessageCircle className="h-4 w-4 text-green-500" />
@@ -234,6 +315,15 @@ export function Sidebar() {
                 {!collapsed && (
                   <span className="font-medium">WhatsApp Help</span>
                 )}
+              </button>
+              <button
+                onClick={() => setLogoutConfirmOpen(true)}
+                className={`md:hidden flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-all duration-200 group w-full mt-1 ${collapsed ? "justify-center" : ""}`}
+              >
+                <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0 group-hover:bg-destructive/20 transition-colors">
+                  <LogOut className="h-4 w-4 text-destructive" />
+                </div>
+                {!collapsed && <span className="font-medium">Logout</span>}
               </button>
             </SidebarMenu>
           </SidebarGroup>
@@ -365,6 +455,26 @@ export function Sidebar() {
           </AnimatePresence>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Logout from RepairXpert?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Aap apne account se logout ho jayenge. Dobara login karne ke liye email aur password chahiye hoga.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performLogout}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <LogOut className="h-4 w-4 mr-2" /> Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

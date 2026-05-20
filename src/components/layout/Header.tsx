@@ -164,7 +164,14 @@ export function Header() {
             <Settings className="h-4 w-4 mr-2" /> Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOut} className="text-destructive">
+          <DropdownMenuItem
+            onClick={async () => {
+              await signOut();
+              toast.success("Logged out successfully");
+              navigate("/auth", { replace: true });
+            }}
+            className="text-destructive"
+          >
             <LogOut className="h-4 w-4 mr-2" /> Logout
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,28 +62,29 @@ export default function WholesaleDashboard() {
     });
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     const [itemsRes, ordersRes] = await Promise.all([
       (supabase as any)
         .from("wholesale_catalog")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
       (supabase as any)
         .from("customer_orders")
         .select("*")
-        .eq("shopkeeper_id", user!.id)
+        .eq("shopkeeper_id", user.id)
         .order("created_at", { ascending: false }),
     ]);
     setItems(itemsRes.data || []);
     setOrders(ordersRes.data || []);
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) load();
-  }, [user?.id]);
+  }, [user, load]);
 
   const submit = async () => {
     if (!form.item_name) return toast.error("Item name required");

@@ -7,17 +7,18 @@ import {
   ReactNode,
 } from "react";
 import { supabase } from "@/services/supabase";
-import { SUPER_ADMIN_EMAIL } from "@/lib/accountType";
+
 
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "admin" | "staff" | "customer" | "shopkeeper" | "wholesaler";
+type AppRole = "super_admin" | "shopkeeper" | "customer";
 type AccountType = "shopkeeper" | "wholesaler" | "customer";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  shopId: string | null;
   accountType: AccountType | null;
   isBanned: boolean;
   isMaintenance: boolean;
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [shopId, setShopId] = useState<string | null>(null);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [isBanned, setIsBanned] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
@@ -55,16 +57,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchRole = useCallback(async (userId: string, userEmail?: string) => {
-    setIsSuperAdmin(userEmail === SUPER_ADMIN_EMAIL);
-    const [rolesRes, profileRes, configRes] = await Promise.all([
-      supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle(),
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = session?.user;
+
+    const [profileRes, configRes] = await Promise.all([
       supabase
         .from("profiles")
-        .select("is_banned, plan_expires_at, account_type")
+        .select("role, shop_id, is_banned, plan_expires_at, account_type")
         .eq("user_id", userId)
         .maybeSingle() as any,
       supabase
@@ -74,54 +73,92 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle() as any,
     ]);
 
-    const currentRole = (rolesRes.data?.role as AppRole) || "staff";
+    const profileData = profileRes.data;
+    if (profileData && currentUser) {
+      const emailVal = currentUser.email;
+      const phoneVal = currentUser.phone || currentUser.user_metadata?.mobile || currentUser.user_metadata?.phone;
+      if (emailVal || phoneVal) {
+        supabase
+          .from("profiles")
+          .update({ email: emailVal, phone: phoneVal } as any)
+          .eq("user_id", userId)
+          .then(() => {});
+      }
+    }
+    const currentRole = (profileData?.role as AppRole) || "customer";
+    const currentShopId = profileData?.shop_id || null;
+    const isSuper = currentRole === "super_admin";
+
     setRole(currentRole);
+    setShopId(currentShopId);
+    setIsSuperAdmin(isSuper);
     setAccountType(
-      (profileRes.data?.account_type as AccountType) || "shopkeeper",
+      (profileData?.account_type as AccountType) || 
+      (currentRole === "super_admin" ? "shopkeeper" : currentRole as AccountType) || 
+      "customer"
     );
 
     const isMaint = configRes.data?.value?.enabled === true;
     setIsMaintenance(isMaint);
 
-    if (isMaint && currentRole !== "admin") {
+    if (isMaint && !isSuper) {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setRole(null);
+      setShopId(null);
       return;
     }
 
     if (
-      profileRes.data?.plan_expires_at &&
-      new Date(profileRes.data.plan_expires_at) < new Date() &&
-      currentRole !== "admin"
+      profileData?.plan_expires_at &&
+      new Date(profileData.plan_expires_at) < new Date() &&
+      !isSuper
     ) {
       setIsPlanExpired(true);
     } else {
       setIsPlanExpired(false);
     }
 
-    if (profileRes.data?.is_banned) {
+    if (profileData?.is_banned) {
       setIsBanned(true);
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setRole(null);
+      setShopId(null);
     } else {
       setIsBanned(false);
     }
   }, []);
 
   useEffect(() => {
+    let hadUser = false;
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        hadUser = true;
         setTimeout(() => fetchRole(session.user.id, session.user.email), 0);
       } else {
         setRole(null);
+        // Only redirect on EXPLICIT sign-out, not on token refresh hiccups
+        if (hadUser && event === "SIGNED_OUT") {
+          hadUser = false;
+          const path = window.location.pathname;
+          const onPublic =
+            path.startsWith("/auth") ||
+            path === "/" ||
+            path.startsWith("/track") ||
+            path.startsWith("/book/") ||
+            path.startsWith("/marketplace") ||
+            path.startsWith("/reset-password");
+          if (!onPublic) {
+            window.location.replace("/auth");
+          }
+        }
       }
       setLoading(false);
     });
@@ -143,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     displayName: string,
     mobile: string,
-    accountType: AccountType = "shopkeeper",
+    accountType: AccountType = "customer",
   ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -172,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
 
     if (data?.user) {
-      const [profileRes, configRes, roleRes] = await Promise.all([
+      const [profileRes, configRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("is_banned, plan_expires_at")
@@ -183,17 +220,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select("value")
           .eq("id", "maintenance")
           .maybeSingle() as any,
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .maybeSingle(),
       ]);
 
       const isMaint = configRes.data?.value?.enabled === true;
-      const userRole = roleRes.data?.role;
+      const isSuper = isSuperAdminEmail(data.user.email);
 
-      if (isMaint && userRole !== "admin") {
+      if (isMaint && !isSuper) {
         await supabase.auth.signOut();
         setIsMaintenance(true);
         return {
@@ -214,17 +246,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth`,
-        queryParams: { prompt: "select_account" },
-      },
-    });
-    if (error) {
-      return { error: error.message };
+    try {
+      const { lovable } = await import("@/integrations/lovable/index");
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
+        extraParams: { prompt: "select_account", access_type: "offline" },
+      } as any);
+      if ((result as any)?.error) return { error: String((result as any).error.message || (result as any).error) };
+      return { error: null };
+    } catch (e: any) {
+      // Fallback to direct Supabase OAuth if Lovable module unavailable
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { prompt: "select_account", access_type: "offline" },
+        },
+      });
+      if (error) return { error: error.message };
+      return { error: null };
     }
-    return { error: null };
   };
 
   const signOut = async () => {
@@ -232,6 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setRole(null);
+    setShopId(null);
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -258,6 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         role,
+        shopId,
         accountType,
         isBanned,
         isMaintenance,

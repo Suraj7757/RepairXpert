@@ -171,6 +171,7 @@ const nextStatuses: Record<JobStatus, JobStatus[]> = {
 export default function RepairJobs() {
   const { user } = useAuth();
   const { data: jobs, refetch } = useSupabaseQuery<any>("repair_jobs");
+  const { data: staffMembers } = useSupabaseQuery<any>("staff_members");
   const { data: payments, refetch: refetchPayments } =
     useSupabaseQuery<any>("payments");
   const { softDelete } = useSoftDelete();
@@ -192,6 +193,7 @@ export default function RepairJobs() {
   const [trackOpen, setTrackOpen] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -290,6 +292,9 @@ export default function RepairJobs() {
 
     setIsCreating(true);
     try {
+      const selectedStaff = staffMembers?.find((s: any) => s.id === technician);
+      const techName = selectedStaff ? selectedStaff.name : (technician === "none" ? null : technician || null);
+
       // Use the optimized RPC to create the job in a single round-trip
       const { data: jobId, error: rpcError } = await supabase.rpc(
         "create_repair_job",
@@ -300,7 +305,7 @@ export default function RepairJobs() {
           p_device_brand: formState.device_brand,
           p_device_model: formState.device_model || null,
           p_problem_description: formState.problem_description,
-          p_technician_name: technician || null,
+          p_technician_name: techName,
           p_estimated_cost: parseFloat(formState.estimated_cost) || 0,
           p_service_category: formState.service_category,
           p_device_details: formState.device_details,
@@ -308,6 +313,22 @@ export default function RepairJobs() {
       );
 
       if (rpcError) throw rpcError;
+
+      if (selectedStaff) {
+        const { data: jobData } = await supabase
+          .from("repair_jobs")
+          .select("id")
+          .eq("job_id", jobId)
+          .single();
+          
+        if (jobData) {
+          await supabase.from("staff_job_assignments").insert({
+            repair_job_id: jobData.id,
+            staff_member_id: selectedStaff.id,
+            shop_user_id: user.id,
+          });
+        }
+      }
 
       toast.success(`Job ${jobId} created`);
       refetch();
@@ -336,7 +357,8 @@ export default function RepairJobs() {
     setSelectedJob(job);
     setEditName(job.customer_name);
     setEditMobile(job.customer_mobile);
-    setEditTech(job.technician_name || "");
+    const matchedStaff = staffMembers?.find((s: any) => s.name === job.technician_name);
+    setEditTech(matchedStaff ? matchedStaff.id : (job.technician_name || "none"));
     setFormState({
       device_brand: job.device_brand,
       device_model: job.device_model || "",
@@ -361,6 +383,9 @@ export default function RepairJobs() {
     }
     setIsEditing(true);
     try {
+      const selectedStaff = staffMembers?.find((s: any) => s.id === editTech);
+      const techName = selectedStaff ? selectedStaff.name : (editTech === "none" ? null : editTech || null);
+
       const { error } = await supabase
         .from("repair_jobs")
         .update({
@@ -369,7 +394,7 @@ export default function RepairJobs() {
           device_brand: formState.device_brand,
           device_model: formState.device_model || null,
           problem_description: formState.problem_description,
-          technician_name: editTech || null,
+          technician_name: techName,
           estimated_cost: parseFloat(formState.estimated_cost) || 0,
           service_category: formState.service_category,
           device_details: formState.device_details,
@@ -377,6 +402,26 @@ export default function RepairJobs() {
         .eq("id", selectedJob.id);
 
       if (error) throw error;
+
+      if (selectedStaff) {
+        const { data: existingAssignment } = await supabase
+          .from("staff_job_assignments")
+          .select("id")
+          .eq("repair_job_id", selectedJob.id)
+          .maybeSingle();
+          
+        if (existingAssignment) {
+          await supabase.from("staff_job_assignments").update({
+            staff_member_id: selectedStaff.id
+          }).eq("id", existingAssignment.id);
+        } else {
+          await supabase.from("staff_job_assignments").insert({
+            repair_job_id: selectedJob.id,
+            staff_member_id: selectedStaff.id,
+            shop_user_id: user.id,
+          });
+        }
+      }
 
       toast.success(`Job ${selectedJob.job_id} updated`);
       refetch();
@@ -447,45 +492,52 @@ export default function RepairJobs() {
   };
 
   const handleReturn = async () => {
-    if (!selectedJob || !user) return;
-    const amount = parseFloat(returnNominalCharge) || 0;
+    if (!selectedJob || !user || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      const amount = parseFloat(returnNominalCharge) || 0;
 
-    // 1. Update job status
-    await supabase
-      .from("repair_jobs")
-      .update({
-        status: "Returned" as any,
-        return_reason: returnReason,
-        delivered_at: new Date().toISOString(),
-      } as any)
-      .eq("id", selectedJob.id);
+      // 1. Update job status
+      await supabase
+        .from("repair_jobs")
+        .update({
+          status: "Returned" as any,
+          return_reason: returnReason,
+          delivered_at: new Date().toISOString(),
+        } as any)
+        .eq("id", selectedJob.id);
 
-    // 2. Record nominal charge if any
-    if (amount > 0) {
-      const splitEnabled = settings?.revenue_split_enabled !== false;
-      const adminPct = splitEnabled
-        ? (settings?.admin_share_percent ?? 50) / 100
-        : 1;
-      const staffPct = splitEnabled
-        ? (settings?.staff_share_percent ?? 50) / 100
-        : 0;
+      // 2. Record nominal charge if any
+      if (amount > 0) {
+        const splitEnabled = settings?.revenue_split_enabled !== false;
+        const adminPct = splitEnabled
+          ? (settings?.admin_share_percent ?? 50) / 100
+          : 1;
+        const staffPct = splitEnabled
+          ? (settings?.staff_share_percent ?? 50) / 100
+          : 0;
 
-      await supabase.from("payments").insert({
-        user_id: user.id,
-        job_id: selectedJob.job_id,
-        repair_job_id: selectedJob.id,
-        amount,
-        method: "Cash",
-        admin_share: amount * adminPct,
-        staff_share: amount * staffPct,
-      });
+        await supabase.from("payments").insert({
+          user_id: user.id,
+          job_id: selectedJob.job_id,
+          repair_job_id: selectedJob.id,
+          amount,
+          method: "Cash",
+          admin_share: amount * adminPct,
+          staff_share: amount * staffPct,
+        });
+      }
+
+      refetch();
+      refetchPayments();
+      setReturnOpen(false);
+      setSelectedJob(null);
+      toast.success(`Job ${selectedJob.job_id} returned to customer`);
+    } catch (error: any) {
+      toast.error("Return failed: " + error.message);
+    } finally {
+      setIsProcessing(false);
     }
-
-    refetch();
-    refetchPayments();
-    setReturnOpen(false);
-    setSelectedJob(null);
-    toast.success(`Job ${selectedJob.job_id} returned to customer`);
   };
 
   const handleDeleteJob = async (job: any) => {
@@ -509,83 +561,128 @@ export default function RepairJobs() {
   };
 
   const handlePayment = async () => {
-    if (!selectedJob || !user) return;
-    const amount = parseFloat(paymentAmount) || 0;
-    const receiver = qrReceiver === "Custom" ? customQr : qrReceiver;
-    const splitEnabled = settings?.revenue_split_enabled !== false;
-    const adminPct = splitEnabled
-      ? (settings?.admin_share_percent ?? 50) / 100
-      : 1;
-    const staffPct = splitEnabled
-      ? (settings?.staff_share_percent ?? 50) / 100
-      : 0;
+    if (!selectedJob || !user || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      const amount = parseFloat(paymentAmount) || 0;
+      const receiver = qrReceiver === "Custom" ? customQr : qrReceiver;
+      const splitEnabled = settings?.revenue_split_enabled !== false;
+      const adminPct = splitEnabled
+        ? (settings?.admin_share_percent ?? 50) / 100
+        : 1;
+      const staffPct = splitEnabled
+        ? (settings?.staff_share_percent ?? 50) / 100
+        : 0;
 
-    await supabase
-      .from("repair_jobs")
-      .update({
-        status: "Delivered" as any,
-        delivered_at: new Date().toISOString(),
-      })
-      .eq("id", selectedJob.id);
-    await supabase.from("payments").insert({
-      user_id: user.id,
-      job_id: selectedJob.job_id,
-      repair_job_id: selectedJob.id,
-      amount,
-      method: paymentMethod as any,
-      qr_receiver: paymentMethod === "UPI/QR" ? receiver : null,
-      admin_share: amount * adminPct,
-      staff_share: amount * staffPct,
-    });
-    refetch();
-    refetchPayments();
-    setPaymentOpen(false);
-    setSelectedJob(null);
-    toast.success(`Job ${selectedJob.job_id} delivered & payment recorded`);
+      await supabase
+        .from("repair_jobs")
+        .update({
+          status: "Delivered" as any,
+          delivered_at: new Date().toISOString(),
+        })
+        .eq("id", selectedJob.id);
+      await supabase.from("payments").insert({
+        user_id: user.id,
+        job_id: selectedJob.job_id,
+        repair_job_id: selectedJob.id,
+        amount,
+        method: paymentMethod as any,
+        qr_receiver: paymentMethod === "UPI/QR" ? receiver : null,
+        admin_share: amount * adminPct,
+        staff_share: amount * staffPct,
+      });
+
+      // Award Loyalty Points to Customer
+      if (selectedJob.customer_mobile && amount > 0) {
+        try {
+          const { data: customerProfile } = await supabase
+            .from("profiles")
+            .select("id, user_id, loyalty_points")
+            .eq("phone", selectedJob.customer_mobile)
+            .maybeSingle();
+
+          if (customerProfile) {
+            const pointsEarned = Math.max(1, Math.floor(amount / 100)); // ₹100 spent = 1 pt
+            const newPoints = (customerProfile.loyalty_points || 0) + pointsEarned;
+
+            await supabase
+              .from("profiles")
+              .update({ loyalty_points: newPoints } as any)
+              .eq("id", customerProfile.id);
+
+            await supabase.from("loyalty_ledger").insert({
+              user_id: customerProfile.user_id,
+              points: pointsEarned,
+              description: `Earned from Repair Job ${selectedJob.job_id} payment`,
+            });
+            toast.success(`Awarded ${pointsEarned} loyalty points to customer!`);
+          }
+        } catch (loyaltyErr) {
+          console.error("Failed to award loyalty points:", loyaltyErr);
+        }
+      }
+
+      refetch();
+      refetchPayments();
+      setPaymentOpen(false);
+      setSelectedJob(null);
+      toast.success(`Job ${selectedJob.job_id} delivered & payment recorded`);
+    } catch (error: any) {
+      toast.error("Payment failed: " + error.message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleClearJobs = async () => {
-    if (!user) return;
-    const now = new Date().toISOString();
-    if (clearType === "all") {
-      await supabase
-        .from("repair_jobs")
-        .update({ deleted: true, deleted_at: now })
-        .eq("user_id", user.id)
-        .eq("deleted", false);
-      await supabase
-        .from("payments")
-        .update({ deleted: true, deleted_at: now })
-        .eq("user_id", user.id)
-        .eq("deleted", false);
-      // Reset job counter
-      await supabase
-        .from("job_counter")
-        .update({ counter: 0 } as any)
-        .eq("user_id", user.id);
-    } else {
-      const deliveredIds = jobs
-        .filter((j: any) => j.status === "Delivered")
-        .map((j: any) => j.id);
-      if (deliveredIds.length > 0) {
+    if (!user || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      const now = new Date().toISOString();
+      if (clearType === "all") {
         await supabase
           .from("repair_jobs")
           .update({ deleted: true, deleted_at: now })
-          .in("id", deliveredIds);
+          .eq("user_id", user.id)
+          .eq("deleted", false);
         await supabase
           .from("payments")
           .update({ deleted: true, deleted_at: now })
-          .in("repair_job_id", deliveredIds);
+          .eq("user_id", user.id)
+          .eq("deleted", false);
+        // Reset job counter
+        await supabase
+          .from("job_counter")
+          .update({ counter: 0 } as any)
+          .eq("user_id", user.id);
+      } else {
+        const deliveredIds = jobs
+          .filter((j: any) => j.status === "Delivered")
+          .map((j: any) => j.id);
+        if (deliveredIds.length > 0) {
+          await supabase
+            .from("repair_jobs")
+            .update({ deleted: true, deleted_at: now })
+            .in("id", deliveredIds);
+          await supabase
+            .from("payments")
+            .update({ deleted: true, deleted_at: now })
+            .in("repair_job_id", deliveredIds);
+        }
       }
+      refetch();
+      refetchPayments();
+      setClearConfirmOpen(false);
+      toast.success(
+        clearType === "all"
+          ? "All jobs cleared & ID reset"
+          : "Delivered jobs moved to trash",
+      );
+    } catch (error: any) {
+      toast.error("Clear failed: " + error.message);
+    } finally {
+      setIsProcessing(false);
     }
-    refetch();
-    refetchPayments();
-    setClearConfirmOpen(false);
-    toast.success(
-      clearType === "all"
-        ? "All jobs cleared & ID reset"
-        : "Delivered jobs moved to trash",
-    );
   };
 
   const handleInvoice = (job: any) => {
@@ -1014,12 +1111,19 @@ export default function RepairJobs() {
                     <Label className="text-xs font-bold uppercase text-muted-foreground">
                       Assigned Technician
                     </Label>
-                    <Input
-                      className="mt-1"
-                      placeholder="Optional"
-                      value={technician}
-                      onChange={(e) => setTechnician(e.target.value)}
-                    />
+                    <Select value={technician || "none"} onValueChange={setTechnician}>
+                      <SelectTrigger className="mt-1 bg-background">
+                        <SelectValue placeholder="Select staff..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None / Auto</SelectItem>
+                        {staffMembers?.filter((s: any) => s.is_active).map((staff: any) => (
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {staff.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -1163,10 +1267,19 @@ export default function RepairJobs() {
                   <Label className="text-xs font-bold uppercase text-muted-foreground">
                     Technician
                   </Label>
-                  <Input
-                    value={editTech}
-                    onChange={(e) => setEditTech(e.target.value)}
-                  />
+                  <Select value={editTech || "none"} onValueChange={setEditTech}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Select staff..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {staffMembers?.filter((s: any) => s.is_active).map((staff: any) => (
+                        <SelectItem key={staff.id} value={staff.id}>
+                          {staff.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -1311,10 +1424,12 @@ export default function RepairJobs() {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setPaymentOpen(false)}>
+              <Button variant="outline" onClick={() => setPaymentOpen(false)} disabled={isProcessing}>
                 Cancel
               </Button>
-              <Button onClick={handlePayment}>Confirm Payment</Button>
+              <Button onClick={handlePayment} disabled={isProcessing}>
+                {isProcessing ? "Processing..." : "Confirm Payment"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1379,14 +1494,15 @@ export default function RepairJobs() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setReturnOpen(false)}>
+              <Button variant="outline" onClick={() => setReturnOpen(false)} disabled={isProcessing}>
                 Cancel
               </Button>
               <Button
                 onClick={handleReturn}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                disabled={isProcessing}
               >
-                Confirm Return
+                {isProcessing ? "Processing..." : "Confirm Return"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1532,11 +1648,12 @@ export default function RepairJobs() {
               <Button
                 variant="outline"
                 onClick={() => setClearConfirmOpen(false)}
+                disabled={isProcessing}
               >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleClearJobs}>
-                Yes, Move to Trash
+              <Button variant="destructive" onClick={handleClearJobs} disabled={isProcessing}>
+                {isProcessing ? "Clearing..." : "Yes, Move to Trash"}
               </Button>
             </DialogFooter>
           </DialogContent>

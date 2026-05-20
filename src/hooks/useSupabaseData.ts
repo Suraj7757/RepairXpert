@@ -28,21 +28,44 @@ type TableName =
   | "erp_tasks"
   | "user_roles"
   | "features"
-  | "whatsapp_config";
+  | "whatsapp_config"
+  | "staff_members"
+  | "staff_job_assignments"
+  | "staff_salary_records"
+  | "service_bookings"
+  | "system_config"
+  | "shops"
+  | "invoices"
+  | "audit_logs";
 
 import { useQuery } from "@tanstack/react-query";
+import { get as idbGet, set as idbSet, createStore } from "idb-keyval";
+
+const offlineStore = createStore("rx-supabase-cache", "kv");
 
 export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
-  const { user } = useAuth();
+  const { user, role, shopId } = useAuth();
+  const cacheKey = `${table}:${user?.id || "anon"}:${includeDeleted ? 1 : 0}`;
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: [table, user?.id, includeDeleted],
+    queryKey: [table, user?.id, includeDeleted, role, shopId],
     queryFn: async () => {
       if (!user) return [];
-      let query = supabase.from(table).select("*") as any;
-      if (!["customer_feedback", "system_config", "features"].includes(table)) {
-        query = query.eq("user_id", user.id);
+      let query = (supabase as any).from(table).select("*") as any;
+      
+      const tablesWithShopId = ["repair_jobs", "customers", "inventory", "invoices", "staff_members"];
+
+      if (role === "shopkeeper" && tablesWithShopId.includes(table) && shopId) {
+        query = query.eq("shop_id", shopId);
+      } else {
+        const shopUserIdTables = ["staff_members", "staff_job_assignments", "staff_salary_records"];
+        if (shopUserIdTables.includes(table)) {
+          query = query.eq("shop_user_id", user.id);
+        } else if (!["customer_feedback", "system_config", "features", "shops", "profiles"].includes(table)) {
+          query = query.eq("user_id", user.id);
+        }
       }
+
       if (
         !includeDeleted &&
         ![
@@ -61,20 +84,39 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
           "notifications",
           "features",
           "whatsapp_config",
+          "staff_members",
+          "staff_job_assignments",
+          "staff_salary_records",
+          "service_bookings",
+          "system_config",
+          "erp_expenses",
+          "erp_leads",
+          "erp_tasks",
+          "user_roles",
         ].includes(table)
       ) {
         query = query.eq("deleted", false);
       }
       query = query.order("created_at", { ascending: false });
-      const { data: result, error } = await query;
-
-      if (error) {
-        if (error.code !== "PGRST116") {
-          console.error(`Query error on ${table}:`, error);
+      try {
+        const { data: result, error } = await query;
+        if (error) {
+          if (error.code !== "PGRST116") {
+            console.error(`Query error on ${table}:`, error);
+          }
+          // fall back to cached
+          const cached = (await idbGet(cacheKey, offlineStore)) as T[] | undefined;
+          return cached ?? [];
         }
-        return [];
+        const rows = (result as T[]) ?? [];
+        // persist to offline cache (fire-and-forget)
+        idbSet(cacheKey, rows, offlineStore).catch(() => {});
+        return rows;
+      } catch (e) {
+        const cached = (await idbGet(cacheKey, offlineStore)) as T[] | undefined;
+        if (cached) return cached;
+        throw e;
       }
-      return (result as T[]) ?? [];
     },
     enabled: !!user,
   });
@@ -94,7 +136,7 @@ export function useActivityLog() {
       details?: Record<string, unknown>,
     ) => {
       if (!user) return;
-      await supabase.from("activity_log").insert({
+      await (supabase as any).from("activity_log").insert({
         user_id: user.id,
         action,
         entity_type: entityType,
@@ -114,12 +156,12 @@ export function useSoftDelete() {
 
   const softDelete = useCallback(
     async (table: TableName, id: string, entityName?: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from(table)
         .update({
           deleted: true,
           deleted_at: new Date().toISOString(),
-        } as any)
+        })
         .eq("id", id);
       if (error) {
         toast.error("Delete failed");
@@ -133,12 +175,12 @@ export function useSoftDelete() {
 
   const restore = useCallback(
     async (table: TableName, id: string, entityName?: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from(table)
         .update({
           deleted: false,
           deleted_at: null,
-        } as any)
+        })
         .eq("id", id);
       if (error) {
         toast.error("Restore failed");
@@ -152,7 +194,7 @@ export function useSoftDelete() {
 
   const permanentDelete = useCallback(
     async (table: TableName, id: string, entityName?: string) => {
-      const { error } = await supabase.from(table).delete().eq("id", id);
+      const { error } = await (supabase as any).from(table).delete().eq("id", id);
       if (error) {
         toast.error("Permanent delete failed");
         return false;

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AutomationBanner } from "@/components/common/AutomationBanner";
 import { Link } from "react-router-dom";
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSupabaseQuery, useShopSettings } from "@/hooks/useSupabaseData";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/services/supabase";
 import {
   Wrench,
   AlertTriangle,
@@ -19,6 +21,8 @@ import {
   Trash2,
   ConciergeBell,
   Building2,
+  CalendarCheck,
+  Bell,
 } from "lucide-react";
 import {
   BarChart,
@@ -43,6 +47,7 @@ const COLORS = [
 ];
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { data: jobs } = useSupabaseQuery<any>("repair_jobs");
   const { data: payments } = useSupabaseQuery<any>("payments");
   const { data: settlements } = useSupabaseQuery<any>("settlement_cycles");
@@ -50,6 +55,22 @@ export default function Dashboard() {
   const { data: deletedCustomers } = useSupabaseQuery<any>("customers", true);
   const { data: deletedJobs } = useSupabaseQuery<any>("repair_jobs", true);
   const { settings } = useShopSettings();
+  const [pendingBookings, setPendingBookings] = useState(0);
+  const [totalBookings, setTotalBookings] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase as any)
+      .from("booking_requests")
+      .select("id, status")
+      .eq("user_id", user.id)
+      .then(({ data }: any) => {
+        if (data) {
+          setTotalBookings(data.length);
+          setPendingBookings(data.filter((b: any) => b.status === "pending").length);
+        }
+      });
+  }, [user]);
 
   const splitEnabled = settings?.revenue_split_enabled !== false;
 
@@ -143,46 +164,64 @@ export default function Dashboard() {
     <MainLayout title="Dashboard">
       <div className="space-y-6 animate-fade-in">
         <AutomationBanner />
-        <Card className="gradient-primary border-0 shadow-2xl shadow-primary/30 overflow-hidden relative group">
-          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-          <CardContent className="py-8 px-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-            <div className="space-y-1">
-              <p className="text-sm font-bold text-primary-foreground/70 uppercase tracking-widest">
+        <Card className="border-0 shadow-2xl overflow-hidden relative group">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary to-indigo-700">
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 blur-3xl rounded-full group-hover:scale-110 transition-transform duration-700"></div>
+            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-blue-400/20 blur-3xl rounded-full"></div>
+          </div>
+          <CardContent className="py-10 px-6 md:px-10 flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+            <div className="space-y-2">
+              <p className="text-xs md:text-sm font-bold text-white/80 uppercase tracking-[0.2em]">
                 Total Platform Revenue
               </p>
-              <h2 className="text-5xl font-black text-primary-foreground tracking-tight">
+              <h2 className="text-5xl md:text-6xl font-black text-white tracking-tighter drop-shadow-lg">
                 ₹{stats.totalRevenue.toLocaleString()}
               </h2>
-              <p className="text-xs text-primary-foreground/60 flex items-center gap-1 mt-2">
+              <div className="flex items-center gap-2 mt-4">
                 <Badge
                   variant="secondary"
-                  className="bg-white/20 border-0 text-white text-[10px] h-5"
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-md border-0 text-white text-[10px] md:text-xs py-1 px-3 shadow-inner transition-colors"
                 >
                   +12.5% from last month
                 </Badge>
-              </p>
+              </div>
             </div>
-            <div className="flex gap-8 border-l border-white/10 pl-8 h-full items-center">
+            <div className="flex gap-6 md:gap-10 border-l-2 border-white/10 pl-6 md:pl-10 h-full items-center">
               <div>
-                <p className="text-xs font-bold text-primary-foreground/60 uppercase tracking-widest">
+                <p className="text-[10px] md:text-xs font-bold text-white/70 uppercase tracking-[0.2em] mb-1">
                   Unsettled
                 </p>
-                <p className="text-3xl font-black text-primary-foreground">
+                <p className="text-2xl md:text-4xl font-black text-white drop-shadow-md">
                   ₹{stats.unsettledEarnings.toLocaleString()}
                 </p>
               </div>
-              <div className="h-10 w-[1px] bg-white/10 hidden md:block" />
+              <div className="h-12 w-[2px] bg-white/10" />
               <div>
-                <p className="text-xs font-bold text-primary-foreground/60 uppercase tracking-widest">
+                <p className="text-[10px] md:text-xs font-bold text-white/70 uppercase tracking-[0.2em] mb-1">
                   Dues
                 </p>
-                <p className="text-3xl font-black text-primary-foreground">
+                <p className="text-2xl md:text-4xl font-black text-white drop-shadow-md">
                   ₹{stats.dueTotal.toLocaleString()}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Pending Bookings Alert */}
+        {pendingBookings > 0 && (
+          <Link to="/bookings">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-300 hover:bg-amber-500/20 transition-colors cursor-pointer">
+              <Bell className="h-5 w-5 text-amber-600 animate-bounce" />
+              <div className="flex-1">
+                <p className="font-bold text-amber-800">{pendingBookings} new online booking request{pendingBookings > 1 ? "s" : ""} waiting!</p>
+                <p className="text-xs text-amber-600">Customers submitted repair requests — Accept or Reject now</p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-500 text-white text-xs font-black">View Now</span>
+            </div>
+          </Link>
+        )}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
           <StatCard
@@ -199,7 +238,7 @@ export default function Dashboard() {
             value="Search ID"
             sub="Customer tracking"
             variant="info"
-            link="/track"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-rx-track"))}
           />
           <StatCard
             icon={IndianRupee}
@@ -224,6 +263,14 @@ export default function Dashboard() {
             sub="Manage all services"
             variant="info"
             link="/services"
+          />
+          <StatCard
+            icon={CalendarCheck}
+            label="Bookings"
+            value={totalBookings}
+            sub={`${pendingBookings} pending`}
+            variant={pendingBookings > 0 ? "warning" : "info"}
+            link="/bookings"
           />
           <StatCard
             icon={AlertTriangle}
@@ -550,6 +597,7 @@ function StatCard({
   sub,
   variant,
   link,
+  onClick,
 }: {
   icon: any;
   label: string;
@@ -557,46 +605,49 @@ function StatCard({
   sub: string;
   variant: "primary" | "success" | "warning" | "info";
   link?: string;
+  onClick?: () => void;
 }) {
   const bgMap = {
-    primary: "gradient-primary",
-    success: "gradient-success",
-    warning: "gradient-warning",
-    info: "gradient-info",
+    primary: "from-blue-500 to-indigo-600 shadow-blue-500/20",
+    success: "from-emerald-400 to-teal-500 shadow-emerald-500/20",
+    warning: "from-amber-400 to-orange-500 shadow-amber-500/20",
+    info: "from-cyan-400 to-blue-500 shadow-cyan-500/20",
   };
-  const borderMap = {
-    primary: "border-primary/10",
-    success: "border-success/10",
-    warning: "border-warning/10",
-    info: "border-info/10",
+
+  const textMap = {
+    primary: "text-indigo-600 dark:text-indigo-400",
+    success: "text-emerald-600 dark:text-emerald-400",
+    warning: "text-amber-600 dark:text-amber-400",
+    info: "text-cyan-600 dark:text-cyan-400",
   };
 
   const content = (
     <Card
-      className={`h-full border ${borderMap[variant]} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-card/50 backdrop-blur-md group overflow-hidden`}
+      className={`h-full border-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden relative ring-1 ring-white/20 dark:ring-white/10`}
     >
-      <CardContent className="p-6 relative">
-        <div className="absolute right-0 top-0 h-16 w-16 bg-gradient-to-br from-white/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${bgMap[variant]} opacity-10 rounded-bl-full group-hover:scale-150 transition-transform duration-500`} />
+      <CardContent className="p-5 md:p-6 relative z-10">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-widest">
               {label}
             </p>
-            <p className="text-2xl font-black tracking-tight">{value}</p>
-            <p className="text-[11px] font-medium text-muted-foreground/80 mt-1 flex items-center gap-1 group-hover:text-primary transition-colors italic">
+            <p className="text-2xl md:text-3xl font-black tracking-tight text-foreground">{value}</p>
+            <p className={`text-[10px] md:text-xs font-semibold mt-1 flex items-center gap-1 ${textMap[variant]}`}>
               {sub}
             </p>
           </div>
           <div
-            className={`h-12 w-12 rounded-xl ${bgMap[variant]} flex items-center justify-center shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform`}
+            className={`h-12 w-12 md:h-14 md:w-14 rounded-2xl bg-gradient-to-br ${bgMap[variant]} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ring-2 ring-white/20`}
           >
-            <Icon className="h-6 w-6 text-primary-foreground" />
+            <Icon className="h-6 w-6 md:h-7 md:w-7 text-white" />
           </div>
         </div>
       </CardContent>
     </Card>
   );
 
+  if (onClick) return <button onClick={onClick} className="w-full text-left block outline-none">{content}</button>;
   if (link) return <Link to={link}>{content}</Link>;
   return content;
 }

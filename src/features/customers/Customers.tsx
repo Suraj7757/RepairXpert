@@ -32,6 +32,7 @@ export default function Customers() {
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
 
   const filtered = customers.filter(
@@ -41,46 +42,47 @@ export default function Customers() {
   );
 
   const handleAdd = async () => {
-    if (!name || !mobile || !user) {
+    if (!name || !mobile || !user || isSubmitting) {
       toast.error("Name and mobile required");
       return;
     }
-    if (editingCustomer) {
-      const { error } = await supabase
-        .from("customers")
-        .update({
+    setIsSubmitting(true);
+    try {
+      if (editingCustomer) {
+        const { error } = await supabase
+          .from("customers")
+          .update({
+            name,
+            mobile,
+            email: email || null,
+            address: address || null,
+          })
+          .eq("id", editingCustomer.id);
+        if (error) throw error;
+        toast.success("Customer updated");
+      } else {
+        const { error } = await supabase.from("customers").insert({
+          user_id: user.id,
           name,
           mobile,
           email: email || null,
           address: address || null,
-        })
-        .eq("id", editingCustomer.id);
-      if (error) {
-        toast.error(error.message);
-        return;
+        });
+        if (error) throw error;
+        toast.success("Customer added");
       }
-      toast.success("Customer updated");
-    } else {
-      const { error } = await supabase.from("customers").insert({
-        user_id: user.id,
-        name,
-        mobile,
-        email: email || null,
-        address: address || null,
-      });
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      toast.success("Customer added");
+      refetch();
+      setOpen(false);
+      setEditingCustomer(null);
+      setName("");
+      setMobile("");
+      setEmail("");
+      setAddress("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save customer");
+    } finally {
+      setIsSubmitting(false);
     }
-    refetch();
-    setOpen(false);
-    setEditingCustomer(null);
-    setName("");
-    setMobile("");
-    setEmail("");
-    setAddress("");
   };
 
   const openEdit = (c: any) => {
@@ -259,7 +261,19 @@ export default function Customers() {
           </div>
         </Card>
 
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+          open={open}
+          onOpenChange={(val) => {
+            setOpen(val);
+            if (!val) {
+              setEditingCustomer(null);
+              setName("");
+              setMobile("");
+              setEmail("");
+              setAddress("");
+            }
+          }}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -272,10 +286,13 @@ export default function Customers() {
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
-                <Label>Mobile *</Label>
+                <Label>Mobile * <span className="text-[10px] text-muted-foreground">(10 digits)</span></Label>
                 <Input
                   value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="9876543210"
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 />
               </div>
               <div>
@@ -294,11 +311,11 @@ export default function Customers() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>
+              <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button onClick={handleAdd}>
-                {editingCustomer ? "Save Changes" : "Add"}
+              <Button onClick={handleAdd} disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : (editingCustomer ? "Save Changes" : "Add")}
               </Button>
             </DialogFooter>
           </DialogContent>

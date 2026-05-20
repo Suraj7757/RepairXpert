@@ -1,1000 +1,515 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Smartphone,
-  Wrench,
-  Package,
-  ShoppingCart,
-  BarChart3,
-  Shield,
-  Users,
-  Wallet,
-  Gift,
-  Monitor,
-  Bell,
-  MessageCircle,
-  ArrowRight,
-  CheckCircle,
-  Star,
-  Zap,
-  Mail,
-  ConciergeBell,
-  Download,
-  ChevronDown,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { NewsTicker } from "@/components/layout/NewsTicker";
 import { useState, useEffect } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import TrackOrder from "@/features/jobs/TrackOrder";
-import MultiServiceShowcase from "@/features/dashboard/MultiServiceShowcase";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Search, ShoppingCart, Wrench, Package, MapPin, Star,
+  ChevronDown, ChevronRight, ArrowRight, Smartphone, Monitor,
+  Zap, Shield, MessageCircle, BarChart3, Users, Wallet,
+  CheckCircle, Bell, Headphones, Battery, Tag, TrendingUp,
+  Menu, X
+} from "lucide-react";
+import { supabase } from "@/services/supabase";
+import { toast } from "sonner";
 
-const ADMIN_WHATSAPP = "7319884599";
-const SUPER_ADMIN = "krs715665@gmail.com";
-
-const features = [
-  {
-    icon: ConciergeBell,
-    title: "Multi Services Management",
-    desc: "Full service catalog with pricing ranges, turnaround times, categories, and status management. Mark popular services and track job counts per service.",
-  },
-  {
-    icon: Wrench,
-    title: "Repair Job Management",
-    desc: "Track repair jobs with unique IDs, status updates, and customer notifications.",
-  },
-  {
-    icon: Package,
-    title: "Inventory Management",
-    desc: "Full stock tracking with low-stock alerts and GST-compliant invoicing.",
-  },
-  {
-    icon: ShoppingCart,
-    title: "Sales & Invoicing",
-    desc: "Sell inventory items with PDF invoices and WhatsApp sharing.",
-  },
-  {
-    icon: Wallet,
-    title: "Wallet & Earnings",
-    desc: "Built-in wallet system with ad revenue, referral bonuses, and withdrawals.",
-  },
-  {
-    icon: BarChart3,
-    title: "Reports & Analytics",
-    desc: "Revenue charts, payment breakdowns, and business insights.",
-  },
+const CATEGORIES = [
+  { label: "Mobile Screens", icon: Smartphone, href: "/marketplace?category=screen" },
+  { label: "Batteries", icon: Battery, href: "/marketplace?category=battery" },
+  { label: "Chargers", icon: Zap, href: "/marketplace?category=charger" },
+  { label: "Accessories", icon: Headphones, href: "/marketplace?category=accessory" },
+  { label: "Spare Parts", icon: Package, href: "/marketplace?category=tools" },
+  { label: "Laptops", icon: Monitor, href: "/marketplace?category=general" },
+  { label: "Deals", icon: Tag, href: "/marketplace" },
+  { label: "Trending", icon: TrendingUp, href: "/marketplace" },
 ];
 
-const getPlans = (cycle: "monthly" | "quarterly" | "annually") => {
-  const calcPrice = (base: number, discount: number) => {
-    if (cycle === "monthly") return `₹${base}`;
-    if (cycle === "quarterly") return `₹${base * 3}`;
-    return `₹${Math.round(base * 12 * (1 - discount))}`;
-  };
-
-  const basicFeatures = [
-    "1000 Jobs & Sales Records",
-    "Up to 2 Employees",
-    "Import Data With Ease",
-    "Upload Device Images",
-    "Client Login",
-    "Advance Reports",
-    "Individual Dashboards",
-    "Attachments",
-    "Inventory Module",
-    "WhatsApp Integration",
-    "Quotations & Invoices",
-    "48 Hours Support Time",
-    "Activity Log",
-    "Mobile App",
-  ];
-
-  const standardFeatures = [
-    "Unlimited Jobs & Sales Records",
-    "Up to 6 Employees",
-    "Import Data With Ease",
-    "Upload Device Images",
-    "Client Login",
-    "Advance Reports",
-    "Role-Based Access Rights",
-    "Individual Dashboards",
-    "Private & Public Chat",
-    "Attachments",
-    "Inventory Module",
-    "Purchase Management",
-    "Own Email Setup",
-    "Pickup Drop",
-    "UPI Payments",
-    "Bulk Payments",
-    "WhatsApp Integration",
-    "Quotations & Invoices",
-    "Live Support",
-    "Activity Log",
-    "Mobile App",
-    "AMC (Annual Maintenance Contract)",
-    "Outsource Management",
-    "Lead Management",
-    "Task Management",
-    "Expense Management",
-    "Configurable Permissions",
-    "Assigned Only Jobs to Employees",
-    "Digital Signature",
-    "OTP Verification For Delivery",
-    "Payment Gateway Integration (PhonePe)",
-    "Self Check-In",
-    "Data Recovery Module",
-    "Own Branding",
-    "Branches",
-  ];
-
-  const enterpriseFeatures = [...standardFeatures];
-  enterpriseFeatures[1] = "Up to 12 Employees";
-
-  const premiumFeatures = [...standardFeatures];
-  premiumFeatures[1] = "Unlimited Employees";
-  premiumFeatures[premiumFeatures.length - 1] = "3 Branches";
-
-  return [
-    {
-      name: "Basic",
-      price: calcPrice(249, 0),
-      period:
-        cycle === "monthly" ? "/mo" : cycle === "quarterly" ? "/qtr" : "/yr",
-      features: basicFeatures,
-      cta: "Get Started",
-      popular: false,
-      badge: "",
-    },
-    {
-      name: "Standard",
-      price: calcPrice(499, 0.1),
-      period:
-        cycle === "monthly" ? "/mo" : cycle === "quarterly" ? "/qtr" : "/yr",
-      features: standardFeatures,
-      cta: "Upgrade to Standard",
-      popular: true,
-      badge: "FLAT 10% OFF 1ST YR",
-    },
-    {
-      name: "Enterprise",
-      price: calcPrice(999, 0.2),
-      period:
-        cycle === "monthly" ? "/mo" : cycle === "quarterly" ? "/qtr" : "/yr",
-      features: enterpriseFeatures,
-      cta: "Get Enterprise",
-      popular: false,
-      badge: "FLAT 20% OFF 1ST YR",
-    },
-    {
-      name: "Premium",
-      price: calcPrice(1749, 0.2),
-      period:
-        cycle === "monthly" ? "/mo" : cycle === "quarterly" ? "/qtr" : "/yr",
-      features: premiumFeatures,
-      cta: "Go Premium",
-      popular: false,
-      badge: "FLAT 20% OFF 1ST YR",
-    },
-  ];
-};
-
-const roadmap = [
-  {
-    phase: "Phase 1",
-    title: "Core Transformation",
-    status: "Completed",
-    date: "April 2026",
-    items: [
-      "Feature-based Refactoring",
-      "Premium SaaS UI",
-      "Secure Key Auth Migration",
-    ],
-  },
-  {
-    phase: "Phase 2",
-    title: "Earning Ecosystem",
-    status: "In Progress",
-    date: "May 2026",
-    items: [
-      "Wallet System",
-      "Ad Revenue Engine",
-      "Referral Multi-level Rewards",
-    ],
-  },
-  {
-    phase: "Phase 3",
-    title: "Advanced Automation",
-    status: "Planned",
-    date: "June 2026",
-    items: [
-      "AI Diagnostic Assistant",
-      "Auto-sync Invoicing",
-      "Multi-staff Roles",
-    ],
-  },
-  {
-    phase: "Phase 4",
-    title: "Global Scale",
-    status: "Planned",
-    date: "Q3 2026",
-    items: [
-      "Multi-store Dashboard",
-      "API for POS Integration",
-      "Mobile App Launch",
-    ],
-  },
+const CRM_FEATURES = [
+  { label: "Repair Jobs", href: "/jobs" },
+  { label: "Inventory", href: "/inventory" },
+  { label: "Customers", href: "/customers" },
+  { label: "Staff", href: "/staff" },
+  { label: "Reports", href: "/reports" },
+  { label: "Payments", href: "/payments" },
 ];
 
-const updates = [
+const HERO_SLIDES = [
   {
-    date: "29-Apr-2026",
-    title: "🧠 AI-Powered Repair Diagnostics",
-    description:
-      "Ab system customer ki problem description padh kar automatically potential issues aur estimated cost suggest karega.",
+    bg: "from-[#131921] to-[#232f3e]",
+    badge: "🔥 Best Seller",
+    title: "Premium Mobile\nSpare Parts",
+    sub: "Original quality screens, batteries & more",
+    cta: "Shop Now",
+    href: "/marketplace",
+    img: "📱",
+    accent: "#ff9900",
   },
   {
-    date: "29-Apr-2026",
-    title: "📸 AI Device Image Analysis",
-    description:
-      "Tute hue phone ki photo upload karein aur AI khud detect karega ki screen damage hai ya panel, aur parts ka cost batayega.",
+    bg: "from-[#0f3460] to-[#16213e]",
+    badge: "⚡ New Arrival",
+    title: "Laptop Parts &\nAccessories",
+    sub: "SSDs, RAM, cooling pads & more",
+    cta: "Explore",
+    href: "/marketplace",
+    img: "💻",
+    accent: "#00d4ff",
   },
   {
-    date: "29-Apr-2026",
-    title: "📈 Predictive Inventory Restock (AI)",
-    description:
-      "AI ab past trends ko analyze karke batayega ki agle hafte kaun se parts ki demand sabse jyada hone wali hai.",
-  },
-  {
-    date: "29-Apr-2026",
-    title: "💬 AI WhatsApp Auto-Reply Bot",
-    description:
-      "Fully automated WhatsApp bot jo customers ko unke tracking ID ke base par real-time repair status batayega bina human touch ke.",
-  },
-  {
-    date: "29-Apr-2026",
-    title: "👤 Advanced Staff Management",
-    local: true,
-    description:
-      "Shop owners ab apne technicians aur receptionists ko add kar sakte hain, specific roles de sakte hain aur unki performance track kar sakte hain.",
-  },
-  {
-    date: "29-Apr-2026",
-    title: "📊 Profit & Loss Deep Analytics",
-    description:
-      "Naya Financials dashboard jisme Revenue, Expenses, Part Costs, aur Net Profit ko beautiful charts ke through visualize kiya gaya hai.",
-  },
-  {
-    date: "28-Apr-2026",
-    title: "📝 AI Smart Invoicing",
-    description:
-      "Invoice generate karte time AI automatically professional repair descriptions aur terms & conditions add kar dega.",
-  },
-  {
-    date: "28-Apr-2026",
-    title: "📱 Customer Self-Service Portal",
-    description:
-      "Customers ab ek secure link ke through apne repair estimates ko online approve ya reject kar sakte hain.",
-  },
-  {
-    date: "28-Apr-2026",
-    title: "🛡️ Advanced Fraud Detection",
-    description:
-      "Agar koi staff unusually high discount deta hai ya suspicious entry karta hai, toh owner ko turant alert jayega.",
-  },
-  {
-    date: "28-Apr-2026",
-    title: "🌐 Multi-Language Support (Beta)",
-    description:
-      "Local staff ki suvidha ke liye ab system Hindi, Marathi, Bengali aur anya regional languages support karta hai.",
-  },
-  {
-    date: "24-Apr-2026",
-    title: "🎉 Multi-Service Repair Form Redesign",
-    description:
-      "Repair case form ab category-specific fields support karta hai — Mobile, Laptop, TV, AC, Fridge, PC. Framer Motion animations bhi add ki gayi hain.",
-  },
-  {
-    date: "24-Apr-2026",
-    title: "🆕 Animated Multi-Service Homepage Section",
-    description:
-      "Homepage pe ek brand new animated service showcase add kiya gaya hai with clickable category tabs and smooth transitions.",
-  },
-  {
-    date: "24-Apr-2026",
-    title: "🔧 Quick Create Button in Sidebar",
-    description:
-      'Sidebar mein ab ek single "+ Create New" button hai jisme tap karne se Job, Sell, Customer, ya Inventory create karne ka popup aata hai.',
-  },
-  {
-    date: "24-Apr-2026",
-    title: "📥 Download Section Added",
-    description:
-      "Homepage pe Download menu add kiya gaya hai — Android App aur Windows PC exe ke liye direct download links.",
-  },
-  {
-    date: "22-Apr-2026",
-    title: "Enterprise ERP Modules Launched",
-    description:
-      "Major update! Added 35+ advanced modules including Expense Tracking, Lead Management, Task Assignment, and a Digital Signature Canvas.",
-  },
-  {
-    date: "21-Apr-2026",
-    title: "Smart AI Chatbot Launched",
-    description:
-      "Added a context-aware AI Assistant that supports Hinglish. Customers can check job status, create new jobs, and get FAQs.",
-  },
-];
-
-const landingServices = [
-  {
-    name: "Screen Replacement",
-    category: "Mobile Repair",
-    price: "₹800 - ₹3500",
-    tat: "1-2 hrs",
-    popular: true,
-    icon: Smartphone,
-    desc: "Original & compatible screen replacements for all major brands with warranty.",
-  },
-  {
-    name: "Laptop SSD Upgrade",
-    category: "Laptop Repair",
-    price: "₹1300 - ₹5000",
-    tat: "30 min",
-    popular: true,
-    icon: Monitor,
-    desc: "Boost your PC speed instantly with NVMe/SATA SSD upgrades.",
-  },
-  {
-    name: "TV Panel Repair",
-    category: "TV / LED Repair",
-    price: "₹1200 - ₹8000",
-    tat: "3-5 hrs",
-    popular: false,
-    icon: Monitor,
-    desc: "LED/OLED panel fault diagnosis and chip-level repair.",
-  },
-  {
-    name: "Charging Port Fix",
-    category: "Mobile Repair",
-    price: "₹200 - ₹600",
-    tat: "1 hr",
-    popular: false,
-    icon: Wrench,
-    desc: "Fix charging issues, deep port cleaning & IC replacement.",
-  },
-  {
-    name: "Smartwatch Glass",
-    category: "Smartwatch Repair",
-    price: "₹250 - ₹800",
-    tat: "2 hrs",
-    popular: true,
-    icon: Wrench,
-    desc: "Scratch-free UV glass protector & display replacement.",
-  },
-  {
-    name: "Water Damage Treatment",
-    category: "Mobile Repair",
-    price: "₹400 - ₹1200",
-    tat: "24 hrs",
-    popular: false,
-    icon: Package,
-    desc: "Ultrasonic cleaning + full internal motherboard inspection.",
+    bg: "from-[#1a1a2e] to-[#16213e]",
+    badge: "🚀 For Shopkeepers",
+    title: "RepairXpert CRM\nFree Trial",
+    sub: "Manage repairs, staff, inventory & earnings",
+    cta: "Start Free",
+    href: "/auth?mode=signup",
+    img: "🛠️",
+    accent: "#7c3aed",
   },
 ];
 
 export default function Landing() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedFeature, setSelectedFeature] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedService, setSelectedService] = useState<any>(null);
-  const [showRoadmapModal, setShowRoadmapModal] = useState(false);
-  const [showUpdatesModal, setShowUpdatesModal] = useState(false);
-  const [showTrackModal, setShowTrackModal] = useState(false);
-  const [billingCycle, setBillingCycle] = useState<
-    "monthly" | "quarterly" | "annually"
-  >("monthly");
+  const [slide, setSlide] = useState(0);
+  const [search, setSearch] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [trackId, setTrackId] = useState("");
+  const [trackOpen, setTrackOpen] = useState(false);
+  const [listings, setListings] = useState<any[]>([]);
+  const [shops, setShops] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    // Force default (blue) skin on homepage permanently
-    document.documentElement.setAttribute("data-skin", "default");
+    const t = setInterval(() => setSlide(s => (s + 1) % HERO_SLIDES.length), 4000);
+    return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("inventory")
+        .select("*")
+        .eq("is_marketplace_listed", true)
+        .gt("quantity", 0)
+        .limit(12)
+        .order("created_at", { ascending: false });
+      setListings(data || []);
+      const ids = [...new Set((data || []).map((r: any) => r.user_id))];
+      if (ids.length) {
+        const { data: sd } = await (supabase as any)
+          .from("shop_settings")
+          .select("user_id, shop_name, address")
+          .in("user_id", ids);
+        const m: Record<string, any> = {};
+        (sd || []).forEach((s: any) => { m[s.user_id] = s; });
+        setShops(m);
+      }
+    })();
+  }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    window.location.href = `/marketplace?search=${encodeURIComponent(search)}`;
+  };
+
+  const s = HERO_SLIDES[slide];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950 text-slate-800 dark:text-slate-100">
-      <NewsTicker />
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-blue-200/50 dark:border-blue-900/50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <Wrench className="h-6 w-6 text-primary-foreground" />
+    <div className="min-h-screen bg-[#f3f3f3] font-sans">
+      {/* ── TOP NAV (Amazon-style dark) ── */}
+      <header className="bg-[#131921] text-white sticky top-0 z-50">
+        {/* Row 1 */}
+        <div className="flex items-center gap-2 px-3 py-2 max-w-[1500px] mx-auto">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-1.5 shrink-0 mr-2 group">
+            <div className="h-8 w-8 rounded-lg bg-[#ff9900] flex items-center justify-center">
+              <Wrench className="h-4 w-4 text-white" />
             </div>
-            <span className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+            <span className="font-black text-lg tracking-tight text-white group-hover:text-[#ff9900] transition-colors hidden sm:block">
               RepairXpert
             </span>
-          </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm">
-            <a
-              href="#features"
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
-            >
-              Features
-            </a>
-            <button
-              onClick={() => setShowRoadmapModal(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
-            >
-              Roadmap
+          </Link>
+
+          {/* Location */}
+          <button className="hidden md:flex items-start gap-1 border border-transparent hover:border-white rounded px-1 py-1 shrink-0">
+            <MapPin className="h-3.5 w-3.5 mt-1 text-[#ccc]" />
+            <div className="text-left">
+              <p className="text-[10px] text-[#ccc]">Deliver to</p>
+              <p className="text-xs font-bold">India</p>
+            </div>
+          </button>
+
+          {/* Search */}
+          <form onSubmit={handleSearch} className="flex-1 flex rounded-md overflow-hidden">
+            <select className="bg-[#e3e6e6] text-[#131921] text-xs px-2 border-r border-gray-300 hidden md:block shrink-0">
+              <option>All</option>
+              <option>Mobile Parts</option>
+              <option>Laptops</option>
+              <option>Accessories</option>
+            </select>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search parts, accessories, devices..."
+              className="flex-1 px-3 py-2.5 text-[#131921] text-sm outline-none"
+            />
+            <button type="submit" className="bg-[#ff9900] hover:bg-[#fa8900] px-4 flex items-center justify-center">
+              <Search className="h-5 w-5 text-[#131921]" />
             </button>
-            <button
-              onClick={() => setShowUpdatesModal(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
-            >
-              Updates
+          </form>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-1 shrink-0 ml-1">
+            {/* Account Dropdown */}
+            <div className="hidden md:block relative group">
+              <button className="border border-transparent hover:border-white rounded px-2 py-1 text-xs flex flex-col text-left">
+                <p className="text-[10px] text-[#ccc]">Hello, Sign in</p>
+                <p className="font-bold text-sm flex items-center gap-0.5">Account <ChevronDown className="h-3 w-3" /></p>
+              </button>
+              {/* Dropdown */}
+              <div className="absolute right-0 top-full mt-1 w-52 bg-white text-[#131921] rounded-lg shadow-2xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <div className="p-3 border-b">
+                  <a href="/auth?mode=signup" className="block w-full text-center py-2 bg-[#ff9900] hover:bg-[#fa8900] text-[#131921] font-black rounded-full text-sm transition-colors">
+                    Create Account
+                  </a>
+                  <p className="text-[10px] text-center text-gray-500 mt-1">
+                    Already have one? <a href="/auth" className="text-[#007185] hover:underline font-semibold">Sign in</a>
+                  </p>
+                </div>
+                <div className="py-1">
+                  <a href="/auth" className="block px-4 py-2 text-xs hover:bg-gray-100 font-semibold">Sign In</a>
+                  <a href="/my-orders" className="block px-4 py-2 text-xs hover:bg-gray-100">My Orders</a>
+                  <a href="/cart" className="block px-4 py-2 text-xs hover:bg-gray-100">My Cart</a>
+                  <a href="/track" className="block px-4 py-2 text-xs hover:bg-gray-100">Track Order</a>
+                  <div className="border-t my-1" />
+                  <a href="/dashboard" className="block px-4 py-2 text-xs hover:bg-gray-100 text-[#c7511f] font-semibold">🏪 Shopkeeper Dashboard</a>
+                  <a href="/auth?mode=signup" className="block px-4 py-2 text-xs hover:bg-gray-100 text-purple-700 font-semibold">🚀 Free CRM Trial</a>
+                </div>
+              </div>
+            </div>
+            <Link to="/marketplace" className="hidden md:block border border-transparent hover:border-white rounded px-2 py-1 text-xs">
+              <p className="text-[10px] text-[#ccc]">Returns</p>
+              <p className="font-bold text-sm">& Orders</p>
+            </Link>
+            <Link to="/cart" className="border border-transparent hover:border-white rounded px-2 py-1 flex items-center gap-1">
+              <div className="relative">
+                <ShoppingCart className="h-6 w-6" />
+                <span className="absolute -top-1 -right-1 bg-[#ff9900] text-[#131921] text-[9px] font-black rounded-full h-4 w-4 flex items-center justify-center">0</span>
+              </div>
+              <span className="hidden md:block font-bold text-sm">Cart</span>
+            </Link>
+            <button className="md:hidden ml-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
-            <a
-              href="#pricing"
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
-            >
-              Plans
-            </a>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1">
-                  <Download className="h-3.5 w-3.5" /> Download{" "}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <a
-                    href="#"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <span className="text-lg">🤖</span>
-                    <div>
-                      <p className="font-semibold text-xs">Android App</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        Coming Soon
-                      </p>
-                    </div>
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a
-                    href="#"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <span className="text-lg">🖥️</span>
-                    <div>
-                      <p className="font-semibold text-xs">Windows PC (.exe)</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        Coming Soon
-                      </p>
-                    </div>
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTrackModal(true)}
-            >
-              Track Order
-            </Button>
-            <Link to="/auth">
-              <Button size="sm">Sign In</Button>
-            </Link>
-          </nav>
-          <div className="md:hidden flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTrackModal(true)}
-            >
-              Track
-            </Button>
-            <Link to="/auth">
-              <Button size="sm">Sign In</Button>
-            </Link>
           </div>
         </div>
+
+        {/* Row 2 — Category nav */}
+        <nav className="bg-[#232f3e] overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-0 px-3 max-w-[1500px] mx-auto">
+            <button className="flex items-center gap-1.5 text-xs font-bold py-2.5 px-3 hover:bg-white/10 whitespace-nowrap border border-transparent hover:border-white rounded-sm transition-colors">
+              <Menu className="h-4 w-4" /> All
+            </button>
+            <Link to="/marketplace" className="text-xs font-bold py-2.5 px-3 hover:bg-white/10 whitespace-nowrap border border-transparent hover:border-white rounded-sm transition-colors">
+              Marketplace
+            </Link>
+            <Link to="/marketplace" className="text-xs font-bold py-2.5 px-3 hover:bg-white/10 whitespace-nowrap border border-transparent hover:border-white rounded-sm transition-colors">
+              Book Repair
+            </Link>
+            <Link to="/track" className="text-xs font-bold py-2.5 px-3 hover:bg-white/10 whitespace-nowrap border border-transparent hover:border-white rounded-sm transition-colors">
+              Track Order
+            </Link>
+            <span className="h-4 w-px bg-white/20 mx-1" />
+            {/* CRM features in nav */}
+            {CRM_FEATURES.map(f => (
+              <Link key={f.href} to={f.href} className="text-xs py-2.5 px-3 hover:bg-white/10 whitespace-nowrap border border-transparent hover:border-white rounded-sm transition-colors text-[#ccc] hover:text-white">
+                {f.label}
+              </Link>
+            ))}
+            <span className="h-4 w-px bg-white/20 mx-1" />
+            <Link to="/auth?mode=signup" className="text-xs font-bold py-2.5 px-3 hover:bg-white/10 whitespace-nowrap text-[#ff9900] border border-transparent hover:border-[#ff9900] rounded-sm transition-colors">
+              🚀 Free CRM Trial
+            </Link>
+          </div>
+        </nav>
       </header>
 
-      {/* Hero — compact */}
-      <section className="container mx-auto px-4 py-10 md:py-14 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs text-muted-foreground mb-4">
-          <Zap className="h-3.5 w-3.5 text-primary" />
-          7-Day Free Trial • No Credit Card Required
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="bg-[#232f3e] text-white px-4 py-3 flex flex-col gap-2 md:hidden z-40">
+          <Link to="/marketplace" className="text-sm py-1">🛒 Marketplace</Link>
+          <Link to="/track" className="text-sm py-1">📦 Track Order</Link>
+          <Link to="/auth" className="text-sm py-1">👤 Sign In / Register</Link>
+          <Link to="/auth?mode=signup" className="text-sm py-1 text-[#ff9900] font-bold">🚀 Free CRM Trial</Link>
         </div>
-        <h1 className="text-4xl md:text-6xl font-black text-foreground leading-[1.1] max-w-3xl mx-auto tracking-tighter">
-          Smart Service Management for{" "}
-          <span className="text-primary italic">Repair Experts</span>
-        </h1>
-        <p className="mt-4 text-base text-muted-foreground max-w-xl mx-auto">
-          Manage repair jobs, inventory, sales & payments — all in one place.
-          Built for mobile, laptop, TV, AC & more.
-        </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/auth?mode=signup">
-            <Button size="default" className="px-8 font-bold">
-              Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-          <Button
-            variant="outline"
-            size="default"
-            className="px-8"
-            onClick={() => setShowTrackModal(true)}
-          >
-            📦 Track Your Order
-          </Button>
-        </div>
-        <div className="mt-6 flex items-center justify-center gap-5 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <CheckCircle className="h-3.5 w-3.5 text-green-500" /> Free Forever
-            Plan
-          </span>
-          <span className="flex items-center gap-1">
-            <CheckCircle className="h-3.5 w-3.5 text-green-500" /> GST Invoicing
-          </span>
-          <span className="flex items-center gap-1">
-            <CheckCircle className="h-3.5 w-3.5 text-green-500" /> WhatsApp
-            Support
-          </span>
-        </div>
-      </section>
+      )}
 
-      {/* Multi Services Management Showcase */}
-      <MultiServiceShowcase />
-
-      {/* Features */}
-      <section id="features" className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-foreground">
-            Everything You Need
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Powerful features to run your mobile repair business efficiently.
-          </p>
+      <main className="max-w-[1500px] mx-auto px-3 md:px-4">
+        {/* ── HERO CAROUSEL ── */}
+        <div className={`relative mt-3 rounded-xl overflow-hidden bg-gradient-to-r ${s.bg} text-white`} style={{ minHeight: 280 }}>
+          <div className="flex flex-col md:flex-row items-center justify-between p-8 md:p-12 gap-6">
+            <div className="space-y-4 max-w-lg">
+              <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: s.accent + "33", color: s.accent }}>
+                {s.badge}
+              </span>
+              <h1 className="text-3xl md:text-5xl font-black leading-tight whitespace-pre-line">
+                {s.title}
+              </h1>
+              <p className="text-white/70 text-sm">{s.sub}</p>
+              <Link to={s.href}>
+                <button className="mt-2 px-8 py-3 rounded-full font-black text-[#131921] hover:opacity-90 transition-all shadow-lg" style={{ backgroundColor: s.accent }}>
+                  {s.cta} <ArrowRight className="inline h-4 w-4 ml-1" />
+                </button>
+              </Link>
+            </div>
+            <div className="text-9xl md:text-[160px] select-none opacity-90 shrink-0">{s.img}</div>
+          </div>
+          {/* Slide dots */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+            {HERO_SLIDES.map((_, i) => (
+              <button key={i} onClick={() => setSlide(i)}
+                className={`h-2 rounded-full transition-all ${i === slide ? "w-6 bg-[#ff9900]" : "w-2 bg-white/40"}`} />
+            ))}
+          </div>
+          {/* Prev/Next */}
+          <button onClick={() => setSlide((slide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 rounded-full p-2 transition-colors">
+            <ChevronRight className="h-5 w-5 rotate-180" />
+          </button>
+          <button onClick={() => setSlide((slide + 1) % HERO_SLIDES.length)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 rounded-full p-2 transition-colors">
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((f, i) => (
-            <Card
-              key={i}
-              className="hover:shadow-xl hover:-translate-y-1 transition-all border group cursor-pointer"
-              onClick={() => setSelectedFeature(f)}
-            >
-              <CardContent className="p-6">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <f.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-bold text-lg text-foreground mb-2">
-                  {f.title}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {f.desc}
-                </p>
-                <div className="mt-4 flex items-center text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  View Details <ArrowRight className="ml-1 h-3 w-3" />
-                </div>
-              </CardContent>
-            </Card>
+
+        {/* ── CATEGORY PILLS ── */}
+        <div className="grid grid-cols-4 md:grid-cols-8 gap-2 mt-3">
+          {CATEGORIES.map(cat => (
+            <Link key={cat.label} to={cat.href}
+              className="flex flex-col items-center gap-1.5 p-3 bg-white rounded-xl hover:shadow-md hover:-translate-y-0.5 transition-all group border border-transparent hover:border-[#ff9900]/30">
+              <div className="h-10 w-10 rounded-full bg-[#ff9900]/10 flex items-center justify-center group-hover:bg-[#ff9900]/20 transition-colors">
+                <cat.icon className="h-5 w-5 text-[#ff9900]" />
+              </div>
+              <span className="text-[10px] font-bold text-center text-gray-700 leading-tight">{cat.label}</span>
+            </Link>
           ))}
         </div>
-      </section>
 
-      {/* Plans CTA — compact, links to subscription page */}
-      <section id="pricing" className="container mx-auto px-4 py-10">
-        <div className="max-w-3xl mx-auto bg-card border rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-6 shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-          <div className="flex-1 space-y-3 text-center md:text-left relative z-10">
-            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase tracking-widest py-1 px-3">
-              Flexible Pricing
-            </Badge>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight">
-              Plans starting from <span className="text-primary">₹249/mo</span>
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Basic, Standard, Enterprise & Premium plans. Start free, upgrade
-              anytime.
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center md:justify-start pt-1 text-xs font-semibold">
-              <span className="flex items-center gap-1">
-                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                Free Forever Plan
-              </span>
-              <span className="flex items-center gap-1">
-                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                GST Invoicing
-              </span>
-              <span className="flex items-center gap-1">
-                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                No Hidden Fees
-              </span>
+        {/* ── MARKETPLACE PRODUCTS ── */}
+        {listings.length > 0 && (
+          <section className="mt-4 bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-black text-[#131921]">🛍️ Featured Products</h2>
+              <Link to="/marketplace" className="text-[#007185] text-sm font-semibold hover:text-[#c7511f] hover:underline flex items-center gap-1">
+                See all <ChevronRight className="h-4 w-4" />
+              </Link>
             </div>
-          </div>
-          <div className="shrink-0 relative z-10 flex flex-col gap-3">
-            <Link to="/subscription">
-              <Button
-                size="lg"
-                className="px-8 font-bold shadow-lg shadow-primary/20"
-              >
-                View All Plans <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/auth?mode=signup">
-              <Button variant="outline" size="sm" className="w-full">
-                Start Free Today
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              {listings.map((item: any) => {
+                const shop = shops[item.user_id];
+                const disc = item.cost_price > item.sell_price ? Math.round((1 - item.sell_price / item.cost_price) * 100) : 0;
+                return (
+                  <Link to={`/marketplace/${item.id}`} key={item.id}
+                    className="group border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-[#ff9900]/40 transition-all bg-white">
+                    <div className="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
+                      {item.image_url
+                        ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        : <Package className="h-10 w-10 text-gray-300" />
+                      }
+                    </div>
+                    <div className="p-2">
+                      <p className="text-xs font-semibold line-clamp-2 text-[#131921] leading-snug">{item.name}</p>
+                      {shop && <p className="text-[10px] text-[#007185] mt-0.5 truncate">{shop.shop_name}</p>}
+                      <div className="flex items-center gap-1 mt-1">
+                        {[1,2,3,4].map(i => <Star key={i} className="h-2.5 w-2.5 fill-[#ff9900] text-[#ff9900]" />)}
+                        <Star className="h-2.5 w-2.5 text-gray-300" />
+                      </div>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-sm font-black text-[#B12704]">₹{item.sell_price}</span>
+                        {disc > 0 && (
+                          <>
+                            <span className="text-[10px] line-through text-gray-400">₹{item.cost_price}</span>
+                            <span className="text-[10px] text-green-600 font-bold">({disc}%)</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-green-600 font-medium mt-0.5">Free delivery</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-      {/* Contact */}
-      <section id="contact" className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-foreground">Get In Touch</h2>
-          <p className="mt-3 text-muted-foreground">
-            We're here to help you succeed.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-          <Card className="text-center hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <MessageCircle className="h-8 w-8 text-green-500 mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground mb-2">WhatsApp</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Chat with us directly
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  window.open(
-                    `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with RepairDesk CRM")}`,
-                    "_blank",
-                  )
-                }
-              >
-                Open WhatsApp
-              </Button>
-            </CardContent>
-          </Card>
-          <Card className="text-center hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <Mail className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground mb-2">Email</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Send us a query
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  (window.location.href =
-                    "mailto:krs715665@gmail.com?subject=RepairDesk Support")
-                }
-              >
-                Send Email
-              </Button>
-            </CardContent>
-          </Card>
-          <Card className="text-center hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <Smartphone className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground mb-2">Call Us</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Mon-Sat, 10am-7pm
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  (window.location.href = `tel:+91${ADMIN_WHATSAPP}`)
-                }
-              >
-                +91 {ADMIN_WHATSAPP}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t bg-muted/30 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left mb-8">
-            <div className="flex flex-col items-center md:items-start">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-8 w-8 rounded-xl gradient-primary flex items-center justify-center shadow-md">
-                  <Wrench className="h-4 w-4 text-primary-foreground" />
-                </div>
-                <span className="font-black text-lg text-foreground tracking-tight">
-                  RepairXpert
-                </span>
+        {/* ── SHOP-HIGHLIGHTED REPAIR BOOKING ── */}
+        <div className="grid md:grid-cols-2 gap-3 mt-3">
+          {/* Repair Booking - highlighted with shops */}
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-amber-100">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl">🔧</span>
+              <h3 className="text-lg font-black text-[#131921]">Book a Repair</h3>
+              <span className="ml-auto px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-black">ONLINE BOOKING</span>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Select your device type and get it repaired by a nearby verified shop.</p>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[
+                { icon: "📱", label: "Mobile", sub: "Phone & Tablet" },
+                { icon: "💻", label: "Laptop", sub: "Any brand" },
+                { icon: "📺", label: "TV/LED", sub: "Smart & LCD" },
+                { icon: "❄️", label: "AC", sub: "All types" },
+                { icon: "🖥️", label: "Desktop", sub: "PC & iMac" },
+                { icon: "🧊", label: "Fridge", sub: "All brands" },
+              ].map(s => (
+                <Link to="/marketplace" key={s.label}
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[#f7f8f8] hover:bg-amber-50 hover:border-amber-200 border border-transparent transition-all text-center group">
+                  <span className="text-2xl group-hover:scale-110 transition-transform">{s.icon}</span>
+                  <span className="text-xs font-bold text-[#131921]">{s.label}</span>
+                  <span className="text-[9px] text-gray-400">{s.sub}</span>
+                </Link>
+              ))}
+            </div>
+            {/* Nearest shop CTA */}
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-100 mb-3">
+              <MapPin className="h-4 w-4 text-blue-500 shrink-0" />
+              <div className="flex-1 text-xs">
+                <p className="font-bold text-blue-700">Find shops near you</p>
+                <p className="text-blue-500">Verified repair shops with online booking</p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} RepairXpert — Advanced Repair CRM.
-                <br />
-                Repair, Sales & Service Management Platform.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center md:items-start">
-              <h4 className="font-bold text-foreground mb-3">Quick Links</h4>
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                <button
-                  onClick={() => setShowTrackModal(true)}
-                  className="text-left hover:text-primary transition-colors"
-                >
-                  Track Order
+              <Link to="/marketplace">
+                <button className="px-3 py-1.5 bg-blue-500 text-white rounded-full text-xs font-bold hover:bg-blue-600 transition-colors whitespace-nowrap">
+                  Find Shop
                 </button>
-                <Link
-                  to="/auth"
-                  className="hover:text-primary transition-colors"
-                >
-                  Sign In / Register
-                </Link>
-                <Link
-                  to="/privacy"
-                  className="hover:text-primary transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-                <Link
-                  to="/terms"
-                  className="hover:text-primary transition-colors"
-                >
-                  Terms & Conditions
-                </Link>
-                <a
-                  href={`https://wa.me/${ADMIN_WHATSAPP}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
-                >
-                  Support & Help
-                </a>
-              </div>
+              </Link>
             </div>
-
-            <div className="flex flex-col items-center md:items-start">
-              <h4 className="font-bold text-foreground mb-3">About Us</h4>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>
-                  <span className="font-semibold text-foreground">
-                    Founder:
-                  </span>{" "}
-                  Suraj Kumar
-                </p>
-                <p>
-                  <span className="font-semibold text-foreground">Phone:</span>{" "}
-                  +91 7319884599
-                </p>
-                <p>
-                  <span className="font-semibold text-foreground">
-                    Address:
-                  </span>{" "}
-                  Sheikhpura BH-PAT-14
-                </p>
-              </div>
-            </div>
+            <Link to="/marketplace">
+              <button className="w-full py-2.5 bg-[#ffd814] hover:bg-[#f7ca00] text-[#131921] font-black rounded-full text-sm transition-colors shadow-sm">
+                🚀 Book Repair Now
+              </button>
+            </Link>
           </div>
 
-          <div className="border-t pt-6 text-center text-xs text-muted-foreground uppercase tracking-widest font-bold">
-            Built with modern technology for advanced business management
+          {/* CRM Signup */}
+          <div className="bg-gradient-to-br from-[#131921] to-[#1a2940] rounded-xl p-6 shadow-sm text-white">
+            <div className="inline-block px-2.5 py-1 rounded-full text-[10px] font-black bg-[#ff9900] text-[#131921] mb-2">FOR SHOPKEEPERS</div>
+            <h3 className="text-lg font-black mb-1">RepairXpert CRM</h3>
+            <p className="text-sm text-white/70 mb-1">Manage repairs, staff, inventory & grow your business.</p>
+            <p className="text-xs text-white/50 mb-3">✅ Get online booking requests from customers</p>
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+              {[
+                { icon: Wrench, t: "Repair Jobs" },
+                { icon: Package, t: "Inventory" },
+                { icon: Users, t: "Staff Mgmt" },
+                { icon: BarChart3, t: "Analytics" },
+                { icon: Bell, t: "Online Bookings" },
+                { icon: MessageCircle, t: "WhatsApp" },
+              ].map(f => (
+                <div key={f.t} className="flex items-center gap-1.5 text-white/80">
+                  <f.icon className="h-3.5 w-3.5 text-[#ff9900]" />
+                  <span>{f.t}</span>
+                </div>
+              ))}
+            </div>
+            <Link to="/auth?mode=signup">
+              <button className="w-full py-2.5 bg-[#ff9900] hover:bg-[#fa8900] text-[#131921] font-black rounded-full text-sm transition-colors">
+                Start Free Trial →
+              </button>
+            </Link>
+            <p className="text-[10px] text-white/40 mt-2 text-center">No credit card • 7-day free trial</p>
           </div>
+        </div>
+
+        {/* ── WHY REPAIRXPERT ── */}
+        <section className="mt-3 bg-white rounded-xl p-6 shadow-sm">
+          <h2 className="text-xl font-black text-[#131921] mb-4">✅ Why RepairXpert?</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: Shield, title: "Verified Shops", desc: "All sellers are verified repair shops" },
+              { icon: Zap, title: "Fast Repair", desc: "Get repairs done same day" },
+              { icon: Wallet, title: "Best Prices", desc: "Compare prices across shops" },
+              { icon: MessageCircle, title: "WhatsApp Updates", desc: "Real-time status via WhatsApp" },
+            ].map(f => (
+              <div key={f.title} className="flex flex-col items-center text-center gap-2 p-4 rounded-xl bg-[#f7f8f8] hover:bg-[#ff9900]/10 transition-colors">
+                <div className="h-10 w-10 rounded-full bg-[#ff9900]/15 flex items-center justify-center">
+                  <f.icon className="h-5 w-5 text-[#ff9900]" />
+                </div>
+                <h4 className="text-sm font-black text-[#131921]">{f.title}</h4>
+                <p className="text-xs text-gray-500">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── PRICING CTA ── */}
+        <section className="mt-3 rounded-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-[#0f3460] to-[#533483] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="text-[10px] font-black px-2 py-0.5 rounded bg-[#ff9900] text-[#131921] inline-block mb-2">LIMITED TIME OFFER</div>
+              <h2 className="text-2xl md:text-3xl font-black">Plans from <span className="text-[#ff9900]">₹249/mo</span></h2>
+              <p className="text-white/70 text-sm mt-1">Full CRM + Marketplace + Staff Management</p>
+              <div className="flex flex-wrap gap-3 mt-3 text-xs">
+                {["Free Forever Plan", "GST Invoicing", "WhatsApp Integration", "Staff Management"].map(t => (
+                  <span key={t} className="flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5 text-green-400" />{t}</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 shrink-0">
+              <Link to="/subscription">
+                <button className="px-8 py-3 bg-[#ff9900] hover:bg-[#fa8900] text-[#131921] font-black rounded-full transition-colors whitespace-nowrap shadow-lg">
+                  View All Plans →
+                </button>
+              </Link>
+              <Link to="/auth?mode=signup">
+                <button className="px-8 py-3 border border-white/30 hover:bg-white/10 rounded-full text-sm transition-colors whitespace-nowrap text-center">
+                  Start Free Today
+                </button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* ── FOOTER ── */}
+      <footer className="bg-[#131921] text-white mt-6">
+        <div className="bg-[#232f3e] py-3 text-center text-xs cursor-pointer hover:bg-[#37475a] transition-colors">
+          ↑ Back to top
+        </div>
+        <div className="max-w-[1500px] mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+          <div>
+            <h4 className="font-black mb-3 text-white">Get to Know Us</h4>
+            <div className="flex flex-col gap-2 text-[#ddd]">
+              <Link to="/" className="hover:text-white hover:underline">About RepairXpert</Link>
+              <Link to="/auth?mode=signup" className="hover:text-white hover:underline">Partner With Us</Link>
+              <a href="https://wa.me/7319884599" target="_blank" rel="noreferrer" className="hover:text-white hover:underline">Careers</a>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-black mb-3 text-white">Marketplace</h4>
+            <div className="flex flex-col gap-2 text-[#ddd]">
+              <Link to="/marketplace" className="hover:text-white hover:underline">Browse Products</Link>
+              <Link to="/cart" className="hover:text-white hover:underline">My Cart</Link>
+              <Link to="/my-orders" className="hover:text-white hover:underline">My Orders</Link>
+              <Link to="/track" className="hover:text-white hover:underline">Track Order</Link>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-black mb-3 text-white">For Shopkeepers</h4>
+            <div className="flex flex-col gap-2 text-[#ddd]">
+              <Link to="/dashboard" className="hover:text-white hover:underline">CRM Dashboard</Link>
+              <Link to="/staff" className="hover:text-white hover:underline">Staff Management</Link>
+              <Link to="/inventory" className="hover:text-white hover:underline">Inventory</Link>
+              <Link to="/subscription" className="hover:text-white hover:underline">Pricing Plans</Link>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-black mb-3 text-white">Support</h4>
+            <div className="flex flex-col gap-2 text-[#ddd]">
+              <a href="https://wa.me/7319884599" target="_blank" rel="noreferrer" className="hover:text-white hover:underline">WhatsApp Support</a>
+              <a href="mailto:krs715665@gmail.com" className="hover:text-white hover:underline">Email Us</a>
+              <Link to="/privacy" className="hover:text-white hover:underline">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white hover:underline">Terms & Conditions</Link>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-white/10 py-4 text-center text-xs text-[#999]">
+          © {new Date().getFullYear()} RepairXpert · All rights reserved · Founder: Suraj Kumar · +91 7319884599
         </div>
       </footer>
-
-      {/* Modals */}
-      <Dialog
-        open={!!selectedFeature}
-        onOpenChange={() => setSelectedFeature(null)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 mx-auto">
-              {selectedFeature && (
-                <selectedFeature.icon className="h-8 w-8 text-primary" />
-              )}
-            </div>
-            <DialogTitle className="text-2xl font-black text-center">
-              {selectedFeature?.title}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4 text-center">
-            <p className="text-muted-foreground leading-relaxed">
-              {selectedFeature?.desc}
-            </p>
-          </div>
-          <DialogFooter>
-            <Button className="w-full" onClick={() => setSelectedFeature(null)}>
-              Got it
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Service Details Modal */}
-      <Dialog
-        open={!!selectedService}
-        onOpenChange={() => setSelectedService(null)}
-      >
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <div className="flex items-center justify-between mb-4">
-              <Badge
-                variant="outline"
-                className="text-[10px] font-black uppercase tracking-widest text-primary"
-              >
-                {selectedService?.category}
-              </Badge>
-              {selectedService?.popular && (
-                <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px]">
-                  <Star className="h-3 w-3 mr-1 fill-amber-500 text-amber-500" />{" "}
-                  Popular
-                </Badge>
-              )}
-            </div>
-            <DialogTitle className="text-xl font-black">
-              {selectedService?.name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              {selectedService?.desc}
-            </p>
-            <div className="bg-muted/50 rounded-xl p-4 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-                  Estimated Cost
-                </p>
-                <p className="text-lg font-black text-primary">
-                  {selectedService?.price}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-                  Turnaround Time
-                </p>
-                <p className="text-sm font-semibold">{selectedService?.tat}</p>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button className="w-full" onClick={() => setSelectedService(null)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Roadmap Modal */}
-      <Dialog open={showRoadmapModal} onOpenChange={setShowRoadmapModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
-          <DialogHeader className="text-center mb-6">
-            <Badge className="mx-auto bg-primary/10 text-primary border-primary/20 uppercase tracking-widest text-[10px] py-1 px-4 mb-2">
-              The Future
-            </Badge>
-            <DialogTitle className="text-3xl font-black tracking-tighter">
-              Product <span className="text-primary italic">Roadmap</span>
-            </DialogTitle>
-            <p className="text-muted-foreground text-sm mt-2">
-              See where we're heading. Our vision is to automate every
-              micro-task of your service business.
-            </p>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {roadmap.map((step, i) => (
-              <Card key={i} className="border-primary/10 bg-card/50">
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">
-                      {step.phase}
-                    </span>
-                    <Badge
-                      variant={
-                        step.status === "Completed"
-                          ? "default"
-                          : step.status === "In Progress"
-                            ? "secondary"
-                            : "outline"
-                      }
-                      className="text-[9px] font-bold"
-                    >
-                      {step.status}
-                    </Badge>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black tracking-tight">
-                      {step.title}
-                    </h3>
-                    <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-widest">
-                      {step.date}
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-3 border-t border-primary/5">
-                    {step.items.map((item, j) => (
-                      <li
-                        key={j}
-                        className="flex items-start gap-2 text-xs text-muted-foreground"
-                      >
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary/40 mt-1.5 shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Updates Modal */}
-      <Dialog open={showUpdatesModal} onOpenChange={setShowUpdatesModal}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
-          <DialogHeader className="text-center mb-6">
-            <Badge className="mx-auto bg-green-500/10 text-green-600 border-green-500/20 uppercase tracking-widest text-[10px] py-1 px-4 mb-2">
-              Live Updates
-            </Badge>
-            <DialogTitle className="text-3xl font-black tracking-tighter">
-              What's New <span className="text-primary">Today?</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            {updates.map((u, i) => (
-              <div
-                key={i}
-                className={`space-y-3 ${i > 0 ? "pt-6 border-t border-border/40" : ""}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center text-white shrink-0">
-                    <Zap className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black tracking-tight leading-tight">
-                      {u.title}
-                    </h4>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      {u.date}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed pl-13">
-                  {u.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-      {/* Track Order Modal */}
-      <Dialog open={showTrackModal} onOpenChange={setShowTrackModal}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none">
-          <DialogTitle className="sr-only">Track Your Order</DialogTitle>
-          <div className="bg-background rounded-3xl overflow-hidden">
-            <TrackOrder isModal />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

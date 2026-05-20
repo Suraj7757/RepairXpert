@@ -20,6 +20,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { useSupabaseQuery, useSoftDelete } from "@/hooks/useSupabaseData";
 import { supabase } from "@/services/supabase";
@@ -54,6 +56,9 @@ export default function Inventory() {
     costPrice: "",
     sellPrice: "",
     gstPercent: "18",
+    is_marketplace_listed: false,
+    description: "",
+    image_url: "",
   });
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,6 +84,9 @@ export default function Inventory() {
         costPrice: "",
         sellPrice: "",
         gstPercent: "18",
+        is_marketplace_listed: false,
+        description: "",
+        image_url: "",
       });
       setOpen(true);
     }
@@ -111,6 +119,9 @@ export default function Inventory() {
         cost_price: parseFloat(form.costPrice) || 0,
         sell_price: parseFloat(form.sellPrice) || 0,
         gst_percent: parseFloat(form.gstPercent) || 18,
+        is_marketplace_listed: form.is_marketplace_listed,
+        description: form.description,
+        image_url: form.image_url,
       };
 
       if (editingItem) {
@@ -137,6 +148,9 @@ export default function Inventory() {
         costPrice: "",
         sellPrice: "",
         gstPercent: "18",
+        is_marketplace_listed: false,
+        description: "",
+        image_url: "",
       });
     } catch (error: any) {
       console.error(error);
@@ -157,6 +171,9 @@ export default function Inventory() {
       costPrice: String(item.cost_price),
       sellPrice: String(item.sell_price),
       gstPercent: String(item.gst_percent),
+      is_marketplace_listed: item.is_marketplace_listed || false,
+      description: item.description || "",
+      image_url: item.image_url || "",
     });
     setOpen(true);
   };
@@ -223,6 +240,9 @@ export default function Inventory() {
                   costPrice: "",
                   sellPrice: "",
                   gstPercent: "18",
+                  is_marketplace_listed: false,
+                  description: "",
+                  image_url: "",
                 });
                 setOpen(true);
               }}
@@ -238,6 +258,66 @@ export default function Inventory() {
           onClose={() => setScanOpen(false)}
           onScan={handleScanned}
         />
+
+        {/* Low Stock Alerts */}
+        {(() => {
+          const lowItems = items.filter((i: any) => Number(i.quantity) <= Number(i.min_stock || 5));
+          if (lowItems.length === 0) return null;
+          return (
+            <Card className="border-amber-300/60 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 animate-pulse" />
+                  <h3 className="font-bold text-amber-800 dark:text-amber-300">
+                    {lowItems.length} item{lowItems.length > 1 ? "s" : ""} below threshold — reorder soon
+                  </h3>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {lowItems.slice(0, 6).map((i: any) => {
+                    const suggested = Math.max(1, (Number(i.min_stock || 5) * 3) - Number(i.quantity || 0));
+                    const supplier = (i as any).supplier || "";
+                    const supplierPhone = ((i as any).supplier_phone || "").replace(/\D/g, "");
+                    const waText = encodeURIComponent(`Hi${supplier ? ` ${supplier}` : ""}, please send ${suggested} × ${i.name} (SKU: ${i.sku}). Thanks!`);
+                    return (
+                      <div key={i.id} className="rounded-lg bg-background border p-3 text-sm">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-bold truncate">{i.name}</p>
+                            <p className="text-[10px] font-mono text-muted-foreground truncate">{i.sku}</p>
+                          </div>
+                          <Badge variant="destructive" className="text-[10px] shrink-0">{i.quantity} left</Badge>
+                        </div>
+                        <p className="text-xs mt-1 text-muted-foreground">
+                          Suggested reorder: <span className="font-bold text-foreground">{suggested}</span>
+                          {supplier && <> · Supplier: <span className="font-semibold">{supplier}</span></>}
+                        </p>
+                        <div className="flex gap-1.5 mt-2">
+                          <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => openEdit(i)}>
+                            <Pencil className="h-3 w-3 mr-1" /> Restock
+                          </Button>
+                          {supplierPhone && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                              onClick={() => window.open(`https://wa.me/${supplierPhone}?text=${waText}`, "_blank")}
+                            >
+                              WhatsApp
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {lowItems.length > 6 && (
+                  <p className="text-xs text-muted-foreground">+ {lowItems.length - 6} more low-stock items below</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()}
+
 
         {/* Category Tabs */}
         <Tabs
@@ -520,6 +600,42 @@ export default function Inventory() {
                     className="h-12 rounded-xl font-bold"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold">List on Marketplace</Label>
+                    <p className="text-xs text-muted-foreground">Make this item available for customers to buy online.</p>
+                  </div>
+                  <Switch
+                    checked={form.is_marketplace_listed}
+                    onCheckedChange={(checked) => setForm({ ...form, is_marketplace_listed: checked })}
+                  />
+                </div>
+                
+                {form.is_marketplace_listed && (
+                  <div className="grid grid-cols-1 gap-4 animate-fade-in">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Image URL</Label>
+                      <Input
+                        value={form.image_url}
+                        onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                        className="h-12 rounded-xl"
+                        placeholder="https://example.com/image.png"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Product Description</Label>
+                      <Textarea
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className="rounded-xl"
+                        placeholder="Describe the product for customers..."
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="bg-primary/5 p-4 rounded-2xl flex items-start gap-3 border border-primary/10">

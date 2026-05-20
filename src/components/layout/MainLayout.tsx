@@ -7,6 +7,10 @@ import { WhatsAppButton } from "@/components/common/WhatsAppButton";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { InstallPWAPrompt } from "@/components/common/InstallPWAPrompt";
 import { OfflineBanner } from "@/components/common/OfflineBanner";
+import { SyncStatus } from "@/components/common/SyncStatus";
+import { CommandPalette } from "@/components/common/CommandPalette";
+import { DailySummaryNotifier } from "@/components/common/DailySummaryNotifier";
+import { TrackOrderModal } from "@/features/jobs/TrackOrderModal";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -34,7 +38,7 @@ export function MainLayout({ children, title }: LayoutProps) {
             </div>
             <Header />
           </header>
-          <main className="flex-1 p-6 lg:p-8 pb-24 md:pb-8 overflow-y-auto relative scrollbar-thin scrollbar-thumb-primary/20">
+          <main className="flex-1 p-6 lg:p-8 pb-32 md:pb-8 overflow-y-auto relative scrollbar-thin scrollbar-thumb-primary/20">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -46,7 +50,11 @@ export function MainLayout({ children, title }: LayoutProps) {
           </main>
           {/* Chatbot mounted globally in App.tsx */}
           <WhatsAppButton />
+          <TrackOrderModal />
           <InstallPWAPrompt />
+          <SyncStatus />
+          <CommandPalette />
+          <DailySummaryNotifier />
           <MobileBottomNav />
         </div>
       </div>

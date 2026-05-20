@@ -62,7 +62,7 @@ export default function RefundModal({
   payment,
   onSuccess,
 }: RefundModalProps) {
-  const { user } = useAuth();
+  const { user, shopId } = useAuth();
   const [refundType, setRefundType] = useState<"full" | "partial">("full");
   const [refundAmount, setRefundAmount] = useState("");
   const [reason, setReason] = useState("");
@@ -98,6 +98,7 @@ export default function RefundModal({
         job_id: payment.job_id,
         payment_id: payment.id || null,
         user_id: user.id,
+        shop_id: shopId || null,
         customer_name: payment.customer_name || "",
         customer_phone: (payment as any).customer_mobile || "",
         original_amount: payment.amount,

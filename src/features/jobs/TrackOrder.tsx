@@ -106,9 +106,17 @@ const statusColors: Record<string, string> = {
   Returned: "bg-indigo-100 text-indigo-700",
 };
 
-export default function TrackOrder({ isModal = false }: { isModal?: boolean }) {
+export default function TrackOrder({
+  isModal = false,
+  initialId = "",
+  onClose,
+}: {
+  isModal?: boolean;
+  initialId?: string;
+  onClose?: () => void;
+}) {
   const [searchParams] = useSearchParams();
-  const [trackingId, setTrackingId] = useState(searchParams.get("id") || "");
+  const [trackingId, setTrackingId] = useState(initialId || searchParams.get("id") || "");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -123,40 +131,60 @@ export default function TrackOrder({ isModal = false }: { isModal?: boolean }) {
   const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
-    const id = searchParams.get("id");
+    const id = initialId || searchParams.get("id");
     if (id) {
       setTrackingId(id);
       handleTrackDirect(id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialId]);
 
   const handleTrackDirect = async (id: string) => {
+    const cleaned = (id || "").trim().toUpperCase();
+    if (cleaned.length < 3) {
+      toast.error("Tracking ID looks too short");
+      return;
+    }
     setLoading(true);
     setSearched(true);
-    const { data, error } = await supabase.rpc("track_order", {
-      _tracking_id: id,
-    });
-    if (error) {
-      setResult(null);
-    } else {
-      const responseData = data as any;
-      setResult(responseData);
-      if (responseData?.user_id) {
-        const { data: mSettings } = await supabase
-          .from("shop_settings")
-          .select("*")
-          .eq("user_id", responseData.user_id)
-          .maybeSingle();
-        setMerchantSettings(mSettings);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.rpc("track_order", {
+        _tracking_id: cleaned,
+      });
+      if (error) {
+        console.error(error);
+        setResult(null);
+      } else {
+        const responseData = data as any;
+        setResult(responseData);
+        if (responseData?.user_id) {
+          const { data: mSettings } = await supabase
+            .from("shop_settings")
+            .select("*")
+            .eq("user_id", responseData.user_id)
+            .maybeSingle();
+          setMerchantSettings(mSettings);
+        } else {
+          setMerchantSettings(null);
+        }
       }
+    } catch (e) {
+      console.error(e);
+      setResult(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleTrack = () => {
-    if (trackingId.trim()) handleTrackDirect(trackingId.trim());
+    if (!trackingId.trim()) {
+      toast.error("Enter a tracking ID");
+      return;
+    }
+    handleTrackDirect(trackingId.trim());
   };
+
 
   const downloadInvoicePDF = () => {
     if (!result) return;
@@ -325,8 +353,61 @@ export default function TrackOrder({ isModal = false }: { isModal?: boolean }) {
           </Card>
         )}
 
+        {/* Marketplace order result */}
+        {!loading && result && result.type === "marketplace" && (
+          <Card className="border-0 shadow-xl overflow-hidden">
+            <div className="p-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs opacity-75 font-medium">Order #</p>
+                  <p className="font-black text-lg font-mono">{result.tracking_id}</p>
+                </div>
+                <Badge className="bg-white/20 text-white border-0 font-bold capitalize">{String(result.status).replace(/_/g, " ")}</Badge>
+              </div>
+            </div>
+            <CardContent className="p-4 space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <InfoBox label="Customer" value={result.customer_name || "—"} />
+                <InfoBox label="Shop" value={result.shop_name || "—"} />
+                <InfoBox label="Total" value={`₹${Number(result.total).toLocaleString()}`} highlight />
+                <InfoBox label="Payment" value={`${String(result.payment_method).toUpperCase()} · ${result.payment_status}`} />
+                <InfoBox label="Fulfillment" value={String(result.fulfillment_method || "delivery")} />
+                <InfoBox label="Placed" value={new Date(result.created_at).toLocaleDateString("en-IN")} />
+                {result.qr_receiver && <InfoBox label="Paid to" value={result.qr_receiver} />}
+              </div>
+              <div className="border-t pt-3 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Items</p>
+                {Array.isArray(result.items) && result.items.map((it: any, i: number) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="line-clamp-1">{it.title} × {it.quantity}</span>
+                    <span>₹{it.line_total}</span>
+                  </div>
+                ))}
+              </div>
+              {Array.isArray(result.history) && result.history.length > 0 && (
+                <div className="border-t pt-3 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status History</p>
+                  <ol className="space-y-1.5">
+                    {result.history.map((h: any, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-xs">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-violet-500 shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-semibold capitalize">{String(h.to_status).replace(/_/g, " ")}</p>
+                          {h.note && <p className="text-muted-foreground">{h.note}</p>}
+                          <p className="text-muted-foreground/70 text-[10px]">{new Date(h.created_at).toLocaleString("en-IN")}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+
         {/* Result */}
-        {!loading && result && (
+        {!loading && result && result.type !== "marketplace" && (
           <div className="space-y-4">
             {/* Status Card */}
             <Card className="border-0 shadow-xl overflow-hidden">

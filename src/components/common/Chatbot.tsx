@@ -57,6 +57,12 @@ export function Chatbot() {
     }
   }, [messages, isOpen]);
 
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener("open-rx-chatbot", handleOpen);
+    return () => window.removeEventListener("open-rx-chatbot", handleOpen);
+  }, []);
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || isStreaming) return;
@@ -97,63 +103,30 @@ export function Chatbot() {
 
     try {
       abortRef.current = new AbortController();
-      const resp = await fetch(CHAT_URL, {
+      const response = await fetch("https://text.pollinations.ai/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: history,
-          context: { isAuthed: !!user, route: location.pathname },
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are RepairXpert AI, a helpful and professional CRM assistant for repair shops. You answer in concise Hindi-English mix (Hinglish) or English. You help users understand how to manage jobs, inventory, sales, and track repairs.",
+            },
+            ...history,
+          ],
         }),
         signal: abortRef.current.signal,
       });
 
-      if (!resp.ok) {
-        if (resp.status === 429) {
-          toast.error("Bahut zyada requests. Thodi der baad try karein.");
-        } else if (resp.status === 402) {
-          toast.error("AI credits khatam. Admin se contact karein.");
-        } else {
-          toast.error("AI assistant error.");
-        }
-        setIsStreaming(false);
-        return;
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
 
-      if (!resp.body) throw new Error("No response body");
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let done = false;
-
-      while (!done) {
-        const { done: d, value } = await reader.read();
-        if (d) break;
-        buffer += decoder.decode(value, { stream: true });
-        let nl: number;
-        while ((nl = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nl);
-          buffer = buffer.slice(nl + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") {
-            done = true;
-            break;
-          }
-          try {
-            const parsed = JSON.parse(json);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) upsertAssistant(content);
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
-      }
+      const text = await response.text();
+      upsertAssistant(text);
     } catch (e: any) {
       if (e?.name !== "AbortError") {
         console.error("Chat error:", e);
@@ -166,10 +139,17 @@ export function Chatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div
+      className={cn(
+        "fixed z-50 flex-col items-end",
+        isOpen
+          ? "inset-0 flex bg-background/80 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none sm:inset-auto sm:bottom-6 sm:right-6"
+          : "hidden md:flex bottom-6 right-6"
+      )}
+    >
       {isOpen && (
-        <Card className="w-80 sm:w-96 mb-4 shadow-2xl border-primary/10 animate-in slide-in-from-bottom-5 duration-300 overflow-hidden">
-          <CardHeader className="gradient-primary p-4 flex flex-row items-center justify-between space-y-0">
+        <Card className="w-full h-full sm:h-auto sm:w-96 sm:mb-4 shadow-2xl border-primary/10 animate-in slide-in-from-bottom-5 duration-300 overflow-hidden flex flex-col justify-between">
+          <CardHeader className="gradient-primary p-4 flex flex-row items-center justify-between space-y-0 shrink-0">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-white" />
@@ -196,7 +176,7 @@ export function Chatbot() {
             </Button>
           </CardHeader>
           <CardContent
-            className="p-4 h-80 overflow-y-auto flex flex-col gap-3 bg-slate-50"
+            className="p-4 flex-1 overflow-y-auto flex flex-col gap-3 bg-slate-50"
             ref={scrollRef}
           >
             {messages.map((m) => (
@@ -252,7 +232,7 @@ export function Chatbot() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="p-3 bg-white border-t">
+          <CardFooter className="p-3 bg-white border-t shrink-0">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -277,7 +257,7 @@ export function Chatbot() {
               </Button>
             </form>
           </CardFooter>
-          <div className="px-4 py-2 bg-slate-50 border-t flex justify-center gap-4">
+          <div className="px-4 py-2 bg-slate-50 border-t flex justify-center gap-4 shrink-0">
             <a
               href={`https://wa.me/91${SUPPORT_WHATSAPP}`}
               target="_blank"
@@ -295,22 +275,15 @@ export function Chatbot() {
           </div>
         </Card>
       )}
-      <Button
-        size="icon"
-        className={cn(
-          "h-14 w-14 rounded-full shadow-2xl transition-all duration-300 hover:scale-110",
-          isOpen
-            ? "rotate-90 bg-destructive hover:bg-destructive"
-            : "gradient-primary",
-        )}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
+      {!isOpen && (
+        <Button
+          size="icon"
+          className="h-14 w-14 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 gradient-primary hidden md:flex"
+          onClick={() => setIsOpen(true)}
+        >
           <MessageCircle className="h-6 w-6" />
-        )}
-      </Button>
+        </Button>
+      )}
     </div>
   );
 }

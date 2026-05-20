@@ -133,7 +133,7 @@ export default function Sells() {
   };
 
   const handleSell = async () => {
-    if (!selectedItem || !user) return;
+    if (!selectedItem || !user || isSubmitting) return;
     if (qty > selectedItem.quantity) {
       toast.error("Not enough stock");
       return;
@@ -564,11 +564,13 @@ export default function Sells() {
                 />
               </div>
               <div>
-                <Label>Customer Mobile</Label>
+                <Label>Customer Mobile <span className="text-[10px] text-muted-foreground">(10 digits)</span></Label>
                 <Input
                   placeholder="9876543210"
+                  inputMode="numeric"
+                  maxLength={10}
                   value={customerMobile}
-                  onChange={(e) => setCustomerMobile(e.target.value)}
+                  onChange={(e) => setCustomerMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 />
               </div>
               <div>

@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   BrainCircuit,
@@ -37,24 +38,33 @@ export default function AiDiagnosticCenter() {
     setIsAnalyzing(true);
     setResult(null);
     try {
-      // Simulate an AI call via edge function or basic mock if edge function isn't ready
-      const { data, error } = await supabase.functions.invoke("ai-assistant", {
-        body: {
+      const response = await fetch("https://text.pollinations.ai/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           messages: [
             {
+              role: "system",
+              content:
+                "Act as an expert repair technician. Return ONLY a valid JSON array of objects with 'issue' (string), 'confidence' (number 0-100), 'recommendedAction' (string), and 'estimatedCost' (number). No markdown formatting.",
+            },
+            {
               role: "user",
-              content: `Act as an expert repair technician. Analyze this issue: Device is ${deviceModel}. Symptoms: ${symptoms}. Return a JSON array of objects with 'issue' (string), 'confidence' (number 0-100), 'recommendedAction' (string), and 'estimatedCost' (number). Return ONLY valid JSON, no markdown formatting.`,
+              content: `Device is ${deviceModel}. Symptoms: ${symptoms}.`,
             },
           ],
-        },
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("AI API failed");
+
+      let content = await response.text();
 
       // Parse the response
       let parsed = [];
       try {
-        let content = data.choices[0].message.content;
         // Clean markdown backticks if present
         if (content.startsWith("\`\`\`json")) {
           content = content

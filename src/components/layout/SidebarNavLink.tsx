@@ -31,7 +31,16 @@ export function SidebarNavLink({
           !active && "hover:bg-sidebar-accent/60",
         )}
       >
-        <Link to={to} className="flex items-center gap-3">
+        <Link
+          to={to}
+          onClick={(e) => {
+            if (to === "/track") {
+              e.preventDefault();
+              window.dispatchEvent(new CustomEvent("open-rx-track"));
+            }
+          }}
+          className="flex items-center gap-3"
+        >
           {active && (
             <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-sidebar-primary" />
           )}

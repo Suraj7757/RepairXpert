@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
-import { useSupabaseQuery, useShopSettings } from "@/hooks/useSupabaseData";
+import { useSupabaseQuery, useShopSettings, useSoftDelete } from "@/hooks/useSupabaseData";
 import { supabase } from "@/services/supabase";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -63,6 +63,7 @@ const methodIcons: Record<string, any> = {
 
 export default function Payments() {
   const { user } = useAuth();
+  const { softDelete } = useSoftDelete();
   const {
     data: payments,
     loading,
@@ -75,12 +76,24 @@ export default function Payments() {
   const [editMethod, setEditMethod] = useState<PaymentMethod>("Cash");
   const [editQr, setEditQr] = useState("");
   const [editAmount, setEditAmount] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [viewPayment, setViewPayment] = useState<any>(null);
   const [payLinkOpen, setPayLinkOpen] = useState(false);
   const [payLinkPayment, setPayLinkPayment] = useState<any>(null);
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundPayment, setRefundPayment] = useState<any>(null);
+
+  const handleDeletePayment = async (p: any, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!p) return;
+    if (!window.confirm(`Are you sure you want to delete the payment of ₹${p.amount} for Job ${p.job_id}?`)) return;
+    const success = await softDelete("payments", p.id, `Job ${p.job_id} Payment`);
+    if (success) {
+      toast.success("Payment deleted successfully");
+      refetch();
+    }
+  };
 
   const filtered = payments.filter(
     (p: any) =>
@@ -120,29 +133,47 @@ export default function Payments() {
   };
 
   const handleEditPayment = async () => {
-    if (!selectedPayment || !user) return;
-    const amount = parseFloat(editAmount) || Number(selectedPayment.amount);
-    const splitEnabled = settings?.revenue_split_enabled !== false;
-    const adminPct = splitEnabled
-      ? (settings?.admin_share_percent ?? 50) / 100
-      : 1;
-    const staffPct = splitEnabled
-      ? (settings?.staff_share_percent ?? 50) / 100
-      : 0;
-    await supabase
-      .from("payments")
-      .update({
-        method: editMethod as any,
-        amount,
-        qr_receiver: editMethod === "UPI/QR" ? editQr : null,
-        admin_share: amount * adminPct,
-        staff_share: amount * staffPct,
-      })
-      .eq("id", selectedPayment.id);
-    refetch();
-    setEditOpen(false);
-    toast.success("Payment updated");
+    if (!selectedPayment || !user || savingEdit) return;
+    const amount = parseFloat(editAmount);
+    if (!isFinite(amount) || amount < 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (editMethod === "UPI/QR" && !editQr) {
+      toast.error("Select a QR receiver");
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const splitEnabled = settings?.revenue_split_enabled !== false;
+      const adminPct = splitEnabled
+        ? (settings?.admin_share_percent ?? 50) / 100
+        : 1;
+      const staffPct = splitEnabled
+        ? (settings?.staff_share_percent ?? 50) / 100
+        : 0;
+      const { error } = await supabase
+        .from("payments")
+        .update({
+          method: editMethod as any,
+          amount,
+          qr_receiver: editMethod === "UPI/QR" ? editQr : null,
+          admin_share: amount * adminPct,
+          staff_share: amount * staffPct,
+        })
+        .eq("id", selectedPayment.id);
+      if (error) throw error;
+      refetch();
+      setEditOpen(false);
+      toast.success("Payment updated");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to save payment");
+    } finally {
+      setSavingEdit(false);
+    }
   };
+
 
   const qrReceivers = settings?.qr_receivers || [
     "Admin QR",
@@ -514,11 +545,21 @@ export default function Payments() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 w-7 p-0 text-muted-foreground"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                                 title="Edit"
                                 onClick={() => openEditPayment(p)}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              {/* Delete */}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                                title="Delete"
+                                onClick={(e) => handleDeletePayment(p, e)}
+                              >
+                                <X className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </td>
@@ -694,15 +735,25 @@ export default function Payments() {
                 </Button>
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setDetailsOpen(false)}
-              >
-                Close
-              </Button>
-            </DialogFooter>
+             <DialogFooter className="flex gap-2">
+               <Button
+                 variant="destructive"
+                 className="flex-1"
+                 onClick={() => {
+                   handleDeletePayment(viewPayment);
+                   setDetailsOpen(false);
+                 }}
+               >
+                 Delete
+               </Button>
+               <Button
+                 variant="outline"
+                 className="flex-1"
+                 onClick={() => setDetailsOpen(false)}
+               >
+                 Close
+               </Button>
+             </DialogFooter>
           </DialogContent>
         </Dialog>
 
@@ -758,11 +809,14 @@ export default function Payments() {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEditOpen(false)}>
+              <Button variant="outline" onClick={() => setEditOpen(false)} disabled={savingEdit}>
                 Cancel
               </Button>
-              <Button onClick={handleEditPayment}>Save Changes</Button>
+              <Button onClick={handleEditPayment} disabled={savingEdit}>
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </Button>
             </DialogFooter>
+
           </DialogContent>
         </Dialog>
 
