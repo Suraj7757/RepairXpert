@@ -162,14 +162,8 @@ export function Sidebar() {
             )}
           </div>
 
-          {!isAdmin && (
-            <>
-              {/* Create Button */}
-              <SidebarGroup>
-                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
-                  Quick Action
-                </SidebarGroupLabel>
-                <div className="px-3 mb-1">
+          {/* Role-aware menu */}
+
           {!isAdmin && isCustomer && (
             <SidebarGroup className="mt-2">
               <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
