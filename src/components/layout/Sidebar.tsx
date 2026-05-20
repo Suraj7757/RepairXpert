@@ -91,13 +91,23 @@ const secondaryItems = [
   { title: "Trash", url: "/trash", icon: Trash2 },
 ];
 
+const customerItems = [
+  { title: "Home", url: "/customer", icon: Home },
+  { title: "Browse Shop", url: "/marketplace", icon: ShoppingBag },
+  { title: "My Cart", url: "/cart", icon: ShoppingCart },
+  { title: "My Orders", url: "/my-orders", icon: Package },
+  { title: "Track Order", url: "/track", icon: Smartphone },
+  { title: "Settings", url: "/settings", icon: Settings },
+];
+
 export function Sidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isSuperAdmin, signOut } = useAuth();
+  const { isSuperAdmin, accountType, signOut } = useAuth();
   const collapsed = state === "collapsed";
   const isAdmin = isSuperAdmin;
+  const isCustomer = accountType === "customer";
   const [createOpen, setCreateOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
