@@ -345,6 +345,7 @@ export default function TrackOrder({ isModal = false }: { isModal?: boolean }) {
                 <InfoBox label="Payment" value={`${String(result.payment_method).toUpperCase()} · ${result.payment_status}`} />
                 <InfoBox label="Fulfillment" value={String(result.fulfillment_method || "delivery")} />
                 <InfoBox label="Placed" value={new Date(result.created_at).toLocaleDateString("en-IN")} />
+                {result.qr_receiver && <InfoBox label="Paid to" value={result.qr_receiver} />}
               </div>
               <div className="border-t pt-3 space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Items</p>
@@ -355,9 +356,27 @@ export default function TrackOrder({ isModal = false }: { isModal?: boolean }) {
                   </div>
                 ))}
               </div>
+              {Array.isArray(result.history) && result.history.length > 0 && (
+                <div className="border-t pt-3 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status History</p>
+                  <ol className="space-y-1.5">
+                    {result.history.map((h: any, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-xs">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-violet-500 shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-semibold capitalize">{String(h.to_status).replace(/_/g, " ")}</p>
+                          {h.note && <p className="text-muted-foreground">{h.note}</p>}
+                          <p className="text-muted-foreground/70 text-[10px]">{new Date(h.created_at).toLocaleString("en-IN")}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
+
 
         {/* Result */}
         {!loading && result && result.type !== "marketplace" && (
