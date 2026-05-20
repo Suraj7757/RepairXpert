@@ -170,6 +170,34 @@ export function Sidebar() {
                   Quick Action
                 </SidebarGroupLabel>
                 <div className="px-3 mb-1">
+          {!isAdmin && isCustomer && (
+            <SidebarGroup className="mt-2">
+              <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                Customer Menu
+              </SidebarGroupLabel>
+              <SidebarMenu className="px-3">
+                {customerItems.map((item) => (
+                  <SidebarNavLink
+                    key={item.url}
+                    to={item.url}
+                    icon={item.icon}
+                    label={item.title}
+                    active={location.pathname === item.url}
+                    collapsed={collapsed}
+                  />
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
+
+          {!isAdmin && !isCustomer && (
+            <>
+              {/* Create Button */}
+              <SidebarGroup>
+                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                  Quick Action
+                </SidebarGroupLabel>
+                <div className="px-3 mb-1">
                   <button
                     onClick={() => setCreateOpen(true)}
                     className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md shadow-primary/20 hover:bg-primary/90 transition-all ${collapsed ? "justify-center" : ""}`}
