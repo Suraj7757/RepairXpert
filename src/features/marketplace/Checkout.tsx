@@ -17,6 +17,8 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [orderIds, setOrderIds] = useState<string[]>([]);
+  const [sellerQrMap, setSellerQrMap] = useState<Record<string, string[]>>({});
+  const [selectedQrBySeller, setSelectedQrBySeller] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     name: user?.user_metadata?.display_name || "",
     mobile: "",
@@ -35,6 +37,19 @@ export default function Checkout() {
         .select("*, marketplace_listings(*)")
         .eq("user_id", user.id);
       setItems(data || []);
+      // Fetch QR receivers for each unique seller
+      const sellerIds = Array.from(new Set((data || []).map((i: any) => i.marketplace_listings?.seller_id).filter(Boolean)));
+      if (sellerIds.length > 0) {
+        const { data: shops } = await (supabase as any)
+          .from("shop_settings")
+          .select("user_id, qr_receivers")
+          .in("user_id", sellerIds);
+        const map: Record<string, string[]> = {};
+        (shops || []).forEach((s: any) => {
+          map[s.user_id] = (s.qr_receivers && s.qr_receivers.length > 0) ? s.qr_receivers : ["Shop QR"];
+        });
+        setSellerQrMap(map);
+      }
       setLoading(false);
     })();
   }, [user?.id]);
@@ -50,8 +65,13 @@ export default function Checkout() {
   const totalAmount = items.reduce((s, i) => s + (i.marketplace_listings?.price || 0) * i.quantity, 0);
 
   const placeOrders = async () => {
+    if (placing) return;
     if (!form.name || !form.mobile) {
       toast.error("Please fill name and mobile");
+      return;
+    }
+    if (!/^\d{10}$/.test(form.mobile.replace(/\D/g, ""))) {
+      toast.error("Enter a valid 10-digit mobile number");
       return;
     }
     if (form.fulfillment_method === "delivery" && !form.address) {
@@ -62,11 +82,20 @@ export default function Checkout() {
       toast.error("Please choose a pickup date");
       return;
     }
+    if (form.payment_method === "upi") {
+      const missing = Object.keys(bySeller).find((sid) => !selectedQrBySeller[sid]);
+      if (missing) {
+        toast.error("Please pick a QR receiver for each seller");
+        return;
+      }
+    }
     setPlacing(true);
     const created: string[] = [];
     try {
       for (const [sellerId, sellerItems] of Object.entries(bySeller) as any) {
         const itemsPayload = sellerItems.map((it: any) => ({ listing_id: it.listing_id, quantity: it.quantity }));
+        const qrChoice = form.payment_method === "upi" ? (selectedQrBySeller[sellerId] || "") : "";
+        const notesWithQr = qrChoice ? `${form.notes ? form.notes + "\n" : ""}[Paid to: ${qrChoice}]` : form.notes;
         const { data, error } = await (supabase as any).rpc("place_marketplace_order", {
           _seller_id: sellerId,
           _items: itemsPayload,
@@ -75,16 +104,16 @@ export default function Checkout() {
           _buyer_address: form.address,
           _payment_method: form.payment_method,
           _shipping: 0,
-          _notes: form.notes,
+          _notes: notesWithQr,
         });
         if (error) { toast.error(error.message); continue; }
         if (data) {
-          // attach fulfillment fields (column added in migration)
           await (supabase as any)
             .from("marketplace_orders")
             .update({
               fulfillment_method: form.fulfillment_method,
               pickup_date: form.fulfillment_method === "pickup" ? form.pickup_date : null,
+              qr_receiver: qrChoice || null,
             })
             .eq("id", data);
           created.push(data);
@@ -93,11 +122,17 @@ export default function Checkout() {
       if (created.length > 0) {
         setOrderIds(created);
         toast.success(`${created.length} order(s) placed!`);
+      } else {
+        toast.error("No orders were created. Please try again.");
       }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to place order");
     } finally {
       setPlacing(false);
     }
   };
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
 
