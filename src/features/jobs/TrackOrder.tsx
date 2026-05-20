@@ -132,31 +132,51 @@ export default function TrackOrder({ isModal = false }: { isModal?: boolean }) {
   }, []);
 
   const handleTrackDirect = async (id: string) => {
+    const cleaned = (id || "").trim().toUpperCase();
+    if (cleaned.length < 3) {
+      toast.error("Tracking ID looks too short");
+      return;
+    }
     setLoading(true);
     setSearched(true);
-    const { data, error } = await supabase.rpc("track_order", {
-      _tracking_id: id,
-    });
-    if (error) {
-      setResult(null);
-    } else {
-      const responseData = data as any;
-      setResult(responseData);
-      if (responseData?.user_id) {
-        const { data: mSettings } = await supabase
-          .from("shop_settings")
-          .select("*")
-          .eq("user_id", responseData.user_id)
-          .maybeSingle();
-        setMerchantSettings(mSettings);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.rpc("track_order", {
+        _tracking_id: cleaned,
+      });
+      if (error) {
+        console.error(error);
+        setResult(null);
+      } else {
+        const responseData = data as any;
+        setResult(responseData);
+        if (responseData?.user_id) {
+          const { data: mSettings } = await supabase
+            .from("shop_settings")
+            .select("*")
+            .eq("user_id", responseData.user_id)
+            .maybeSingle();
+          setMerchantSettings(mSettings);
+        } else {
+          setMerchantSettings(null);
+        }
       }
+    } catch (e) {
+      console.error(e);
+      setResult(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleTrack = () => {
-    if (trackingId.trim()) handleTrackDirect(trackingId.trim());
+    if (!trackingId.trim()) {
+      toast.error("Enter a tracking ID");
+      return;
+    }
+    handleTrackDirect(trackingId.trim());
   };
+
 
   const downloadInvoicePDF = () => {
     if (!result) return;
