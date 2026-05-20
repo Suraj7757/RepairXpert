@@ -165,22 +165,23 @@ export function MobileBottomNav() {
             return (
               <button
                 key={item.label}
-                onClick={() => setMenuOpen((v) => !v)}
+                onClick={() => isCustomer ? navigate(item.to) : setMenuOpen((v) => !v)}
                 className="relative -top-4 flex flex-col items-center justify-center group outline-none mx-auto"
                 aria-label={item.label}
               >
                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <motion.div
                   whileTap={{ scale: 0.88 }}
-                  animate={menuOpen ? { rotate: 135 } : { rotate: 0 }}
+                  animate={!isCustomer && menuOpen ? { rotate: 135 } : { rotate: 0 }}
                   transition={{ duration: 0.3 }}
                   className="h-[3.75rem] w-[3.75rem] rounded-full bg-gradient-to-tr from-primary to-primary/80 flex items-center justify-center shadow-2xl ring-[5px] ring-background text-white hover:shadow-primary/40 transition-all z-10"
                 >
-                  <Plus className="h-7 w-7" strokeWidth={2.5} />
+                  <Icon className="h-7 w-7" strokeWidth={2.5} />
                 </motion.div>
               </button>
             );
           }
+
 
           if (item.isMenu) {
             return (
