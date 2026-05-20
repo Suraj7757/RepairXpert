@@ -259,6 +259,66 @@ export default function Inventory() {
           onScan={handleScanned}
         />
 
+        {/* Low Stock Alerts */}
+        {(() => {
+          const lowItems = items.filter((i: any) => Number(i.quantity) <= Number(i.min_stock || 5));
+          if (lowItems.length === 0) return null;
+          return (
+            <Card className="border-amber-300/60 bg-amber-50/60 dark:bg-amber-950/20 shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 animate-pulse" />
+                  <h3 className="font-bold text-amber-800 dark:text-amber-300">
+                    {lowItems.length} item{lowItems.length > 1 ? "s" : ""} below threshold — reorder soon
+                  </h3>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {lowItems.slice(0, 6).map((i: any) => {
+                    const suggested = Math.max(1, (Number(i.min_stock || 5) * 3) - Number(i.quantity || 0));
+                    const supplier = (i as any).supplier || "";
+                    const supplierPhone = ((i as any).supplier_phone || "").replace(/\D/g, "");
+                    const waText = encodeURIComponent(`Hi${supplier ? ` ${supplier}` : ""}, please send ${suggested} × ${i.name} (SKU: ${i.sku}). Thanks!`);
+                    return (
+                      <div key={i.id} className="rounded-lg bg-background border p-3 text-sm">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-bold truncate">{i.name}</p>
+                            <p className="text-[10px] font-mono text-muted-foreground truncate">{i.sku}</p>
+                          </div>
+                          <Badge variant="destructive" className="text-[10px] shrink-0">{i.quantity} left</Badge>
+                        </div>
+                        <p className="text-xs mt-1 text-muted-foreground">
+                          Suggested reorder: <span className="font-bold text-foreground">{suggested}</span>
+                          {supplier && <> · Supplier: <span className="font-semibold">{supplier}</span></>}
+                        </p>
+                        <div className="flex gap-1.5 mt-2">
+                          <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => openEdit(i)}>
+                            <Pencil className="h-3 w-3 mr-1" /> Restock
+                          </Button>
+                          {supplierPhone && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                              onClick={() => window.open(`https://wa.me/${supplierPhone}?text=${waText}`, "_blank")}
+                            >
+                              WhatsApp
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {lowItems.length > 6 && (
+                  <p className="text-xs text-muted-foreground">+ {lowItems.length - 6} more low-stock items below</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()}
+
+
         {/* Category Tabs */}
         <Tabs
           value={categoryTab}
