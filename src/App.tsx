@@ -138,13 +138,14 @@ function AppRoutes() {
           <Route
             path="/"
             element={
-              user && accountType !== "customer" && !isSuperAdmin
+              user && !isSuperAdmin
                 ? <Navigate to={home} replace />
                 : isSuperAdmin
                   ? <Navigate to="/admin" replace />
                   : <Landing />
             }
           />
+
           <Route
             path="/auth"
             element={<AuthRoute home={home} />}
