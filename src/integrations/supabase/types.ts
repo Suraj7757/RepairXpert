@@ -453,6 +453,8 @@ export type Database = {
           quantity: number
           sell_price: number
           sku: string
+          supplier: string | null
+          supplier_phone: string | null
           updated_at: string
           user_id: string
         }
@@ -470,6 +472,8 @@ export type Database = {
           quantity?: number
           sell_price?: number
           sku: string
+          supplier?: string | null
+          supplier_phone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -487,6 +491,8 @@ export type Database = {
           quantity?: number
           sell_price?: number
           sku?: string
+          supplier?: string | null
+          supplier_phone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -664,6 +670,7 @@ export type Database = {
           payment_method: string | null
           payment_status: string | null
           pickup_date: string | null
+          qr_receiver: string | null
           seller_id: string
           shipping: number
           subtotal: number
@@ -686,6 +693,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           pickup_date?: string | null
+          qr_receiver?: string | null
           seller_id: string
           shipping?: number
           subtotal?: number
@@ -708,6 +716,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           pickup_date?: string | null
+          qr_receiver?: string | null
           seller_id?: string
           shipping?: number
           subtotal?: number

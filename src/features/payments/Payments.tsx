@@ -75,6 +75,7 @@ export default function Payments() {
   const [editMethod, setEditMethod] = useState<PaymentMethod>("Cash");
   const [editQr, setEditQr] = useState("");
   const [editAmount, setEditAmount] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [viewPayment, setViewPayment] = useState<any>(null);
   const [payLinkOpen, setPayLinkOpen] = useState(false);
@@ -120,29 +121,47 @@ export default function Payments() {
   };
 
   const handleEditPayment = async () => {
-    if (!selectedPayment || !user) return;
-    const amount = parseFloat(editAmount) || Number(selectedPayment.amount);
-    const splitEnabled = settings?.revenue_split_enabled !== false;
-    const adminPct = splitEnabled
-      ? (settings?.admin_share_percent ?? 50) / 100
-      : 1;
-    const staffPct = splitEnabled
-      ? (settings?.staff_share_percent ?? 50) / 100
-      : 0;
-    await supabase
-      .from("payments")
-      .update({
-        method: editMethod as any,
-        amount,
-        qr_receiver: editMethod === "UPI/QR" ? editQr : null,
-        admin_share: amount * adminPct,
-        staff_share: amount * staffPct,
-      })
-      .eq("id", selectedPayment.id);
-    refetch();
-    setEditOpen(false);
-    toast.success("Payment updated");
+    if (!selectedPayment || !user || savingEdit) return;
+    const amount = parseFloat(editAmount);
+    if (!isFinite(amount) || amount < 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (editMethod === "UPI/QR" && !editQr) {
+      toast.error("Select a QR receiver");
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const splitEnabled = settings?.revenue_split_enabled !== false;
+      const adminPct = splitEnabled
+        ? (settings?.admin_share_percent ?? 50) / 100
+        : 1;
+      const staffPct = splitEnabled
+        ? (settings?.staff_share_percent ?? 50) / 100
+        : 0;
+      const { error } = await supabase
+        .from("payments")
+        .update({
+          method: editMethod as any,
+          amount,
+          qr_receiver: editMethod === "UPI/QR" ? editQr : null,
+          admin_share: amount * adminPct,
+          staff_share: amount * staffPct,
+        })
+        .eq("id", selectedPayment.id);
+      if (error) throw error;
+      refetch();
+      setEditOpen(false);
+      toast.success("Payment updated");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to save payment");
+    } finally {
+      setSavingEdit(false);
+    }
   };
+
 
   const qrReceivers = settings?.qr_receivers || [
     "Admin QR",
@@ -758,11 +777,14 @@ export default function Payments() {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEditOpen(false)}>
+              <Button variant="outline" onClick={() => setEditOpen(false)} disabled={savingEdit}>
                 Cancel
               </Button>
-              <Button onClick={handleEditPayment}>Save Changes</Button>
+              <Button onClick={handleEditPayment} disabled={savingEdit}>
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </Button>
             </DialogFooter>
+
           </DialogContent>
         </Dialog>
 
