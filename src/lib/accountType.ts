@@ -24,12 +24,14 @@ export function homePathFor(
   accountType: AccountType | null | undefined,
   isSuper: boolean,
 ): string {
-  if (isSuper) return "/super-admin";
+  if (isSuper) return "/admin";
   switch (accountType) {
     case "customer":
       return "/customer";
+    case "wholesaler":
+      return "/wholesale";
     case "shopkeeper":
     default:
-      return "/shop";
+      return "/dashboard";
   }
 }
