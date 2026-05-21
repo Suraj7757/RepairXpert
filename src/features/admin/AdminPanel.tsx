@@ -573,13 +573,13 @@ export default function AdminPanel() {
                           <div className="flex gap-2 mt-3 flex-wrap">
                             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 text-xs"
                               onClick={async () => {
-                                await (supabase as any).from("shopkeeper_applications").update({
-                                  status: "approved",
-                                  reviewed_by: user!.id,
-                                  reviewed_at: new Date().toISOString(),
-                                }).eq("id", app.id);
-                                await supabase.from("profiles").update({ account_type: "shopkeeper" } as any).eq("user_id", app.user_id);
-                                toast.success(`${app.shop_name} approved!`);
+                                const { error } = await (supabase as any).rpc("approve_shopkeeper_application", {
+                                  _app_id: app.id,
+                                  _approve: true,
+                                  _reason: "",
+                                });
+                                if (error) { toast.error(error.message); return; }
+                                toast.success(`${app.shop_name} approved — CRM unlocked!`);
                                 fetchAll();
                               }}>
                               <CheckCircle className="h-3 w-3 mr-1" /> Approve
@@ -587,12 +587,12 @@ export default function AdminPanel() {
                             <Button size="sm" variant="destructive" className="h-8 text-xs"
                               onClick={async () => {
                                 const reason = prompt("Rejection reason (optional):") || "";
-                                await (supabase as any).from("shopkeeper_applications").update({
-                                  status: "rejected",
-                                  rejection_reason: reason,
-                                  reviewed_by: user!.id,
-                                  reviewed_at: new Date().toISOString(),
-                                }).eq("id", app.id);
+                                const { error } = await (supabase as any).rpc("approve_shopkeeper_application", {
+                                  _app_id: app.id,
+                                  _approve: false,
+                                  _reason: reason,
+                                });
+                                if (error) { toast.error(error.message); return; }
                                 toast.success("Application rejected");
                                 fetchAll();
                               }}>
