@@ -8,8 +8,8 @@ export default function SuperAdminDashboard() {
   const { data: shopsCount = 0, isLoading: shopsLoading } = useQuery({
     queryKey: ["super-admin", "shops-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("shops")
+      const { count, error } = await (supabase as any)
+        .from("shop_settings")
         .select("*", { count: "exact", head: true });
       if (error) throw error;
       return count || 0;

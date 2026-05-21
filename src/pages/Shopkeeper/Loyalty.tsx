@@ -34,7 +34,7 @@ export default function ShopkeeperLoyalty() {
 
     try {
       // 1. Update profiles table
-      const { error: profileError } = await supabase
+      const { error: profileError } = await (supabase as any)
         .from("profiles")
         .update({ loyalty_points: newPoints })
         .eq("id", selectedProfile.id);
@@ -42,7 +42,7 @@ export default function ShopkeeperLoyalty() {
       if (profileError) throw profileError;
 
       // 2. Insert ledger entry
-      const { error: ledgerError } = await supabase.from("loyalty_ledger").insert({
+      const { error: ledgerError } = await (supabase as any).from("loyalty_ledger").insert({
         user_id: selectedProfile.user_id,
         points: finalDelta,
         description: reason || (type === "add" ? "Manual credit" : "Manual debit"),

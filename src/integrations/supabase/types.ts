@@ -893,10 +893,14 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string
+          email: string | null
           id: string
           is_banned: boolean
+          phone: string | null
           plan_expires_at: string | null
           referral_code: string | null
+          role: string | null
+          shop_id: string | null
           tracking_id: string | null
           updated_at: string
           user_id: string
@@ -906,10 +910,14 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
+          email?: string | null
           id?: string
           is_banned?: boolean
+          phone?: string | null
           plan_expires_at?: string | null
           referral_code?: string | null
+          role?: string | null
+          shop_id?: string | null
           tracking_id?: string | null
           updated_at?: string
           user_id: string
@@ -919,10 +927,14 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
+          email?: string | null
           id?: string
           is_banned?: boolean
+          phone?: string | null
           plan_expires_at?: string | null
           referral_code?: string | null
+          role?: string | null
+          shop_id?: string | null
           tracking_id?: string | null
           updated_at?: string
           user_id?: string
@@ -1299,6 +1311,66 @@ export type Database = {
         }
         Relationships: []
       }
+      shopkeeper_applications: {
+        Row: {
+          address: string | null
+          business_type: string
+          city: string
+          created_at: string
+          email: string | null
+          gst_number: string | null
+          id: string
+          owner_name: string
+          phone: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_name: string
+          state: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          business_type?: string
+          city: string
+          created_at?: string
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          owner_name: string
+          phone: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_name: string
+          state?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          business_type?: string
+          city?: string
+          created_at?: string
+          email?: string | null
+          gst_number?: string | null
+          id?: string
+          owner_name?: string
+          phone?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_name?: string
+          state?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           coupon_code: string | null
@@ -1329,6 +1401,27 @@ export type Database = {
           status?: string
           trial_ends_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      system_config: {
+        Row: {
+          id: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
         }
         Relationships: []
       }
@@ -1594,6 +1687,10 @@ export type Database = {
       }
       admin_set_user_plan: {
         Args: { _expires_at: string; _plan: string; _user_id: string }
+        Returns: undefined
+      }
+      approve_shopkeeper_application: {
+        Args: { _app_id: string; _approve: boolean; _reason?: string }
         Returns: undefined
       }
       convert_booking_to_job: {

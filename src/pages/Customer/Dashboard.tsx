@@ -114,7 +114,7 @@ export default function CustomerDashboard() {
                     <p className="text-xs text-muted-foreground font-medium">Tracking ID: {job.tracking_id || "N/A"}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={job.status === "Ready" ? "success" : "default"} className="rounded-lg font-bold">
+                    <Badge variant={job.status === "Ready" ? "default" : "secondary"} className="rounded-lg font-bold">
                       {job.status}
                     </Badge>
                     <Button size="icon" variant="ghost" onClick={() => navigate(`/track?id=${job.tracking_id}`)} className="rounded-xl">
