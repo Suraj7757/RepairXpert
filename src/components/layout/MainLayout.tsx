@@ -10,10 +10,7 @@ import { OfflineBanner } from "@/components/common/OfflineBanner";
 import { SyncStatus } from "@/components/common/SyncStatus";
 import { CommandPalette } from "@/components/common/CommandPalette";
 import { DailySummaryNotifier } from "@/components/common/DailySummaryNotifier";
-<<<<<<< HEAD
 import { TrackOrderModal } from "@/features/jobs/TrackOrderModal";
-=======
->>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
 
 interface LayoutProps {
   children: React.ReactNode;

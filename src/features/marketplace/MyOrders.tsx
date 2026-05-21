@@ -129,7 +129,6 @@ export default function MyOrders() {
                 </div>
                 <Timeline status={o.fulfillment_status} />
                 <div className="flex gap-2 pt-2 border-t">
-<<<<<<< HEAD
                   <Button
                     size="sm"
                     variant="outline"
@@ -142,12 +141,6 @@ export default function MyOrders() {
                     }
                   >
                     <ExternalLink className="h-3 w-3 mr-1" /> Track Order
-=======
-                  <Button asChild size="sm" variant="outline">
-                    <Link to={`/track?id=${encodeURIComponent(o.order_number)}`}>
-                      <ExternalLink className="h-3 w-3 mr-1" /> Track Order
-                    </Link>
->>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
                   </Button>
                   {o.fulfillment_status === "delivered" && (
                     <Badge variant="outline" className="text-emerald-600 border-emerald-500/30">

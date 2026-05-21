@@ -33,14 +33,10 @@ type TableName =
   | "staff_job_assignments"
   | "staff_salary_records"
   | "service_bookings"
-<<<<<<< HEAD
   | "system_config"
   | "shops"
   | "invoices"
   | "audit_logs";
-=======
-  | "system_config";
->>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
 
 import { useQuery } from "@tanstack/react-query";
 import { get as idbGet, set as idbSet, createStore } from "idb-keyval";
@@ -48,11 +44,7 @@ import { get as idbGet, set as idbSet, createStore } from "idb-keyval";
 const offlineStore = createStore("rx-supabase-cache", "kv");
 
 export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
-<<<<<<< HEAD
   const { user, role, shopId } = useAuth();
-=======
-  const { user } = useAuth();
->>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
   const cacheKey = `${table}:${user?.id || "anon"}:${includeDeleted ? 1 : 0}`;
 
   const { data, isLoading, refetch } = useQuery({
@@ -60,8 +52,6 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
     queryFn: async () => {
       if (!user) return [];
       let query = (supabase as any).from(table).select("*") as any;
-<<<<<<< HEAD
-      
       const tablesWithShopId = ["repair_jobs", "customers", "inventory", "invoices", "staff_members"];
 
       if (role === "shopkeeper" && tablesWithShopId.includes(table) && shopId) {
@@ -73,13 +63,6 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
         } else if (!["customer_feedback", "system_config", "features", "shops", "profiles"].includes(table)) {
           query = query.eq("user_id", user.id);
         }
-=======
-      const shopUserIdTables = ["staff_members", "staff_job_assignments", "staff_salary_records"];
-      if (shopUserIdTables.includes(table)) {
-        query = query.eq("shop_user_id", user.id);
-      } else if (!["customer_feedback", "system_config", "features"].includes(table)) {
-        query = query.eq("user_id", user.id);
->>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
       }
 
       if (

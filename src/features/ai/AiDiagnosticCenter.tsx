@@ -53,11 +53,7 @@ export default function AiDiagnosticCenter() {
             },
             {
               role: "user",
-<<<<<<< HEAD
-              content: `Device is ${deviceModel}. Symptoms: ${symptoms}.`,
-=======
               content: `Device is ${deviceModel}. Symptoms: ${symptoms}.${imageBase64 ? " [User attached a damage photo for reference]" : ""}`,
->>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
             },
           ],
         }),
