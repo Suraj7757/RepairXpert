@@ -56,6 +56,7 @@ const SellerOrders = lazy(() => import("@/features/marketplace/SellerOrders"));
 const ShopPublicPage = lazy(() => import("@/features/marketplace/ShopPublicPage"));
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Chatbot } from "@/components/common/Chatbot";
+import { TawkChat } from "@/components/common/TawkChat";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,12 +94,16 @@ function ProtectedRoute({
 }
 
 function ShopkeeperRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, accountType, isSuperAdmin } = useAuth();
-  if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
+  const { loading, accountType, isSuperAdmin } = useAuth();
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
   if (isSuperAdmin) return <Navigate to="/admin" replace />;
   if (accountType === "customer") return <Navigate to="/" replace />;
-  return <>{children}</>;
+  return <ProtectedRoute>{children}</ProtectedRoute>;
 }
 
 // Extracted from IIFE to fix Rules of Hooks violation
@@ -173,54 +178,7 @@ function AppRoutes() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ShopkeeperRoute><Dashboard /></ShopkeeperRoute>} />
           <Route path="/customers" element={<ShopkeeperRoute><Customers /></ShopkeeperRoute>} />
-          <Route
-            path="/customers"
-            element={
-              <ProtectedRoute>
-                {isSuperAdmin ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <Customers />
-                )}
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/jobs"
-            element={
-              <ProtectedRoute>
-                {isSuperAdmin ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <RepairJobs />
-                )}
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payments"
-            element={
-              <ProtectedRoute>
-                {isSuperAdmin ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <Payments />
-                )}
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settlements"
-            element={
-              <ProtectedRoute>
-                {isSuperAdmin ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <Settlements />
-                )}
-              </ProtectedRoute>
-            }
-          />
+
           <Route path="/jobs" element={<ShopkeeperRoute><RepairJobs /></ShopkeeperRoute>} />
           <Route path="/payments" element={<ShopkeeperRoute><Payments /></ShopkeeperRoute>} />
           <Route path="/settlements" element={<ShopkeeperRoute><Settlements /></ShopkeeperRoute>} />
@@ -319,6 +277,7 @@ export default function App() {
             <Toaster position="top-right" richColors />
             <AppRoutes />
             <Chatbot />
+            <TawkChat />
           </BrowserRouter>
         </AuthProvider>
       </QueryClientProvider>
