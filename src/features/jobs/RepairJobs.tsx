@@ -594,7 +594,7 @@ export default function RepairJobs() {
       // Award Loyalty Points to Customer
       if (selectedJob.customer_mobile && amount > 0) {
         try {
-          const { data: customerProfile } = await supabase
+          const { data: customerProfile } = await (supabase as any)
             .from("profiles")
             .select("id, user_id, loyalty_points")
             .eq("phone", selectedJob.customer_mobile)
@@ -604,12 +604,12 @@ export default function RepairJobs() {
             const pointsEarned = Math.max(1, Math.floor(amount / 100)); // ₹100 spent = 1 pt
             const newPoints = (customerProfile.loyalty_points || 0) + pointsEarned;
 
-            await supabase
+            await (supabase as any)
               .from("profiles")
-              .update({ loyalty_points: newPoints } as any)
+              .update({ loyalty_points: newPoints })
               .eq("id", customerProfile.id);
 
-            await supabase.from("loyalty_ledger").insert({
+            await (supabase as any).from("loyalty_ledger").insert({
               user_id: customerProfile.user_id,
               points: pointsEarned,
               description: `Earned from Repair Job ${selectedJob.job_id} payment`,

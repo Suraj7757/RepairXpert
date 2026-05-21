@@ -108,7 +108,7 @@ export default function AiDiagnostic() {
 
       // Save to public.ai_diagnostics in Supabase
       if (user) {
-        const { error } = await supabase.from("ai_diagnostics").insert({
+        const { error } = await (supabase as any).from("ai_diagnostics").insert({
           user_id: user.id,
           device_model: deviceModel,
           symptoms,
