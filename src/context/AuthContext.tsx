@@ -7,6 +7,10 @@ import {
   ReactNode,
 } from "react";
 import { supabase } from "@/services/supabase";
+<<<<<<< HEAD
+=======
+import { isSuperAdminEmail } from "@/lib/accountType";
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
 
 
 import type { User, Session } from "@supabase/supabase-js";
@@ -57,10 +61,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchRole = useCallback(async (userId: string, userEmail?: string) => {
+<<<<<<< HEAD
     const { data: { session } } = await supabase.auth.getSession();
     const currentUser = session?.user;
 
     const [profileRes, configRes] = await Promise.all([
+=======
+    const isSuper = isSuperAdminEmail(userEmail);
+    setIsSuperAdmin(isSuper);
+    const [rolesRes, profileRes, configRes] = await Promise.all([
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle(),
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
       supabase
         .from("profiles")
         .select("role, shop_id, is_banned, plan_expires_at, account_type")
@@ -73,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle() as any,
     ]);
 
+<<<<<<< HEAD
     const profileData = profileRes.data;
     if (profileData && currentUser) {
       const emailVal = currentUser.email;
@@ -89,6 +105,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentShopId = profileData?.shop_id || null;
     const isSuper = currentRole === "super_admin";
 
+=======
+    const dbRole = (rolesRes.data?.role as AppRole) || "staff";
+    const currentRole = isSuper
+      ? ("admin" as AppRole)
+      : dbRole === "admin"
+        ? ("shopkeeper" as AppRole)
+        : dbRole;
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
     setRole(currentRole);
     setShopId(currentShopId);
     setIsSuperAdmin(isSuper);
@@ -111,8 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (
+<<<<<<< HEAD
       profileData?.plan_expires_at &&
       new Date(profileData.plan_expires_at) < new Date() &&
+=======
+      profileRes.data?.plan_expires_at &&
+      new Date(profileRes.data.plan_expires_at) < new Date() &&
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
       !isSuper
     ) {
       setIsPlanExpired(true);

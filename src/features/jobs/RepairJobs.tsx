@@ -591,6 +591,7 @@ export default function RepairJobs() {
         admin_share: amount * adminPct,
         staff_share: amount * staffPct,
       });
+<<<<<<< HEAD
 
       // Award Loyalty Points to Customer
       if (selectedJob.customer_mobile && amount > 0) {
@@ -622,6 +623,8 @@ export default function RepairJobs() {
         }
       }
 
+=======
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
       refetch();
       refetchPayments();
       setPaymentOpen(false);

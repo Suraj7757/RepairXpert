@@ -139,6 +139,7 @@ export function Chatbot() {
   };
 
   return (
+<<<<<<< HEAD
     <div
       className={cn(
         "fixed z-50 flex-col items-end",
@@ -147,6 +148,9 @@ export function Chatbot() {
           : "hidden md:flex bottom-6 right-6"
       )}
     >
+=======
+    <div className="hidden md:flex fixed bottom-6 right-6 z-50 flex-col items-end">
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
       {isOpen && (
         <Card className="w-full h-full sm:h-auto sm:w-96 sm:mb-4 shadow-2xl border-primary/10 animate-in slide-in-from-bottom-5 duration-300 overflow-hidden flex flex-col justify-between">
           <CardHeader className="gradient-primary p-4 flex flex-row items-center justify-between space-y-0 shrink-0">

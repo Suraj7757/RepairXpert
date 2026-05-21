@@ -120,6 +120,7 @@ export default function CustomerDashboard() {
             <Link to="/marketplace">
               <Button variant="outline" className="gap-2"><ShoppingBag className="h-4 w-4" /> Browse Shop</Button>
             </Link>
+<<<<<<< HEAD
             <Button
               variant="outline"
               className="gap-2"
@@ -127,6 +128,11 @@ export default function CustomerDashboard() {
             >
               <Search className="h-4 w-4" /> Track Order
             </Button>
+=======
+            <Link to="/track">
+              <Button variant="outline" className="gap-2"><Search className="h-4 w-4" /> Track Order</Button>
+            </Link>
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
           </div>
         </div>
 
@@ -257,6 +263,7 @@ export default function CustomerDashboard() {
                   value={trackingId}
                   onChange={(e) => setTrackingId(e.target.value.toUpperCase())}
                 />
+<<<<<<< HEAD
                 <Button
                   className="w-full"
                   onClick={() =>
@@ -268,6 +275,10 @@ export default function CustomerDashboard() {
                   }
                 >
                   Track Status
+=======
+                <Button className="w-full" asChild>
+                  <Link to={`/track${trackingId ? `?id=${trackingId}` : ""}`}>Track Status</Link>
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
                 </Button>
               </CardContent>
             </Card>

@@ -100,6 +100,7 @@ const customerItems = [
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
+<<<<<<< HEAD
 interface SidebarLink {
   to: string;
   label: string;
@@ -194,6 +195,19 @@ export function Sidebar({ links = [] }: SidebarProps) {
     }
   };
 
+=======
+export function Sidebar() {
+  const { state } = useSidebar();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isSuperAdmin, accountType, signOut } = useAuth();
+  const collapsed = state === "collapsed";
+  const isAdmin = isSuperAdmin;
+  const isCustomer = accountType === "customer";
+  const [createOpen, setCreateOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
   const performLogout = async () => {
     try {
       await signOut();
@@ -245,9 +259,92 @@ export function Sidebar({ links = [] }: SidebarProps) {
             )}
           </div>
 
+<<<<<<< HEAD
           {/* Quick Action for Shopkeepers */}
           {role === "shopkeeper" && (
             <SidebarGroup>
+=======
+          {/* Role-aware menu */}
+
+          {!isAdmin && isCustomer && (
+            <SidebarGroup className="mt-2">
+              <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                Customer Menu
+              </SidebarGroupLabel>
+              <SidebarMenu className="px-3">
+                {customerItems.map((item) => (
+                  <SidebarNavLink
+                    key={item.url}
+                    to={item.url}
+                    icon={item.icon}
+                    label={item.title}
+                    active={location.pathname === item.url}
+                    collapsed={collapsed}
+                  />
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
+
+          {!isAdmin && !isCustomer && (
+            <>
+              {/* Create Button */}
+              <SidebarGroup>
+                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                  Quick Action
+                </SidebarGroupLabel>
+                <div className="px-3 mb-1">
+                  <button
+                    onClick={() => setCreateOpen(true)}
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md shadow-primary/20 hover:bg-primary/90 transition-all ${collapsed ? "justify-center" : ""}`}
+                  >
+                    <PlusCircle className="h-5 w-5 shrink-0" />
+                    {!collapsed && <span>+ Create New</span>}
+                  </button>
+                </div>
+              </SidebarGroup>
+
+              <SidebarGroup className="mt-2">
+                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                  Main Menu
+                </SidebarGroupLabel>
+                <SidebarMenu className="px-3">
+                  {mainItems.map((item) => (
+                    <SidebarNavLink
+                      key={item.url}
+                      to={item.url}
+                      icon={item.icon}
+                      label={item.title}
+                      active={location.pathname === item.url}
+                      collapsed={collapsed}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroup>
+
+              <SidebarGroup className="mt-4">
+                <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
+                  Management
+                </SidebarGroupLabel>
+                <SidebarMenu className="px-3">
+                  {secondaryItems.map((item) => (
+                    <SidebarNavLink
+                      key={item.url}
+                      to={item.url}
+                      icon={item.icon}
+                      label={item.title}
+                      active={location.pathname === item.url}
+                      collapsed={collapsed}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroup>
+            </>
+          )}
+
+          {isAdmin && (
+            <SidebarGroup className="mt-4">
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
               <SidebarGroupLabel className="px-6 text-sidebar-muted/50 text-[10px] font-bold uppercase tracking-widest mb-2">
                 Quick Action
               </SidebarGroupLabel>

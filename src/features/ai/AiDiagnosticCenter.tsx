@@ -26,6 +26,7 @@ import { supabase } from "@/services/supabase";
 export default function AiDiagnosticCenter() {
   const [symptoms, setSymptoms] = useState("");
   const [deviceModel, setDeviceModel] = useState("");
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
 
@@ -52,7 +53,11 @@ export default function AiDiagnosticCenter() {
             },
             {
               role: "user",
+<<<<<<< HEAD
               content: `Device is ${deviceModel}. Symptoms: ${symptoms}.`,
+=======
+              content: `Device is ${deviceModel}. Symptoms: ${symptoms}.${imageBase64 ? " [User attached a damage photo for reference]" : ""}`,
+>>>>>>> c408fdbab0c70d405e0ef64a0ca7825de86b9241
             },
           ],
         }),
@@ -161,19 +166,41 @@ export default function AiDiagnosticCenter() {
                 />
               </div>
 
-              {/* Future feature: Image Upload */}
               <div className="space-y-2">
                 <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex justify-between">
                   <span>Damage Photos (Optional)</span>
-                  <Badge variant="secondary" className="text-[9px]">
-                    Coming Soon
-                  </Badge>
                 </Label>
-                <div className="h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground opacity-50 cursor-not-allowed bg-muted/20">
-                  <Upload className="h-6 w-6 mb-2" />
-                  <span className="text-xs font-medium">
-                    Upload physical damage photos
-                  </span>
+                <div className="relative h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground bg-muted/20 hover:bg-muted/30 transition-colors group cursor-pointer overflow-hidden">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setImageBase64(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  {imageBase64 ? (
+                    <img src={imageBase64} alt="Upload preview" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                  ) : (
+                    <>
+                      <Upload className="h-6 w-6 mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-medium">
+                        Click to upload damage photos
+                      </span>
+                    </>
+                  )}
+                  {imageBase64 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-white text-xs font-bold">Change Photo</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
