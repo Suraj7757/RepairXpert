@@ -12,7 +12,7 @@ import { isSuperAdminEmail } from "@/lib/accountType";
 
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "super_admin" | "shopkeeper" | "customer";
+type AppRole = "super_admin" | "shopkeeper" | "staff" | "customer";
 type AccountType = "shopkeeper" | "wholesaler" | "customer";
 
 interface AuthContextType {
@@ -105,7 +105,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const currentRole = finalRole;
-    const currentShopId = profileData?.shop_id || null;
+    let currentShopId = profileData?.shop_id || null;
+
+    if (currentRole === "staff" && currentUser) {
+      const { data: staffData } = await supabase
+        .from("staff_members")
+        .select("shop_user_id")
+        .or(`email.eq.${currentUser.email},phone.eq.${currentUser.phone || currentUser.user_metadata?.mobile || currentUser.user_metadata?.phone || ""}`)
+        .maybeSingle();
+      if (staffData) {
+        currentShopId = staffData.shop_user_id;
+      }
+    }
+
     setRole(currentRole);
     setShopId(currentShopId);
     setIsSuperAdmin(isSuper);

@@ -36,6 +36,7 @@ type TableName =
   | "system_config"
   | "shops"
   | "invoices"
+  | "qr_codes"
   | "audit_logs";
 
 import { useQuery } from "@tanstack/react-query";
@@ -56,6 +57,13 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
 
       if (role === "shopkeeper" && tablesWithShopId.includes(table) && shopId) {
         query = query.eq("shop_id", shopId);
+      } else if (role === "staff" && shopId) {
+        const shopUserIdTables = ["staff_members", "staff_job_assignments", "staff_salary_records"];
+        if (shopUserIdTables.includes(table)) {
+          query = query.eq("shop_user_id", shopId);
+        } else if (!["customer_feedback", "system_config", "features", "shops", "profiles"].includes(table)) {
+          query = query.eq("user_id", shopId);
+        }
       } else {
         const shopUserIdTables = ["staff_members", "staff_job_assignments", "staff_salary_records"];
         if (shopUserIdTables.includes(table)) {
@@ -208,20 +216,21 @@ export function useSoftDelete() {
 }
 
 export function useShopSettings() {
-  const { user } = useAuth();
+  const { user, role, shopId } = useAuth();
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
     if (!user) return;
+    const targetUserId = role === "staff" && shopId ? shopId : user.id;
     const { data } = await supabase
       .from("shop_settings")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", targetUserId)
       .maybeSingle();
     setSettings(data);
     setLoading(false);
-  }, [user]);
+  }, [user, role, shopId]);
 
   useEffect(() => {
     fetchSettings();
@@ -230,7 +239,8 @@ export function useShopSettings() {
   const saveSettings = useCallback(
     async (updates: Record<string, unknown>) => {
       if (!user) return false;
-      let payload = { user_id: user.id, ...updates } as any;
+      const targetUserId = role === "staff" && shopId ? shopId : user.id;
+      let payload = { user_id: targetUserId, ...updates } as any;
       if (settings?.id) {
         payload.id = settings.id;
       }
@@ -245,7 +255,7 @@ export function useShopSettings() {
       await fetchSettings();
       return true;
     },
-    [user, settings, fetchSettings],
+    [user, role, shopId, settings, fetchSettings],
   );
 
   return { settings, loading, saveSettings, refetch: fetchSettings };

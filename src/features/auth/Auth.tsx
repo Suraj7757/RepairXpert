@@ -32,7 +32,8 @@ type AuthMode =
   | "forgot"
   | "signup_done"
   | "forgot_done"
-  | "account_confirmed";
+  | "account_confirmed"
+  | "magiclink_sent";
 
 // Password strength validator
 function getPasswordStrength(pwd: string) {
@@ -61,6 +62,7 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(
     (searchParams.get("mode") as AuthMode) || "login",
   );
+  const [loginMethod, setLoginMethod] = useState<"password" | "magiclink">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -111,6 +113,22 @@ export default function Auth() {
         if (error) toast.error(error);
         else setMode("forgot_done");
       } else if (mode === "login") {
+        if (loginMethod === "magiclink") {
+          const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth/callback`,
+            },
+          });
+          if (error) {
+            toast.error(error.message);
+          } else {
+            toast.success("Magic link sent! Check your inbox.");
+            setMode("magiclink_sent");
+          }
+          setLoading(false);
+          return;
+        }
         if (!password) {
           toast.error("Password is required");
           setLoading(false);
@@ -320,6 +338,40 @@ export default function Auth() {
     );
   }
 
+  /* ─── Magic Link Sent Screen ─── */
+  if (mode === "magiclink_sent") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md shadow-2xl border-primary/5 bg-card/80 backdrop-blur-xl relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-1 gradient-primary opacity-50" />
+          <CardContent className="p-10 flex flex-col items-center text-center gap-6">
+            <div className="h-24 w-24 rounded-3xl bg-primary/10 flex items-center justify-center animate-pulse">
+              <Mail className="h-12 w-12 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-black tracking-tighter animate-bounce">
+                Magic Link <span className="text-primary italic">Sent!</span>
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                We sent a passwordless sign-in link to{" "}
+                <span className="font-bold text-foreground">{email}</span>.
+                <br />
+                Check your inbox and click the link to log in.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full h-12 font-bold"
+              onClick={() => setMode("login")}
+            >
+              Back to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   /* ─── Main Auth Form ─── */
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 flex-col gap-8 relative">
@@ -388,6 +440,24 @@ export default function Auth() {
               </div>
 
               <form onSubmit={handleAuth} className="space-y-4">
+                {mode === "login" && (
+                  <div className="flex gap-2 p-1 bg-muted/50 rounded-xl border border-border/5">
+                    <button
+                      type="button"
+                      className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${loginMethod === "password" ? "bg-card text-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => setLoginMethod("password")}
+                    >
+                      Password
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${loginMethod === "magiclink" ? "bg-card text-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => setLoginMethod("magiclink")}
+                    >
+                      Magic Link
+                    </button>
+                  </div>
+                )}
                 {mode === "signup" && (
                   <>
                     {/* Name field */}
