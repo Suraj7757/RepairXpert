@@ -156,7 +156,7 @@ export default function ResetPassword() {
             Set New Password
           </CardTitle>
           <CardDescription className="uppercase text-[10px] font-bold tracking-[0.2em] text-muted-foreground">
-            Reset Your MSM Account Access
+            Reset Your ServiceHub Account Access
           </CardDescription>
         </CardHeader>
 
@@ -231,7 +231,7 @@ export default function ResetPassword() {
       </Card>
 
       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] opacity-50">
-        MSM Secure Recovery Portal
+        ServiceHub Secure Recovery Portal
       </p>
     </div>
   );

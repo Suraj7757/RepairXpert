@@ -28,7 +28,7 @@ export function generateInvoicePDF(
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text(settings.shopName || "RepairXpert", 40, 10, { align: "center" });
+  doc.text(settings.shopName || "ServiceHub", 40, 10, { align: "center" });
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
@@ -128,7 +128,7 @@ export function generateInvoicePDF(
   doc.text("Thank you for choosing us!", 40, currentY, { align: "center" });
   currentY += 3;
   doc.text(
-    `Visit again to ${settings.shopName || "RepairXpert"}`,
+    `Visit again to ${settings.shopName || "ServiceHub"}`,
     40,
     currentY,
     { align: "center" },
@@ -157,7 +157,7 @@ export function generateSellInvoicePDF(
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text(settings.shopName || "RepairXpert", 40, 10, { align: "center" });
+  doc.text(settings.shopName || "ServiceHub", 40, 10, { align: "center" });
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
@@ -238,3 +238,162 @@ export function downloadSellInvoice(
   const doc = generateSellInvoicePDF(sell, settings);
   doc.save(`Sale-${sell.sellId}.pdf`);
 }
+
+export interface GenericInvoiceData {
+  id: string;
+  customer_name: string;
+  customer_mobile: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+  created_at: string;
+  jobs_details?: Array<{ description: string; cost: number }>;
+}
+
+export function generateGenericInvoicePDF(
+  invoice: GenericInvoiceData,
+  settings: ShopSettings,
+) {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const primaryColor = [67, 56, 202]; // Indigo
+  const textColor = [31, 41, 55]; // Slate 800
+
+  // Header band
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, 210, 40, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.text(settings?.shop_name || "ServiceHub Pro", 20, 18);
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  let headerText = "";
+  if (settings?.address) headerText += settings.address;
+  if (settings?.phone) headerText += `  |  Phone: ${settings.phone}`;
+  if (settings?.gstin) headerText += `  |  GSTIN: ${settings.gstin}`;
+  doc.text(headerText, 20, 28);
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.text("INVOICE", 190, 22, { align: "right" });
+
+  // Reset text color
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+  // Invoice Meta
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("Invoice To:", 20, 55);
+  doc.setFont("helvetica", "normal");
+  doc.text(invoice.customer_name || "Valued Customer", 20, 60);
+  doc.text(`Mobile: ${invoice.customer_mobile || "N/A"}`, 20, 65);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Invoice details:", 130, 55);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Invoice ID: ${invoice.id.substring(0, 8).toUpperCase()}`, 130, 60);
+  doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 130, 65);
+  doc.text(`Payment Status: ${(invoice.status || "unpaid").toUpperCase()}`, 130, 70);
+  doc.text(`Method: ${(invoice.payment_method || "cash").toUpperCase()}`, 130, 75);
+
+  // Table Items
+  let items: Array<{ description: string; cost: number }> = [];
+  try {
+    if (typeof invoice.jobs_details === "string") {
+      items = JSON.parse(invoice.jobs_details);
+    } else if (Array.isArray(invoice.jobs_details)) {
+      items = invoice.jobs_details;
+    }
+  } catch (e) {
+    items = [];
+  }
+
+  if (items.length === 0) {
+    items = [{ description: "General Repair Services", cost: invoice.amount }];
+  }
+
+  const tableRows = items.map((item, index) => [
+    index + 1,
+    item.description,
+    1,
+    `Rs. ${item.cost}`,
+    `Rs. ${item.cost}`,
+  ]);
+
+  autoTable(doc, {
+    startY: 85,
+    head: [["S.No", "Description", "Qty", "Unit Price", "Total"]],
+    body: tableRows,
+    theme: "striped",
+    headStyles: {
+      fillColor: primaryColor as any,
+      textColor: [255, 255, 255] as any,
+      fontStyle: "bold",
+    },
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+    },
+  });
+
+  const finalY = (doc as any).lastAutoTable?.finalY || 120;
+
+  // Totals
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("Grand Total:", 130, finalY + 10);
+  doc.text(`Rs. ${invoice.amount}`, 190, finalY + 10, { align: "right" });
+
+  // Footer / Terms
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text("Terms & Conditions:", 20, 260);
+  doc.text("1. All sales are final. Warranty claims require presenting this invoice.", 20, 264);
+  doc.text("2. Please inspect repaired items carefully before leaving the shop.", 20, 268);
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text(`Thank you for doing business with ${settings?.shop_name || "us"}!`, 105, 280, { align: "center" });
+
+  return doc;
+}
+
+export function downloadGenericInvoice(
+  invoice: GenericInvoiceData,
+  settings: ShopSettings,
+) {
+  const doc = generateGenericInvoicePDF(invoice, settings);
+  doc.save(`Invoice-${invoice.id.substring(0, 8).toUpperCase()}.pdf`);
+}
+
+export function shareInvoiceWhatsApp(
+  customerMobile: string,
+  customerName: string,
+  amount: number,
+  invoiceId: string,
+  items: string,
+  shopName: string,
+) {
+  const cleanMobile = customerMobile.replace(/\D/g, "");
+  const formattedMobile = cleanMobile.startsWith("91") && cleanMobile.length === 12 
+    ? cleanMobile 
+    : cleanMobile.length === 10 
+      ? "91" + cleanMobile 
+      : cleanMobile;
+
+  const text = `Hello ${customerName},\n\nYour invoice from *${shopName}* has been generated.\n\n*Invoice Details:*\n- Invoice ID: ${invoiceId.substring(0, 8).toUpperCase()}\n- Items: ${items}\n- Total Amount: Rs. ${amount}\n\nThank you for choosing us!\nVisit again.`;
+  
+  const url = `https://wa.me/${formattedMobile}?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank");
+}
+

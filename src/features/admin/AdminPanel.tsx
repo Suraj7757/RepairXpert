@@ -450,43 +450,30 @@ export default function AdminPanel() {
              </Button>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Wallet className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">
-                ₹{wallets.reduce((s, w) => s + Number(w.balance), 0).toFixed(0)}
-              </p>
-              <p className="text-xs text-muted-foreground">Total Wallets</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Gift className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">
-                {referrals.length}
-              </p>
-              <p className="text-xs text-muted-foreground">Referrals</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <IndianRupee className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">
-                {paymentSubs.filter((p) => p.status === "pending").length}
-              </p>
-              <p className="text-xs text-muted-foreground">Pending Payments</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Tag className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">
-                {promoCodes.length}
-              </p>
-              <p className="text-xs text-muted-foreground">Promo Codes</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[
+            { icon: Users, label: "Total Users", value: users.length, color: "from-blue-500 to-indigo-600", shadow: "shadow-blue-500/20" },
+            { icon: Store, label: "Active Shops", value: users.filter((u: any) => u.account_type === "shopkeeper").length, color: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-500/20" },
+            { icon: IndianRupee, label: "Pending Payments", value: paymentSubs.filter((p) => p.status === "pending").length, color: "from-amber-400 to-orange-500", shadow: "shadow-amber-500/20" },
+            { icon: TrendingUp, label: "Total Revenue", value: `₹${allPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0).toLocaleString()}`, color: "from-green-400 to-emerald-600", shadow: "shadow-green-500/20" },
+            { icon: Gift, label: "Referrals", value: referrals.length, color: "from-purple-400 to-violet-600", shadow: "shadow-purple-500/20" },
+            { icon: Tag, label: "Promo Codes", value: promoCodes.length, color: "from-cyan-400 to-blue-500", shadow: "shadow-cyan-500/20" },
+          ].map((stat) => (
+            <Card key={stat.label} className="border-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden relative ring-1 ring-white/20 dark:ring-white/10">
+              <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${stat.color} opacity-10 rounded-bl-full group-hover:scale-150 transition-transform duration-500`} />
+              <CardContent className="p-4 relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                    <p className="text-xl font-black tracking-tight text-foreground">{stat.value}</p>
+                  </div>
+                  <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${stat.color} ${stat.shadow} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <Tabs defaultValue="applications">

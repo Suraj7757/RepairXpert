@@ -34,8 +34,8 @@ export default function ShopPublicPage() {
 
       // SEO: title, description, canonical, Open Graph
       const url = `${window.location.origin}/shop/${slug}`;
-      const title = `${shopData.shop_name} — RepairXpert`;
-      const desc = `${shopData.shop_name}${shopData.address ? ` at ${shopData.address}` : ""}. Browse products, book repairs and contact the shop directly on RepairXpert.`;
+      const title = `${shopData.shop_name} — ServiceHub`;
+      const desc = `${shopData.shop_name}${shopData.address ? ` at ${shopData.address}` : ""}. Browse products, book repairs and contact the shop directly on ServiceHub.`;
       const image = (ls && ls[0]?.images?.[0]) || `${window.location.origin}/placeholder.svg`;
 
       document.title = title;

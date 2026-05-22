@@ -10,9 +10,9 @@ export function WhatsAppButton() {
   const handleWhatsAppClick = () => {
     const text = user
       ? encodeURIComponent(
-          `Hello, I need help with RepairXpert. My account email is ${user.email}`,
+          `Hello, I need help with ServiceHub. My account email is ${user.email}`,
         )
-      : encodeURIComponent("Hello, I need help with RepairXpert.");
+      : encodeURIComponent("Hello, I need help with ServiceHub.");
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${text}`, "_blank");
   };
 

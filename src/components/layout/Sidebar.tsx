@@ -27,6 +27,7 @@ import {
   Shield,
   Crown,
   ConciergeBell,
+  Bell,
   Building2,
   PlusCircle,
   X,
@@ -145,14 +146,15 @@ export function Sidebar({ links = [] }: SidebarProps) {
         },
       ];
     } else {
-      // shopkeeper
-      return [
+      // shopkeeper or staff
+      const rawGroups = [
         {
           label: "Core Operations",
           items: [
             { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
             { to: "/jobs", label: "Jobs", icon: Wrench },
             { to: "/customers", label: "Customers", icon: Users },
+            { to: "/notifications", label: "Notifications", icon: Bell },
           ],
         },
         {
@@ -161,6 +163,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
             { to: "/inventory", label: "Inventory", icon: Package },
             { to: "/sells", label: "Sells", icon: ShoppingCart },
             { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
+            { to: "/invoices", label: "Invoices", icon: FileText },
           ],
         },
         {
@@ -191,6 +194,38 @@ export function Sidebar({ links = [] }: SidebarProps) {
           ],
         },
       ];
+
+      if (role === "staff") {
+        const forbidden = [
+          "/staff",
+          "/subscription",
+          "/expenses",
+          "/settlements",
+          "/wallet",
+          "/financials",
+          "/reports",
+          "/analytics",
+          "/enterprise",
+        ];
+        const staffGroups = [
+          {
+            label: "My Work",
+            items: [
+              { to: "/staff-dashboard", label: "My Dashboard", icon: LayoutDashboard },
+              { to: "/jobs", label: "My Jobs", icon: Wrench },
+              { to: "/staff-earnings", label: "My Earnings", icon: IndianRupee },
+            ],
+          },
+          ...rawGroups
+            .map((group) => ({
+              ...group,
+              items: group.items.filter((item) => !forbidden.includes(item.to) && item.to !== "/dashboard"),
+            }))
+            .filter((group) => group.items.length > 0),
+        ];
+        return staffGroups;
+      }
+      return rawGroups;
     }
   };
   const performLogout = async () => {
@@ -205,7 +240,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
 
   const openWhatsApp = () => {
     window.open(
-      `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with RepairXpert")}`,
+      `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with ServiceHub")}`,
       "_blank",
     );
   };
@@ -235,10 +270,10 @@ export function Sidebar({ links = [] }: SidebarProps) {
             {!collapsed && (
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-sidebar-foreground tracking-tight">
-                  RepairXpert
+                  ServiceHub
                 </span>
                 <span className="text-[10px] text-sidebar-muted font-medium uppercase tracking-widest">
-                  v2.0 Pro
+                  v3.0 Pro
                 </span>
               </div>
             )}
@@ -458,7 +493,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
       <AlertDialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Logout from RepairXpert?</AlertDialogTitle>
+            <AlertDialogTitle>Logout from ServiceHub?</AlertDialogTitle>
             <AlertDialogDescription>
               Aap apne account se logout ho jayenge. Dobara login karne ke liye email aur password chahiye hoga.
             </AlertDialogDescription>

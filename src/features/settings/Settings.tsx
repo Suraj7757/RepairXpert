@@ -26,9 +26,11 @@ import { AutomationSettingsCard } from "./AutomationSettingsCard";
 import { WhatsAppBusinessCard } from "./WhatsAppBusinessCard";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { QRCodeSVG } from "qrcode.react";
+import { Plus, Trash, Edit, Check, X } from "lucide-react";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { settings, loading, saveSettings, refetch } = useShopSettings();
   const { theme, setTheme } = useTheme();
 
@@ -401,177 +403,388 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Shop Info */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Store className="h-4 w-4" /> Shop Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label>Shop Name</Label>
-              <Input
-                value={shopName}
-                onChange={(e) => setShopName(e.target.value)}
-                placeholder="e.g. RepairXpert Central"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Phone</Label>
-                <Input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>GSTIN</Label>
-                <Input
-                  value={gstin}
-                  onChange={(e) => setGstin(e.target.value)}
-                />
-              </div>
-            </div>
-            <div>
-              <Label>Address</Label>
-              <Input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
-              <Label className="text-sm font-semibold">📍 Shop Location (Map Pin)</Label>
-              <p className="text-xs text-muted-foreground">Customers will see your exact location and directions on the marketplace.</p>
-              <div className="grid grid-cols-2 gap-2">
+        {role !== "staff" && (
+          <>
+            {/* Shop Info */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Store className="h-4 w-4" /> Shop Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 <div>
-                  <Label className="text-xs">Latitude</Label>
-                  <Input value={mapLat} onChange={(e) => setMapLat(e.target.value)} placeholder="e.g. 25.5941" />
-                </div>
-                <div>
-                  <Label className="text-xs">Longitude</Label>
-                  <Input value={mapLng} onChange={(e) => setMapLng(e.target.value)} placeholder="e.g. 85.1376" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">Google Maps Link (optional)</Label>
-                <Input value={mapUrl} onChange={(e) => setMapUrl(e.target.value)} placeholder="https://maps.google.com/..." />
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (!navigator.geolocation) return toast.error("Geolocation not supported");
-                  toast.info("Fetching your location...");
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                      const lat = pos.coords.latitude.toFixed(6);
-                      const lng = pos.coords.longitude.toFixed(6);
-                      setMapLat(lat);
-                      setMapLng(lng);
-                      setMapUrl(`https://www.google.com/maps?q=${lat},${lng}`);
-                      toast.success("Location pinned!");
-                    },
-                    (err) => toast.error(err.message),
-                    { enableHighAccuracy: true },
-                  );
-                }}
-              >
-                📌 Use My Current Location
-              </Button>
-            </div>
-            <div>
-              <Label>Business UPI ID (for Customer Payments)</Label>
-              <Input
-                value={upiId}
-                onChange={(e) => setUpiId(e.target.value)}
-                placeholder="e.g. name@upi"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Revenue Split */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Percent className="h-4 w-4" /> Revenue Split
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={splitEnabled}
-                onCheckedChange={setSplitEnabled}
-              />
-              <span className="text-sm">
-                {splitEnabled ? "Enabled" : "Disabled"}
-              </span>
-            </div>
-            {splitEnabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Admin Share %</Label>
+                  <Label>Shop Name</Label>
                   <Input
-                    type="number"
-                    value={adminShare}
-                    onChange={(e) => setAdminShare(e.target.value)}
+                    value={shopName}
+                    onChange={(e) => setShopName(e.target.value)}
+                    placeholder="e.g. ServiceHub Central"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Phone</Label>
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>GSTIN</Label>
+                    <Input
+                      value={gstin}
+                      onChange={(e) => setGstin(e.target.value)}
+                    />
+                  </div>
+                </div>
                 <div>
-                  <Label>Staff Share %</Label>
+                  <Label>Address</Label>
                   <Input
-                    type="number"
-                    value={staffShare}
-                    onChange={(e) => setStaffShare(e.target.value)}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                   />
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* QR Receivers */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <QrCode className="h-4 w-4" /> QR Receivers
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {qrReceivers.map((qr, i) => (
-              <div key={i} className="flex gap-2">
-                <Input
-                  value={qr}
-                  onChange={(e) => updateQr(i, e.target.value)}
-                  placeholder={`QR Receiver ${i + 1}`}
-                />
-                {qrReceivers.length > 1 && (
+                <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
+                  <Label className="text-sm font-semibold">📍 Shop Location (Map Pin)</Label>
+                  <p className="text-xs text-muted-foreground">Customers will see your exact location and directions on the marketplace.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Latitude</Label>
+                      <Input value={mapLat} onChange={(e) => setMapLat(e.target.value)} placeholder="e.g. 25.5941" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Longitude</Label>
+                      <Input value={mapLng} onChange={(e) => setMapLng(e.target.value)} placeholder="e.g. 85.1376" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Google Maps Link (optional)</Label>
+                    <Input value={mapUrl} onChange={(e) => setMapUrl(e.target.value)} placeholder="https://maps.google.com/..." />
+                  </div>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => removeQr(i)}
-                    className="shrink-0 text-destructive"
+                    onClick={() => {
+                      if (!navigator.geolocation) return toast.error("Geolocation not supported");
+                      toast.info("Fetching your location...");
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          const lat = pos.coords.latitude.toFixed(6);
+                          const lng = pos.coords.longitude.toFixed(6);
+                          setMapLat(lat);
+                          setMapLng(lng);
+                          setMapUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+                          toast.success("Location pinned!");
+                        },
+                        (err) => toast.error(err.message),
+                        { enableHighAccuracy: true },
+                      );
+                    }}
                   >
-                    ✕
+                    📌 Use My Current Location
                   </Button>
+                </div>
+                <div>
+                  <Label>Business UPI ID (for Customer Payments)</Label>
+                  <Input
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    placeholder="e.g. name@upi"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* QR Payments CRUD */}
+            <QRPaymentsCard />
+
+            {/* Revenue Split */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Percent className="h-4 w-4" /> Revenue Split
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={splitEnabled}
+                    onCheckedChange={setSplitEnabled}
+                  />
+                  <span className="text-sm">
+                    {splitEnabled ? "Enabled" : "Disabled"}
+                  </span>
+                </div>
+                {splitEnabled && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Admin Share %</Label>
+                      <Input
+                        type="number"
+                        value={adminShare}
+                        onChange={(e) => setAdminShare(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Staff Share %</Label>
+                      <Input
+                        type="number"
+                        value={staffShare}
+                        onChange={(e) => setStaffShare(e.target.value)}
+                      />
+                    </div>
+                  </div>
                 )}
-              </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={addQr}>
-              + Add QR Receiver
+              </CardContent>
+            </Card>
+
+            {/* QR Receivers */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <QrCode className="h-4 w-4" /> QR Receivers
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {qrReceivers.map((qr, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Input
+                      value={qr}
+                      onChange={(e) => updateQr(i, e.target.value)}
+                      placeholder={`QR Receiver ${i + 1}`}
+                    />
+                    {qrReceivers.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeQr(i)}
+                        className="shrink-0 text-destructive"
+                      >
+                        ✕
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={addQr}>
+                  + Add QR Receiver
+                </Button>
+              </CardContent>
+            </Card>
+
+            <AutomationSettingsCard />
+            <WhatsAppBusinessCard />
+
+            <Button className="w-full" onClick={handleSaveShop}>
+              <Save className="h-4 w-4 mr-1" /> Save All Settings
             </Button>
-          </CardContent>
-        </Card>
-
-        <AutomationSettingsCard />
-        <WhatsAppBusinessCard />
-
-        <Button className="w-full" onClick={handleSaveShop}>
-          <Save className="h-4 w-4 mr-1" /> Save All Settings
-        </Button>
+          </>
+        )}
       </div>
     </MainLayout>
+  );
+}
+
+function QRPaymentsCard() {
+  const { user } = useAuth();
+  const [qrs, setQrs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Form state
+  const [name, setName] = useState("");
+  const [upiId, setUpiId] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+
+  const fetchQrs = async () => {
+    if (!user) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("qr_codes")
+      .select("*")
+      .order("created_at", { ascending: true });
+    if (!error && data) {
+      setQrs(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchQrs();
+  }, [user]);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !upiId.trim()) {
+      toast.error("Name and UPI ID are required");
+      return;
+    }
+    const { error } = await supabase.from("qr_codes").insert({
+      name: name.trim(),
+      upi_id: upiId.trim(),
+      user_id: user?.id,
+    });
+
+    if (error) {
+      toast.error("Failed to add QR Code: " + error.message);
+    } else {
+      toast.success("QR Code added successfully");
+      setName("");
+      setUpiId("");
+      setIsAdding(false);
+      fetchQrs();
+    }
+  };
+
+  const handleUpdate = async (id: string, newName: string, newUpiId: string) => {
+    if (!newName.trim() || !newUpiId.trim()) {
+      toast.error("Name and UPI ID are required");
+      return;
+    }
+    const { error } = await supabase
+      .from("qr_codes")
+      .update({ name: newName.trim(), upi_id: newUpiId.trim() })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Failed to update QR Code: " + error.message);
+    } else {
+      toast.success("QR Code updated");
+      setEditingId(null);
+      fetchQrs();
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("qr_codes").delete().eq("id", id);
+    if (error) {
+      toast.error("Failed to delete QR Code: " + error.message);
+    } else {
+      toast.success("QR Code deleted");
+      fetchQrs();
+    }
+  };
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <QrCode className="h-4 w-4" /> QR Payments Manager
+        </CardTitle>
+        {!isAdding && (
+          <Button size="sm" onClick={() => setIsAdding(true)} className="h-8">
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add QR
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isAdding && (
+          <form onSubmit={handleAdd} className="p-4 border rounded-2xl bg-muted/20 space-y-3 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">New QR Code</span>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setIsAdding(false)} className="h-6 w-6">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs font-bold text-muted-foreground uppercase">QR Display Name (e.g. Counter 1, Shop Main)</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Shop Main" required className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs font-bold text-muted-foreground uppercase">UPI ID</Label>
+                <Input value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="e.g. name@upi" required className="mt-1" />
+              </div>
+            </div>
+            <Button type="submit" size="sm" className="w-full gradient-primary mt-2">
+              Save QR Code
+            </Button>
+          </form>
+        )}
+
+        {loading ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Loading QR Codes...</p>
+        ) : qrs.length === 0 ? (
+          <div className="text-center py-6 border border-dashed rounded-xl bg-muted/10">
+            <p className="text-xs text-muted-foreground font-semibold">No UPI QR Codes configured yet.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Configure QR Codes here to print on invoices or show on screen.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {qrs.map((qr) => {
+              const isEditing = editingId === qr.id;
+              return (
+                <QRItem
+                  key={qr.id}
+                  qr={qr}
+                  isEditing={isEditing}
+                  onEdit={() => setEditingId(qr.id)}
+                  onCancel={() => setEditingId(null)}
+                  onSave={handleUpdate}
+                  onDelete={handleDelete}
+                />
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function QRItem({ qr, isEditing, onEdit, onCancel, onSave, onDelete }: {
+  qr: any;
+  isEditing: boolean;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: (id: string, name: string, upi: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [editName, setEditName] = useState(qr.name);
+  const [editUpi, setEditUpi] = useState(qr.upi_id);
+  const upiUrl = `upi://pay?pa=${qr.upi_id}&pn=${encodeURIComponent(qr.name)}`;
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-xl bg-card/50 backdrop-blur-sm hover:shadow-md transition-all">
+      <div className="bg-white p-2 rounded-lg border flex items-center justify-center shrink-0">
+        <QRCodeSVG value={upiUrl} size={80} />
+      </div>
+      
+      <div className="flex-1 w-full space-y-1 text-center sm:text-left">
+        {isEditing ? (
+          <div className="space-y-2">
+            <Input size={1} className="h-8 text-xs font-semibold" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
+            <Input size={1} className="h-8 text-xs" value={editUpi} onChange={(e) => setEditUpi(e.target.value)} placeholder="upi_id" />
+          </div>
+        ) : (
+          <>
+            <h4 className="text-sm font-bold text-foreground">{qr.name}</h4>
+            <p className="text-xs font-mono text-muted-foreground select-all break-all">{qr.upi_id}</p>
+          </>
+        )}
+      </div>
+
+      <div className="flex gap-1 shrink-0">
+        {isEditing ? (
+          <>
+            <Button size="icon" variant="outline" className="h-8 w-8 text-green-500 hover:text-green-600" onClick={() => onSave(qr.id, editName, editUpi)}>
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="outline" className="h-8 w-8 text-muted-foreground" onClick={onCancel}>
+              <X className="h-4 w-4" />
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button size="icon" variant="outline" className="h-8 w-8 text-primary" onClick={onEdit}>
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
+            <Button size="icon" variant="outline" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(qr.id)}>
+              <Trash className="h-3.5 w-3.5" />
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

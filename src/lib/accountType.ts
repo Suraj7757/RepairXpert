@@ -23,8 +23,10 @@ export function isSuperAdminEmail(email?: string | null): boolean {
 export function homePathFor(
   accountType: AccountType | null | undefined,
   isSuper: boolean,
+  role?: string,
 ): string {
   if (isSuper) return "/admin";
+  if (role === "staff") return "/staff-dashboard";
   switch (accountType) {
     case "customer":
       return "/customer";

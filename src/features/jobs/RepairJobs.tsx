@@ -484,7 +484,7 @@ export default function RepairJobs() {
         deviceBrand: job.device_brand,
         deviceModel: job.device_model || "",
         estimatedCost: Number(job.estimated_cost),
-        shopName: settings?.shop_name || "RepairXpert",
+        shopName: settings?.shop_name || "ServiceHub",
       });
       setTimeout(() => openWhatsApp(job.customer_mobile, text), 300);
     }

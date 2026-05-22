@@ -55,7 +55,7 @@ const HERO_SLIDES = [
   {
     bg: "from-[#1a1a2e] to-[#16213e]",
     badge: "🚀 For Shopkeepers",
-    title: "RepairXpert CRM\nFree Trial",
+    title: "ServiceHub CRM\nFree Trial",
     sub: "Manage repairs, staff, inventory & earnings",
     cta: "Start Free",
     href: "/auth?mode=signup",
@@ -120,7 +120,7 @@ export default function Landing() {
               <Wrench className="h-4 w-4 text-white" />
             </div>
             <span className="font-black text-lg tracking-tight text-white group-hover:text-[#ff9900] transition-colors hidden sm:block">
-              RepairXpert
+              ServiceHub
             </span>
           </Link>
 
@@ -387,7 +387,7 @@ export default function Landing() {
           {/* CRM Signup */}
           <div className="bg-gradient-to-br from-[#131921] to-[#1a2940] rounded-xl p-6 shadow-sm text-white">
             <div className="inline-block px-2.5 py-1 rounded-full text-[10px] font-black bg-[#ff9900] text-[#131921] mb-2">FOR SHOPKEEPERS</div>
-            <h3 className="text-lg font-black mb-1">RepairXpert CRM</h3>
+            <h3 className="text-lg font-black mb-1">ServiceHub CRM</h3>
             <p className="text-sm text-white/70 mb-1">Manage repairs, staff, inventory & grow your business.</p>
             <p className="text-xs text-white/50 mb-3">✅ Get online booking requests from customers</p>
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
@@ -414,9 +414,9 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* ── WHY REPAIRXPERT ── */}
+        {/* ── WHY SERVICEHUB ── */}
         <section className="mt-3 bg-white rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-black text-[#131921] mb-4">✅ Why RepairXpert?</h2>
+          <h2 className="text-xl font-black text-[#131921] mb-4">✅ Why ServiceHub?</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: Shield, title: "Verified Shops", desc: "All sellers are verified repair shops" },
@@ -473,7 +473,7 @@ export default function Landing() {
           <div>
             <h4 className="font-black mb-3 text-white">Get to Know Us</h4>
             <div className="flex flex-col gap-2 text-[#ddd]">
-              <Link to="/" className="hover:text-white hover:underline">About RepairXpert</Link>
+              <Link to="/" className="hover:text-white hover:underline">About ServiceHub</Link>
               <Link to="/auth?mode=signup" className="hover:text-white hover:underline">Partner With Us</Link>
               <a href="https://wa.me/7319884599" target="_blank" rel="noreferrer" className="hover:text-white hover:underline">Careers</a>
             </div>
@@ -507,7 +507,7 @@ export default function Landing() {
           </div>
         </div>
         <div className="border-t border-white/10 py-4 text-center text-xs text-[#999]">
-          © {new Date().getFullYear()} RepairXpert · All rights reserved · Founder: Suraj Kumar · +91 7319884599
+          © {new Date().getFullYear()} ServiceHub · All rights reserved · Founder: Suraj Kumar · +91 7319884599
         </div>
       </footer>
     </div>

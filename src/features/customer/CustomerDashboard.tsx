@@ -281,7 +281,7 @@ export default function CustomerDashboard() {
                     <p className="font-black text-amber-800">Own a Repair Shop?</p>
                   </div>
                   <p className="text-xs text-amber-700 mb-3">
-                    Register on RepairXpert and get online bookings from customers.
+                    Register on ServiceHub and get online bookings from customers.
                   </p>
                   <ul className="space-y-1 mb-4 text-xs text-amber-700">
                     {["Online booking page", "Manage repair jobs", "Staff management", "Sales & inventory"].map((f) => (
@@ -327,7 +327,7 @@ export default function CustomerDashboard() {
                   <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
                   <p className="font-black text-emerald-700">Shop Approved! 🎉</p>
                   <p className="text-xs text-emerald-600">
-                    <strong>{shopApplication.shop_name}</strong> is live on RepairXpert
+                    <strong>{shopApplication.shop_name}</strong> is live on ServiceHub
                   </p>
                   <Button className="w-full bg-emerald-600 hover:bg-emerald-700 font-black"
                     onClick={() => navigate("/dashboard")}>

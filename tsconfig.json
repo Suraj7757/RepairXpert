@@ -12,6 +12,11 @@
     "skipLibCheck": true,
     "strictNullChecks": false
   },
+  "exclude": [
+    "supabase/functions",
+    "capacitor.config.ts",
+    "electron"
+  ],
   "files": [],
   "references": [
     {

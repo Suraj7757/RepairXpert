@@ -30,10 +30,11 @@ export function MobileBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar();
-  const { accountType } = useAuth();
+  const { accountType, role } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const isCustomer = accountType === "customer";
+  const isStaff = role === "staff";
 
   const items = isCustomer
     ? [
@@ -44,7 +45,7 @@ export function MobileBottomNav() {
         { to: "#menu", icon: Menu, label: "More", isMenu: true },
       ]
     : [
-        { to: "/dashboard", icon: LayoutDashboard, label: "Home" },
+        { to: isStaff ? "/staff-dashboard" : "/dashboard", icon: LayoutDashboard, label: "Home" },
         { to: "/jobs", icon: Wrench, label: "Jobs" },
         { to: "#add", icon: Plus, label: "Add", primary: true },
         { to: "/sells", icon: ShoppingCart, label: "Sells" },

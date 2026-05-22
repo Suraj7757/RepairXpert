@@ -28,6 +28,7 @@ const Subscription = lazy(() => import("@/features/settings/Subscription"));
 const ServicesManagement = lazy(() => import("@/features/services/ServicesManagement"));
 const EnterpriseModules = lazy(() => import("@/features/enterprise/EnterpriseModules"));
 const StaffManagement = lazy(() => import("@/features/staff/StaffManagement"));
+const StaffDashboard = lazy(() => import("@/features/staff/StaffDashboard"));
 const StaffEarnings = lazy(() => import("@/features/staff/StaffEarnings"));
 const Financials = lazy(() => import("@/features/dashboard/Financials"));
 const Analytics = lazy(() => import("@/features/dashboard/Analytics"));
@@ -50,6 +51,8 @@ const Checkout = lazy(() => import("@/features/marketplace/Checkout"));
 const MyOrders = lazy(() => import("@/features/marketplace/MyOrders"));
 const SellerListings = lazy(() => import("@/features/marketplace/SellerListings"));
 const BecomeSeller = lazy(() => import("@/features/seller/BecomeSeller"));
+const Invoices = lazy(() => import("@/features/invoices/Invoices"));
+const NotificationsPage = lazy(() => import("@/features/notifications/NotificationsPage"));
 
 import { homePathFor } from "@/lib/accountType";
 const SellerOrders = lazy(() => import("@/features/marketplace/SellerOrders"));
@@ -102,6 +105,14 @@ function ShopkeeperRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function StaffGuard({ children }: { children: React.ReactNode }) {
+  const { role } = useAuth();
+  if (role === "staff") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+}
+
 // Extracted from IIFE to fix Rules of Hooks violation
 function AuthRoute({ home }: { home: string }) {
   const { user, isBanned, isMaintenance } = useAuth();
@@ -117,14 +128,14 @@ function AuthRoute({ home }: { home: string }) {
 }
 
 function AppRoutes() {
-  const { user, loading, accountType, isSuperAdmin } = useAuth();
+  const { user, loading, accountType, isSuperAdmin, role } = useAuth();
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
-  const home = user ? homePathFor(accountType, isSuperAdmin) : "/";
+  const home = user ? homePathFor(accountType, isSuperAdmin, role ?? undefined) : "/";
 
   return (
     <ErrorBoundary>
@@ -173,15 +184,18 @@ function AppRoutes() {
           <Route path="/track" element={<TrackOrder />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ShopkeeperRoute><Dashboard /></ShopkeeperRoute>} />
+          <Route path="/staff-dashboard" element={<ShopkeeperRoute><StaffDashboard /></ShopkeeperRoute>} />
+          <Route path="/invoices" element={<ShopkeeperRoute><Invoices /></ShopkeeperRoute>} />
+          <Route path="/notifications" element={<ShopkeeperRoute><NotificationsPage /></ShopkeeperRoute>} />
           <Route path="/customers" element={<ShopkeeperRoute><Customers /></ShopkeeperRoute>} />
 
           <Route path="/jobs" element={<ShopkeeperRoute><RepairJobs /></ShopkeeperRoute>} />
           <Route path="/payments" element={<ShopkeeperRoute><Payments /></ShopkeeperRoute>} />
-          <Route path="/settlements" element={<ShopkeeperRoute><Settlements /></ShopkeeperRoute>} />
+          <Route path="/settlements" element={<ShopkeeperRoute><StaffGuard><Settlements /></StaffGuard></ShopkeeperRoute>} />
           <Route path="/inventory" element={<ShopkeeperRoute><Inventory /></ShopkeeperRoute>} />
           <Route path="/sells" element={<ShopkeeperRoute><Sells /></ShopkeeperRoute>} />
-          <Route path="/reports" element={<ShopkeeperRoute><Reports /></ShopkeeperRoute>} />
-          <Route path="/analytics" element={<ShopkeeperRoute><Analytics /></ShopkeeperRoute>} />
+          <Route path="/reports" element={<ShopkeeperRoute><StaffGuard><Reports /></StaffGuard></ShopkeeperRoute>} />
+          <Route path="/analytics" element={<ShopkeeperRoute><StaffGuard><Analytics /></StaffGuard></ShopkeeperRoute>} />
           <Route
             path="/settings"
             element={
@@ -191,7 +205,7 @@ function AppRoutes() {
             }
           />
           <Route path="/trash" element={<ShopkeeperRoute><Trash /></ShopkeeperRoute>} />
-          <Route path="/wallet" element={<ShopkeeperRoute><WalletPage /></ShopkeeperRoute>} />
+          <Route path="/wallet" element={<ShopkeeperRoute><StaffGuard><WalletPage /></StaffGuard></ShopkeeperRoute>} />
           <Route
             path="/subscription"
             element={
@@ -199,18 +213,20 @@ function AppRoutes() {
                 {isSuperAdmin ? (
                   <Navigate to="/admin" replace />
                 ) : (
-                  <Subscription />
+                  <StaffGuard>
+                    <Subscription />
+                  </StaffGuard>
                 )}
               </ProtectedRoute>
             }
           />
           <Route path="/services" element={<ShopkeeperRoute><ServicesManagement /></ShopkeeperRoute>} />
-          <Route path="/enterprise" element={<ShopkeeperRoute><EnterpriseModules /></ShopkeeperRoute>} />
+          <Route path="/enterprise" element={<ShopkeeperRoute><StaffGuard><EnterpriseModules /></StaffGuard></ShopkeeperRoute>} />
           <Route path="/ai-diagnostics" element={<ShopkeeperRoute><AiDiagnosticCenter /></ShopkeeperRoute>} />
           <Route path="/marketing" element={<ShopkeeperRoute><MarketingDashboard /></ShopkeeperRoute>} />
-          <Route path="/staff" element={<ShopkeeperRoute><StaffManagement /></ShopkeeperRoute>} />
-          <Route path="/staff-earnings" element={<ShopkeeperRoute><StaffEarnings /></ShopkeeperRoute>} />
-          <Route path="/financials" element={<ShopkeeperRoute><Financials /></ShopkeeperRoute>} />
+          <Route path="/staff" element={<ShopkeeperRoute><StaffGuard><StaffManagement /></StaffGuard></ShopkeeperRoute>} />
+          <Route path="/staff-earnings" element={<ShopkeeperRoute><StaffGuard><StaffEarnings /></StaffGuard></ShopkeeperRoute>} />
+          <Route path="/financials" element={<ShopkeeperRoute><StaffGuard><Financials /></StaffGuard></ShopkeeperRoute>} />
           <Route
             path="/admin"
             element={

@@ -355,7 +355,7 @@ export default function MultiServiceShowcase() {
                 Ready to boost your service business?
               </h3>
               <p className="text-muted-foreground">
-                Join 500+ service centers using MSM CRM to manage their repairs
+                Join 500+ service centers using ServiceHub to manage their repairs
                 with 99.9% customer satisfaction.
               </p>
               <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">

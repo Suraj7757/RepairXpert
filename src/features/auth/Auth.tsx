@@ -246,7 +246,7 @@ export default function Auth() {
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                <span>Your RepairXpert account is now active</span>
+                <span>Your ServiceHub account is now active</span>
               </div>
             </div>
             <Button
@@ -392,7 +392,7 @@ export default function Auth() {
                 <Wrench className="h-10 w-10 text-primary-foreground" />
               </div>
               <CardTitle className="text-4xl font-black tracking-tighter">
-                RepairXpert
+                ServiceHub
               </CardTitle>
               <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
                 {mode === "login" && "Premium Business Access"}
@@ -537,7 +537,7 @@ export default function Auth() {
                   </div>
                 </div>
 
-                {mode !== "forgot" && (
+                {mode !== "forgot" && (mode !== "login" || loginMethod === "password") && (
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
                       Password
@@ -645,7 +645,7 @@ export default function Auth() {
                   {loading
                     ? "Processing..."
                     : mode === "login"
-                      ? "Sign In"
+                      ? (loginMethod === "magiclink" ? "Send Magic Link" : "Sign In")
                       : mode === "signup"
                         ? "Create Account"
                         : "Send Reset Link"}
@@ -705,7 +705,7 @@ export default function Auth() {
           <div className="space-y-2">
             <h3 className="text-3xl font-black tracking-tight">
               Why choose{" "}
-              <span className="text-primary italic">RepairXpert?</span>
+              <span className="text-primary italic">ServiceHub?</span>
             </h3>
             <p className="text-muted-foreground">
               The most advanced multi-service management platform.
@@ -752,7 +752,7 @@ export default function Auth() {
                 variant="outline"
                 className="text-[9px] bg-primary/10 font-bold border-primary/20"
               >
-                v2.0 Live
+                v3.0 Live
               </Badge>
             </div>
             <ul className="space-y-2">
@@ -775,7 +775,7 @@ export default function Auth() {
       </div>
 
       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] opacity-50">
-        Secured by RepairXpert Enterprise Infrastructure
+        Secured by ServiceHub Enterprise Infrastructure
       </p>
     </div>
   );

@@ -58,114 +58,148 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchRole = useCallback(async (userId: string, userEmail?: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUser = session?.user;
-    const isSuper = isSuperAdminEmail(userEmail);
-    setIsSuperAdmin(isSuper);
-    const [rolesRes, profileRes, configRes] = await Promise.all([
-      supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase
-        .from("profiles")
-        .select("role, shop_id, is_banned, plan_expires_at, account_type")
-        .eq("user_id", userId)
-        .maybeSingle() as any,
-      supabase
-        .from("system_config")
-        .select("value")
-        .eq("id", "maintenance")
-        .maybeSingle() as any,
-    ]);
-
-    const profileData = profileRes.data;
-    if (profileData && currentUser) {
-      const emailVal = currentUser.email;
-      const phoneVal = currentUser.phone || currentUser.user_metadata?.mobile || currentUser.user_metadata?.phone;
-      if (emailVal || phoneVal) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user;
+      if (!currentUser) return; // Guard: session expired during fetch
+      
+      const isSuper = isSuperAdminEmail(userEmail);
+      setIsSuperAdmin(isSuper);
+      const [rolesRes, profileRes, configRes] = await Promise.all([
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle(),
         supabase
           .from("profiles")
-          .update({ email: emailVal, phone: phoneVal } as any)
+          .select("role, shop_id, is_banned, plan_expires_at, account_type")
           .eq("user_id", userId)
-          .then(() => {});
+          .maybeSingle() as any,
+        supabase
+          .from("system_config")
+          .select("value")
+          .eq("id", "maintenance")
+          .maybeSingle() as any,
+      ]);
+
+      const profileData = profileRes.data;
+      if (profileData && currentUser) {
+        const emailVal = currentUser.email;
+        const phoneVal = currentUser.phone || currentUser.user_metadata?.mobile || currentUser.user_metadata?.phone;
+        if (emailVal || phoneVal) {
+          supabase
+            .from("profiles")
+            .update({ email: emailVal, phone: phoneVal } as any)
+            .eq("user_id", userId)
+            .then(() => {});
+        }
       }
-    }
-    
-    let finalRole: AppRole = "customer";
-    if (isSuper) {
-      finalRole = "super_admin";
-    } else if (rolesRes.data?.role === "admin") {
-      finalRole = "shopkeeper";
-    } else if (rolesRes.data?.role) {
-      finalRole = rolesRes.data.role as AppRole;
-    } else {
-      finalRole = (profileData?.role as AppRole) || "customer";
-    }
-
-    const currentRole = finalRole;
-    let currentShopId = profileData?.shop_id || null;
-
-    if (currentRole === "staff" && currentUser) {
-      const { data: staffData } = await supabase
-        .from("staff_members")
-        .select("shop_user_id")
-        .or(`email.eq.${currentUser.email},phone.eq.${currentUser.phone || currentUser.user_metadata?.mobile || currentUser.user_metadata?.phone || ""}`)
-        .maybeSingle();
-      if (staffData) {
-        currentShopId = staffData.shop_user_id;
+      
+      let finalRole: AppRole = "customer";
+      if (isSuper) {
+        finalRole = "super_admin";
+      } else if (rolesRes.data?.role === "admin") {
+        finalRole = "shopkeeper";
+      } else if (rolesRes.data?.role) {
+        finalRole = rolesRes.data.role as AppRole;
+      } else {
+        finalRole = (profileData?.role as AppRole) || "customer";
       }
-    }
 
-    setRole(currentRole);
-    setShopId(currentShopId);
-    setIsSuperAdmin(isSuper);
-    setAccountType(
-      (profileData?.account_type as AccountType) || 
-      (currentRole === "super_admin" ? "shopkeeper" : currentRole as AccountType) || 
-      "customer"
-    );
+      const currentRole = finalRole;
+      let currentShopId = profileData?.shop_id || null;
 
-    const isMaint = configRes.data?.value?.enabled === true;
-    setIsMaintenance(isMaint);
+      if (currentRole === "staff" && currentUser) {
+        try {
+          const staffEmail = currentUser.email || "";
+          const staffPhone = currentUser.phone || currentUser.user_metadata?.mobile || currentUser.user_metadata?.phone || "";
+          const { data: staffData } = await supabase
+            .from("staff_members")
+            .select("shop_user_id")
+            .or(`email.eq.${staffEmail},phone.eq.${staffPhone}`)
+            .maybeSingle();
+          if (staffData) {
+            currentShopId = staffData.shop_user_id;
+          }
+        } catch (staffErr) {
+          console.warn("Staff member lookup failed:", staffErr);
+        }
+      }
 
-    if (isMaint && !isSuper) {
-      await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      setRole(null);
-      setShopId(null);
-      return;
-    }
+      setRole(currentRole);
+      setShopId(currentShopId);
+      setIsSuperAdmin(isSuper);
+      setAccountType(
+        (profileData?.account_type as AccountType) || 
+        (currentRole === "super_admin" ? "shopkeeper" : currentRole as AccountType) || 
+        "customer"
+      );
 
-    if (
-      profileData?.plan_expires_at &&
-      new Date(profileData.plan_expires_at) < new Date() &&
-      !isSuper
-    ) {
-      setIsPlanExpired(true);
-    } else {
-      setIsPlanExpired(false);
-    }
+      const isMaint = configRes.data?.value?.enabled === true;
+      setIsMaintenance(isMaint);
 
-    if (profileData?.is_banned) {
-      setIsBanned(true);
-      await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      setRole(null);
-      setShopId(null);
-    } else {
+      if (isMaint && !isSuper) {
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setRole(null);
+        setShopId(null);
+        return;
+      }
+
+      if (
+        profileData?.plan_expires_at &&
+        new Date(profileData.plan_expires_at) < new Date() &&
+        !isSuper
+      ) {
+        setIsPlanExpired(true);
+      } else {
+        setIsPlanExpired(false);
+      }
+
+      if (profileData?.is_banned) {
+        setIsBanned(true);
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setRole(null);
+        setShopId(null);
+      } else {
+        setIsBanned(false);
+      }
+    } catch (err) {
+      console.error("fetchRole error:", err);
+      // Don't crash the app — keep user logged in with defaults
+      setRole("customer");
       setIsBanned(false);
+      setIsPlanExpired(false);
     }
   }, []);
 
   useEffect(() => {
     let hadUser = false;
+    let initialLoadDone = false;
+
+    // getSession() provides the initial state
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        hadUser = true;
+        await fetchRole(session.user.id, session.user.email);
+      }
+      initialLoadDone = true;
+      setLoading(false);
+    });
+
+    // onAuthStateChange handles subsequent changes (sign-in, sign-out, token refresh)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      // Skip the INITIAL_SESSION event since getSession already handles it
+      if (!initialLoadDone && event === "INITIAL_SESSION") return;
+
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -182,23 +216,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             path === "/" ||
             path.startsWith("/track") ||
             path.startsWith("/book/") ||
+            path.startsWith("/shop/") ||
             path.startsWith("/marketplace") ||
-            path.startsWith("/reset-password");
+            path.startsWith("/reset-password") ||
+            path.startsWith("/privacy") ||
+            path.startsWith("/terms");
           if (!onPublic) {
             window.location.replace("/auth");
           }
         }
       }
-      setLoading(false);
-    });
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchRole(session.user.id, session.user.email);
-      }
-      setLoading(false);
+      if (initialLoadDone) setLoading(false);
     });
 
     return () => subscription.unsubscribe();
