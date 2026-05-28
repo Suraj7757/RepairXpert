@@ -32,11 +32,28 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface ReferralStats {
   total_referrals: number;
   total_rewards_given: number;
   active_referrals: number;
+}
+
+interface Referral {
+  id: string;
+  referred_customer_name: string;
+  referred_customer_phone: string;
+  referral_date: string;
+  reward_amount: number;
+  status: "pending" | "completed" | "rejected";
 }
 
 export default function MarketingDashboard() {
@@ -50,12 +67,14 @@ export default function MarketingDashboard() {
     active_referrals: 0,
   });
   const [showReferralDialog, setShowReferralDialog] = useState(false);
-  const [referrals, setReferrals] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
   const [isLoadingReferrals, setIsLoadingReferrals] = useState(false);
 
-  // Fetch referral stats
+  // Fetch referral stats on mount and when shopId changes
   useEffect(() => {
     fetchReferralStats();
+    const interval = setInterval(fetchReferralStats, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
   }, [shopId]);
 
   const fetchReferralStats = async () => {
@@ -98,7 +117,7 @@ export default function MarketingDashboard() {
         .from("referral_program_details")
         .select("*")
         .eq("shop_id", shopId)
-        .order("created_at", { ascending: false });
+        .order("referral_date", { ascending: false });
 
       if (error) {
         logger.error("Failed to fetch referrals", { error: error.message });
@@ -236,16 +255,17 @@ export default function MarketingDashboard() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-medium bg-white/10 p-2 rounded-lg">
                     <span>Total Referrals</span>
-                    <span className="font-black text-lg">12</span>
+                    <span className="font-black text-lg">{referralStats.total_referrals}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium bg-white/10 p-2 rounded-lg">
                     <span>Rewards Given</span>
                     <span className="font-black text-lg flex items-center">
-                      <IndianRupee className="h-4 w-4" /> 1,200
+                      <IndianRupee className="h-4 w-4" /> {referralStats.total_rewards_given.toLocaleString("en-IN")}
                     </span>
                   </div>
                 </div>
                 <Button
+                  onClick={handleManageReferrals}
                   variant="secondary"
                   className="w-full rounded-xl font-bold mt-2 hover:scale-[1.02] transition-transform"
                 >
@@ -299,6 +319,71 @@ export default function MarketingDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Manage Referrals Dialog */}
+      <Dialog open={showReferralDialog} onOpenChange={setShowReferralDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Referrals</DialogTitle>
+            <DialogDescription>
+              View and manage all referrals for your shop
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingReferrals ? (
+            <div className="flex justify-center items-center py-8">
+              <p className="text-muted-foreground">Loading referrals...</p>
+            </div>
+          ) : referrals.length === 0 ? (
+            <div className="flex justify-center items-center py-8">
+              <p className="text-muted-foreground">No referrals yet</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer Name</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Reward</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {referrals.map((referral) => (
+                    <TableRow key={referral.id}>
+                      <TableCell className="font-medium">
+                        {referral.referred_customer_name}
+                      </TableCell>
+                      <TableCell>{referral.referred_customer_phone}</TableCell>
+                      <TableCell>
+                        {new Date(referral.referral_date).toLocaleDateString("en-IN")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        ₹{referral.reward_amount.toLocaleString("en-IN")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            referral.status === "completed"
+                              ? "default"
+                              : referral.status === "pending"
+                              ? "secondary"
+                              : "outline"
+                          }
+                        >
+                          {referral.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
