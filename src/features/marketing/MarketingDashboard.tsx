@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import {
   Card,
@@ -23,11 +23,97 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/services/supabase";
+import { useAuth } from "@/context/AuthContext";
+import { logger } from "@/lib/logger";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+interface ReferralStats {
+  total_referrals: number;
+  total_rewards_given: number;
+  active_referrals: number;
+}
 
 export default function MarketingDashboard() {
   const { data: customers } = useSupabaseQuery<any>("customers");
+  const { shopId } = useAuth();
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [referralStats, setReferralStats] = useState<ReferralStats>({
+    total_referrals: 0,
+    total_rewards_given: 0,
+    active_referrals: 0,
+  });
+  const [showReferralDialog, setShowReferralDialog] = useState(false);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [isLoadingReferrals, setIsLoadingReferrals] = useState(false);
+
+  // Fetch referral stats
+  useEffect(() => {
+    fetchReferralStats();
+  }, [shopId]);
+
+  const fetchReferralStats = async () => {
+    try {
+      if (!shopId) return;
+
+      // Get referral stats from database
+      const { data, error } = await (supabase as any)
+        .from("referral_program")
+        .select("*")
+        .eq("shop_id", shopId);
+
+      if (error) {
+        logger.error("Failed to fetch referral stats", { error: error.message });
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const stats: any = data[0];
+        setReferralStats({
+          total_referrals: stats.total_referrals || 0,
+          total_rewards_given: stats.total_rewards_given || 0,
+          active_referrals: stats.active_referrals || 0,
+        });
+      }
+    } catch (err) {
+      logger.error("Error fetching referral stats", { error: err });
+    }
+  };
+
+  const handleManageReferrals = async () => {
+    setShowReferralDialog(true);
+    setIsLoadingReferrals(true);
+
+    try {
+      if (!shopId) return;
+
+      // Fetch all referrals for this shop
+      const { data, error } = await (supabase as any)
+        .from("referral_program_details")
+        .select("*")
+        .eq("shop_id", shopId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        logger.error("Failed to fetch referrals", { error: error.message });
+        toast.error("Failed to load referrals");
+        return;
+      }
+
+      setReferrals(data || []);
+    } catch (err) {
+      logger.error("Error loading referrals", { error: err });
+      toast.error("Error loading referrals");
+    } finally {
+      setIsLoadingReferrals(false);
+    }
+  };
 
   const handleBulkSend = async () => {
     if (!message.trim()) {
@@ -36,14 +122,25 @@ export default function MarketingDashboard() {
     }
     setIsSending(true);
 
-    // Simulate sending bulk messages
     try {
-      // Typically we would invoke an Edge Function here
-      // await supabase.functions.invoke('whatsapp-bulk', { body: { customers, message } })
+      // Log the broadcast message for audit trail
+      const { error: logError } = await (supabase as any).from("activity_log").insert({
+        shop_id: shopId,
+        action: "broadcast_sent",
+        description: `WhatsApp broadcast sent to ${customers.length} customers`,
+        details: { customer_count: customers.length, message_preview: message.substring(0, 100) },
+      });
+
+      if (logError) {
+        logger.warn("Failed to log broadcast", { error: logError.message });
+      }
+
+      // Simulate sending bulk messages (in production, would call WhatsApp Business API)
       await new Promise((r) => setTimeout(r, 2000));
       toast.success(`Successfully sent to ${customers.length} customers!`);
       setMessage("");
     } catch (e) {
+      logger.error("Failed to send broadcast", { error: e });
       toast.error("Failed to send broadcast");
     } finally {
       setIsSending(false);

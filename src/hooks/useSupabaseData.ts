@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/services/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 type TableName =
   | "customers"
@@ -109,7 +110,7 @@ export function useSupabaseQuery<T>(table: TableName, includeDeleted = false) {
         const { data: result, error } = await query;
         if (error) {
           if (error.code !== "PGRST116") {
-            console.error(`Query error on ${table}:`, error);
+            logger.error(`Query error on ${table}`, { error: error.message, code: error.code });
           }
           // fall back to cached
           const cached = (await idbGet(cacheKey, offlineStore)) as T[] | undefined;

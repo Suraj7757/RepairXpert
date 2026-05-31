@@ -1,68 +1,186 @@
-# Full-App Audit & E-commerce Upgrade Plan
+# SaaS Restructure Plan — Customer / Shopkeeper / Super Admin
 
-Goal: Har feature, button, route, RLS aur RPC ko ek-ek karke verify karna, broken cheezein fix karna, aur public marketplace ko Flipkart/Amazon jaisa professional banana — bina dubara command ke.
+Goal: Convert the current shopkeeper-first CRM into a proper multi-tenant SaaS with three clearly separated experiences, sharing one auth + DB but with distinct routes, layouts, sidebars, dashboards, and permissions.
 
-## Phase 1 — Deep Audit (read-only)
-1. **Routes & navigation** — `App.tsx`, `Sidebar.tsx`, `MobileBottomNav.tsx`: dead links, role-gated routes, 404s.
-2. **Auth flows** — signup (shopkeeper/wholesaler/customer), Google OAuth, password reset, role redirect after login, plan expiry lock.
-3. **Core CRM modules** — Repair Jobs, Sells, Inventory, Customers, Payments, Expenses, Branches, Loyalty, Staff, Settlements, Bookings, Reviews — CRUD + RLS + soft-delete + undo.
-4. **Marketplace stack** — Listings, Cart, Checkout, MyOrders, SellerOrders, ListingDetail, LiveMarketplaceShowcase, inventory→listing sync trigger, `place_marketplace_order` RPC.
-5. **Public pages** — `/`, `/marketplace`, `/marketplace/:id`, `/track`, `/book/:slug`, `/shop/:slug/reviews` — no-auth access, SEO tags, map links.
-6. **Admin & monetization** — Dev Admin Panel, Trash, Refunds, Broadcast, Ads, Referrals, Wallet, Subscription, Manual UPI verification.
-7. **DB sanity** — run linter, check RLS gaps, missing FKs/indexes, listings sync correctness, order number uniqueness.
+---
 
-Output of phase 1: one issue list grouped by Critical / High / Medium / Polish.
+## 1. Roles & Landing
 
-## Phase 2 — Fix Pass (all auto-applied)
-Apply every Critical + High issue from the audit:
-- Broken navigation/role redirects
-- RLS holes or missing policies
-- Sell/checkout errors after login (validate plan, banned, missing profile)
-- Inventory↔marketplace sync edge cases (price 0, deleted item, branch_id)
-- Soft-delete + 5-sec undo where missing
-- Notifications firing on new marketplace orders for sellers
-- Plan-expiry + banned + maintenance guards on every protected route
-- Mobile bottom-nav active states, FAB removed (already done) — verify
+| Role | Trigger | Landing route | Layout |
+|---|---|---|---|
+| Super Admin | email = krs715665@gmail.com | `/admin` | Admin layout |
+| Shopkeeper | `account_type=shopkeeper` + approved application | `/shop` | Shop CRM layout |
+| Customer | default on signup | `/customer` | Customer layout |
+| Pending shopkeeper | applied but not approved | `/become-shopkeeper` (status view) | Customer layout |
 
-## Phase 3 — E-commerce Upgrade (Flipkart/Amazon-grade)
-Public marketplace polish + new capability:
+`homePathFor()` and `ProtectedRoute` rewritten around these three roles only. Wholesaler/staff kept as sub-variants of shopkeeper for now.
 
-**Browse & discover**
-- Sticky search + category chips + price/rating/location filters + sort (popularity, price asc/desc, newest)
-- Featured carousel + "Near you" section using shop `map_lat/lng` + haversine
-- Product card: image, title, price, MRP + discount %, rating stars, shop name, distance, free-delivery badge
-- Listing detail: image gallery, qty selector, "Buy Now" + "Add to Cart", shop card with map, reviews tab, related items
+---
 
-**Cart & Checkout**
-- Per-seller grouping with subtotals
-- Delivery vs Pickup (already added) + slot picker for pickup
-- Address book for logged-in customers
-- Coupon field (reuse `promo_codes`)
-- COD / UPI (show seller UPI QR) / online (Stripe placeholder)
-- Order success page with tracking ID + WhatsApp confirmation to seller
+## 2. Route Map (new)
 
-**Post-order**
-- Customer "My Orders" with status timeline (Placed → Confirmed → Packed → Shipped/Ready → Delivered/Picked-up)
-- Public order tracking via order_number on `/track`
-- Seller dashboard: new-order toast + sound, one-click status updates, print invoice
-- Auto WhatsApp on every status change (uses existing template system)
+```text
+PUBLIC
+  /                       Landing (marketing, "Shop now" + "Become a Seller" + "Login")
+  /auth                   Login / Signup (tabs: Customer | Shopkeeper)
+  /auth/callback          OAuth
+  /reset-password
+  /track                  Public order tracking
+  /book/:slug             Public booking
+  /shop/:slug             Public shop page
+  /marketplace            Public browse
+  /listing/:id            Public listing
+  /privacy /terms
 
-**Trust & SEO**
-- Shop public page `/shop/:slug` showing profile, rating, reviews, all listings, map
-- Review prompt to customer after "Delivered"
-- JSON-LD `Product` + `LocalBusiness` schema on listing & shop pages
-- Sitemap auto-includes active listings
+CUSTOMER  (role = customer)
+  /customer               Dashboard (orders summary, recent jobs, recommendations)
+  /customer/marketplace   Browse all shops/products
+  /customer/shop/:slug    Shop view
+  /customer/cart
+  /customer/checkout
+  /customer/orders        My orders (marketplace + service)
+  /customer/orders/:id
+  /customer/bookings      My repair bookings
+  /customer/book          Book a repair (pick shop)
+  /customer/ai-diagnostic
+  /customer/wallet        Loyalty points + referral
+  /customer/settings      Profile, addresses
+  /become-shopkeeper      Upgrade form / pending status
 
-## Phase 4 — Verification
-- Manual click-through of every sidebar item in each role (shopkeeper, wholesaler, customer, dev admin)
-- Public marketplace flow end-to-end as guest → signup → buy → seller fulfils → review
-- Supabase linter clean, no console errors, no 404s
+SHOPKEEPER  (role = shopkeeper, approved)
+  /shop                   Dashboard (KPIs)
+  /shop/jobs              Repair jobs CRM
+  /shop/bookings          Incoming customer bookings
+  /shop/customers
+  /shop/inventory
+  /shop/listings          Marketplace listings (publish from inventory)
+  /shop/orders            Marketplace orders received
+  /shop/sells
+  /shop/payments
+  /shop/settlements
+  /shop/expenses
+  /shop/loyalty
+  /shop/branches
+  /shop/staff
+  /shop/wallet
+  /shop/subscription
+  /shop/analytics /shop/financials /shop/reports
+  /shop/settings          Shop profile, QR receivers, booking slug
+  /shop/trash
 
-## Technical Notes
-- Migrations needed: `marketplace_orders.fulfillment_status` enum expansion, `addresses` table for customers, `order_status_history` table, `pickup_slot` text column. Indexes on `marketplace_listings(active, category, price)`, `marketplace_orders(buyer_id, seller_id, created_at)`.
-- New RPCs: `update_marketplace_order_status(_order_id, _status)` with seller-only check + history insert + WhatsApp trigger; `nearby_listings(_lat, _lng, _km)` using earthdistance or simple bbox.
-- New components: `MarketplaceFilters`, `ProductCard`, `ShopPublicPage`, `OrderTimeline`, `AddressBook`, `CouponInput`.
-- Reuse existing: `whatsapp-send` edge function, `place_marketplace_order` RPC, soft-delete pattern, notification bell.
+SUPER ADMIN  (krs715665@gmail.com)
+  /admin                  Platform KPIs
+  /admin/shops            All shopkeepers
+  /admin/users            All users (ban / promote / plan)
+  /admin/applications     Shopkeeper approvals
+  /admin/orders           All marketplace orders
+  /admin/payments         Manual UPI verification
+  /admin/promos           Promo codes
+  /admin/ads              Ad management
+  /admin/broadcast
+  /admin/settings         Maintenance mode, system config
+```
 
-## Scope confirmation
-This is a large multi-day-equivalent change set. You said "sab allow", so on approval I will execute phases 1→4 in sequence, asking nothing further unless a destructive choice appears (e.g. dropping a column). Plan-expired users will still be blocked from CRM but can browse marketplace as customers.
+Old `/dashboard`, `/wholesale`, `/staff-dashboard` redirect to the matching new path.
+
+---
+
+## 3. Layout / Sidebar
+
+Three distinct sidebars driven by `role` in `SharedLayout.tsx`:
+
+- **CustomerSidebar** — Dashboard, Browse Shop, Cart, My Orders, Bookings, AI Diagnostic, Wallet, Settings, "Become a Shopkeeper" CTA.
+- **ShopkeeperSidebar** — current shop nav, cleaned up (Jobs, Bookings, Inventory, Listings, Orders, Sells, Payments, Settlements, Expenses, Loyalty, Branches, Staff, Wallet, Subscription, Analytics, Reports, Settings, Trash).
+- **AdminSidebar** — Dashboard, Shops, Users, Applications, Orders, Payments, Promos, Ads, Broadcast, Settings.
+
+Header shows role badge + quick "Switch view" only for super admin.
+
+---
+
+## 4. Auth Flow Changes
+
+`/auth` page gets two tabs:
+1. **Customer** — quick signup (name, email, mobile, password) → role `customer` → `/customer`.
+2. **Shopkeeper** — same fields + "Continue" → creates customer account first, then forwards to `/become-shopkeeper` to fill business details.
+
+Google OAuth callback uses `localStorage rx_pending_account_type` (already in place) to route accordingly. Super admin email always lands on `/admin`.
+
+Pending application: customer dashboard shows a banner "Your shopkeeper application is under review". On approval (existing `approve_shopkeeper_application` RPC) next login routes to `/shop`.
+
+---
+
+## 5. Customer Experience (new/wired)
+
+- **Customer Dashboard**: tiles for Active Orders, Bookings, Wallet/Loyalty, Recommended shops near you.
+- **Browse Shop / Marketplace**: existing `Marketplace.tsx` reused under `/customer/marketplace`.
+- **Cart + Checkout**: existing components, hardened (no double-submit already done).
+- **My Orders**: combines `marketplace_orders` (buyer_id = me) + `repair_jobs` booked via `booking_requests`.
+- **Bookings**: list of my `booking_requests` with status + tracking link.
+- **Book a Repair**: pick shop (list of shops with `booking_enabled=true`) → reuses PublicBooking form but pre-fills logged-in user.
+- **Wallet**: loyalty points across shops + referrals + ad rewards.
+- **Become a Shopkeeper**: existing form, shows pending/rejected status with reapply.
+
+---
+
+## 6. Shopkeeper Experience
+
+Existing CRM stays, but:
+- Default landing `/shop` (alias for old `/dashboard`).
+- Add `/shop/bookings` page listing `booking_requests` with one-click "Convert to Job" (RPC already exists).
+- Add `/shop/orders` page listing `marketplace_orders` where `seller_id=me` with status updates (RPC exists).
+- Sidebar reorganized into groups: Operations, Sales, Finance, Growth, Settings.
+
+---
+
+## 7. Super Admin Experience
+
+`AdminPanel.tsx` split into proper pages under `/admin/*`:
+- Dashboard: total shops, customers, GMV, active subs, pending applications.
+- Applications: approve/reject (already wired).
+- Users: search, ban/unban, set plan, set role (RPCs exist).
+- Shops: list `shop_settings` joined with profile, plan, GMV.
+- Orders: read-only across all `marketplace_orders`.
+- Payments: pending `payment_submissions` with screenshot + approve.
+- Promos, Ads, Broadcast: existing components moved here.
+- Settings: maintenance mode toggle.
+
+---
+
+## 8. Landing Page
+
+`Landing.tsx` updated CTAs:
+- "Shop Now" → `/marketplace`
+- "Book a Repair" → `/auth?tab=customer&next=/customer/book`
+- "Become a Seller" → `/auth?tab=shopkeeper`
+- "Login" → `/auth`
+
+---
+
+## 9. Files to touch (no DB schema changes needed — all tables already exist)
+
+- `src/App.tsx` — full route restructure with role-based nesting.
+- `src/components/ProtectedRoute.tsx` — keep, add `requireApprovedShopkeeper` flag.
+- `src/components/layout/SharedLayout.tsx` + `Sidebar.tsx` + `MobileBottomNav.tsx` — three sidebars + groups.
+- `src/lib/accountType.ts` — `homePathFor` updated to new routes.
+- `src/context/AuthContext.tsx` — minor: expose `isApprovedShopkeeper`.
+- `src/features/auth/Auth.tsx` — Customer/Shopkeeper tabs.
+- `src/features/dashboard/Landing.tsx` — new CTAs.
+- `src/features/customer/CustomerDashboard.tsx` — rebuilt.
+- New: `src/pages/Customer/Bookings.tsx`, `Book.tsx`, `Wallet.tsx`, `OrderDetail.tsx`.
+- New: `src/pages/Shopkeeper/Bookings.tsx` (list + convert), `Orders.tsx` (marketplace orders).
+- New under `src/pages/SuperAdmin/`: `Applications.tsx`, `Users.tsx`, `Shops.tsx`, `Orders.tsx`, `Payments.tsx`, `Settings.tsx` (re-using existing admin components).
+- Redirects for old paths in `App.tsx`.
+
+No migrations. No business-logic rewrites of existing CRM features — they keep working, just moved under `/shop/*`.
+
+---
+
+## 10. Out of scope (ask later if needed)
+
+- New payment gateway integration.
+- Multi-language expansion beyond current EN/HI/BN.
+- Mobile native (Capacitor) re-skin.
+
+---
+
+Confirm and I'll switch to build mode and implement in this order: routes + layouts → customer pages → shopkeeper additions → super admin split → landing/auth polish.

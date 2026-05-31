@@ -72,9 +72,19 @@ export default function Auth() {
     searchParams.get("ref") || "",
   );
   const [couponCode, setCouponCode] = useState("");
+  const initialTab = (searchParams.get("tab") || searchParams.get("as") || "customer") as
+    | "shopkeeper"
+    | "wholesaler"
+    | "customer";
   const [accountType, setAccountType] = useState<
     "shopkeeper" | "wholesaler" | "customer"
-  >("customer");
+  >(initialTab);
+  // If user lands with ?tab=shopkeeper, default mode to signup
+  useEffect(() => {
+    if ((searchParams.get("tab") === "shopkeeper" || searchParams.get("as") === "shopkeeper") && !searchParams.get("mode")) {
+      setMode("signup");
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(false);

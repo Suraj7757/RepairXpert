@@ -23,16 +23,20 @@ export function generateInvoicePDF(
   // 80mm width is common for thermal printers (approx 226 points)
   const doc = new jsPDF({
     unit: "mm",
-    format: [80, 150 + job.problemDescription.length / 2], // Dynamic height based on content
+    format: [80, 160 + job.problemDescription.length / 2], // Dynamic height based on content
   });
 
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
+<<<<<<< HEAD
   doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
+=======
+  doc.text(settings.shopName || "ServiceHub", 40, 12, { align: "center" });
+>>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  let currentY = 15;
+  let currentY = 17;
   if (settings.address) {
     const splitAddr = doc.splitTextToSize(settings.address, 70);
     doc.text(splitAddr, 40, currentY, { align: "center" });
@@ -43,22 +47,25 @@ export function generateInvoicePDF(
     currentY += 4;
   }
   if (settings.gstin) {
+    doc.setFont("helvetica", "bold");
     doc.text(`GSTIN: ${settings.gstin}`, 40, currentY, { align: "center" });
+    doc.setFont("helvetica", "normal");
     currentY += 4;
   }
 
-  doc.setLineWidth(0.1);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
   doc.line(5, currentY, 75, currentY);
   currentY += 5;
 
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("REPAIR BILL", 40, currentY, { align: "center" });
-  currentY += 5;
+  doc.text("REPAIR INVOICE", 40, currentY, { align: "center" });
+  currentY += 6;
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.text(`Job ID: ${job.jobId}`, 5, currentY);
+  doc.text(`Job ID: #${job.jobId.substring(0, 8)}`, 5, currentY);
   doc.text(
     `Date: ${new Date(job.createdAt).toLocaleDateString()}`,
     75,
@@ -67,26 +74,28 @@ export function generateInvoicePDF(
   );
   currentY += 5;
 
+  doc.setLineWidth(0.2);
   doc.line(5, currentY, 75, currentY);
   currentY += 5;
 
   doc.setFont("helvetica", "bold");
-  doc.text("Customer:", 5, currentY);
-  doc.setFont("helvetica", "normal");
-  doc.text(`${job.customerName}`, 20, currentY);
+  doc.text("Customer Details:", 5, currentY);
   currentY += 4;
-  doc.text(`Mobile: ${job.customerMobile}`, 20, currentY);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Name: ${job.customerName}`, 5, currentY);
+  currentY += 4;
+  doc.text(`Mobile: ${job.customerMobile}`, 5, currentY);
   currentY += 6;
 
   doc.setFont("helvetica", "bold");
-  doc.text("Device:", 5, currentY);
-  doc.setFont("helvetica", "normal");
-  doc.text(`${job.deviceBrand} ${job.deviceModel || ""}`, 20, currentY);
+  doc.text("Device Details:", 5, currentY);
   currentY += 4;
+  doc.setFont("helvetica", "normal");
+  doc.text(`Model: ${job.deviceBrand} ${job.deviceModel || ""}`, 5, currentY);
+  currentY += 5;
 
   const tableData: any[][] = [];
   tableData.push([
-    "Service",
     job.problemDescription,
     `Rs.${job.estimatedCost}`,
   ]);
@@ -94,20 +103,22 @@ export function generateInvoicePDF(
   autoTable(doc, {
     startY: currentY,
     margin: { left: 5, right: 5 },
-    head: [["Item", "Desc", "Amt"]],
+    head: [["Service Description", "Amount"]],
     body: tableData,
     theme: "plain",
-    styles: { fontSize: 7, cellPadding: 1 },
-    headStyles: { fontStyle: "bold", lineColor: [0, 0, 0], lineWidth: 0.1 },
+    styles: { fontSize: 7, cellPadding: 1.5 },
+    headStyles: { fontStyle: "bold", fillColor: [240, 240, 240], textColor: [0,0,0], lineWidth: 0.1, lineColor: [200, 200, 200] },
+    bodyStyles: { lineWidth: 0.1, lineColor: [200, 200, 200] } as any
   });
 
   currentY = (doc as any).lastAutoTable?.finalY || currentY + 10;
   currentY += 5;
 
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
+  doc.text("Total Amount:", 5, currentY);
   doc.text(
-    `Total Amount: Rs.${payment ? payment.amount : job.estimatedCost}`,
+    `Rs. ${payment ? payment.amount : job.estimatedCost}`,
     75,
     currentY,
     { align: "right" },
@@ -116,19 +127,32 @@ export function generateInvoicePDF(
 
   if (payment) {
     doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Paid via: ${payment.method}`, 5, currentY);
-    currentY += 4;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Status: PAID via ${payment.method.toUpperCase()}`, 5, currentY);
+    currentY += 5;
+  } else {
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Status: UNPAID`, 5, currentY);
+    currentY += 5;
   }
 
+  doc.setLineWidth(0.5);
   doc.line(5, currentY, 75, currentY);
   currentY += 5;
 
-  doc.setFontSize(6);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "bold");
   doc.text("Thank you for choosing us!", 40, currentY, { align: "center" });
-  currentY += 3;
+  currentY += 4;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
   doc.text(
+<<<<<<< HEAD
     `Visit again to ${settings.shopName || "Servixo"}`,
+=======
+    `ServiceHub - Powered by Technology`,
+>>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
     40,
     currentY,
     { align: "center" },
@@ -152,16 +176,20 @@ export function generateSellInvoicePDF(
 ) {
   const doc = new jsPDF({
     unit: "mm",
-    format: [80, 130],
+    format: [80, 140],
   });
 
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
+<<<<<<< HEAD
   doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
+=======
+  doc.text(settings.shopName || "ServiceHub", 40, 12, { align: "center" });
+>>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  let currentY = 15;
+  let currentY = 17;
   if (settings.address) {
     const splitAddr = doc.splitTextToSize(settings.address, 70);
     doc.text(splitAddr, 40, currentY, { align: "center" });
@@ -171,19 +199,26 @@ export function generateSellInvoicePDF(
     doc.text(`Phone: ${settings.phone}`, 40, currentY, { align: "center" });
     currentY += 4;
   }
+  if (settings.gstin) {
+    doc.setFont("helvetica", "bold");
+    doc.text(`GSTIN: ${settings.gstin}`, 40, currentY, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    currentY += 4;
+  }
 
-  doc.setLineWidth(0.1);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
   doc.line(5, currentY, 75, currentY);
   currentY += 5;
 
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("SALES BILL", 40, currentY, { align: "center" });
-  currentY += 5;
+  doc.text("SALES INVOICE", 40, currentY, { align: "center" });
+  currentY += 6;
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.text(`Sale ID: ${sell.sellId}`, 5, currentY);
+  doc.text(`Invoice ID: #${sell.sellId.substring(0, 8)}`, 5, currentY);
   doc.text(
     `Date: ${new Date(sell.createdAt).toLocaleDateString()}`,
     75,
@@ -200,33 +235,46 @@ export function generateSellInvoicePDF(
       [
         sell.itemName,
         String(sell.quantity),
-        `Rs.${sell.sellPrice}`,
-        `Rs.${sell.total}`,
+        `${sell.sellPrice}`,
+        `${sell.total}`,
       ],
     ],
     theme: "plain",
-    styles: { fontSize: 7, cellPadding: 1 },
-    headStyles: { fontStyle: "bold", lineColor: [0, 0, 0], lineWidth: 0.1 },
+    styles: { fontSize: 7, cellPadding: 1.5 },
+    headStyles: { fontStyle: "bold", fillColor: [240, 240, 240], textColor: [0,0,0], lineWidth: 0.1, lineColor: [200, 200, 200] },
+    bodyStyles: { lineWidth: 0.1, lineColor: [200, 200, 200] } as any
   });
 
   currentY = (doc as any).lastAutoTable?.finalY || currentY + 10;
   currentY += 5;
 
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(`Grand Total: Rs.${sell.total}`, 75, currentY, { align: "right" });
+  doc.text(`Grand Total:`, 5, currentY);
+  doc.text(`Rs. ${sell.total}`, 75, currentY, { align: "right" });
   currentY += 6;
 
   doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Payment: ${sell.paymentMethod}`, 5, currentY);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Payment: PAID via ${sell.paymentMethod.toUpperCase()}`, 5, currentY);
   currentY += 6;
 
+  doc.setLineWidth(0.5);
   doc.line(5, currentY, 75, currentY);
   currentY += 5;
 
-  doc.setFontSize(6);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "bold");
   doc.text("Thank you for your purchase!", 40, currentY, { align: "center" });
+  currentY += 4;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.text(
+    `ServiceHub - Powered by Technology`,
+    40,
+    currentY,
+    { align: "center" },
+  );
 
   return doc;
 }
@@ -260,49 +308,86 @@ export function generateGenericInvoicePDF(
     format: "a4",
   });
 
-  const primaryColor = [67, 56, 202]; // Indigo
-  const textColor = [31, 41, 55]; // Slate 800
+  const primaryColor = [79, 70, 229]; // Modern Indigo
+  const textColor = [51, 65, 85]; // Slate 700
+  const lightBg = [248, 250, 252]; // Slate 50
 
-  // Header band
+  // Top Accent Bar
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(0, 0, 210, 40, "F");
+  doc.rect(0, 0, 210, 8, "F");
 
-  doc.setTextColor(255, 255, 255);
+  // Shop Info & Logo Area
+  doc.setTextColor(30, 41, 59); // Dark slate
+  doc.setFontSize(26);
+  doc.setFont("helvetica", "bold");
+  doc.text((settings as any)?.shop_name || settings?.shopName || "ServiceHub", 20, 25);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  let currentY = 32;
+  if (settings?.address) {
+    const addrLines = doc.splitTextToSize(settings.address, 80);
+    doc.text(addrLines, 20, currentY);
+    currentY += addrLines.length * 5;
+  }
+  if (settings?.phone) {
+    doc.text(`Phone: ${settings.phone}`, 20, currentY);
+    currentY += 5;
+  }
+  if (settings?.gstin) {
+    doc.setFont("helvetica", "bold");
+    doc.text(`GSTIN: ${settings.gstin}`, 20, currentY);
+    doc.setFont("helvetica", "normal");
+    currentY += 5;
+  }
+
+  // Right Side - Invoice Details
+  doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+  doc.roundedRect(120, 15, 70, 40, 3, 3, "F");
+  
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
+<<<<<<< HEAD
   doc.text(settings?.shop_name || "Servixo Pro", 20, 18);
+=======
+  doc.text("TAX INVOICE", 185, 27, { align: "right" });
+>>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
 
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  let headerText = "";
-  if (settings?.address) headerText += settings.address;
-  if (settings?.phone) headerText += `  |  Phone: ${settings.phone}`;
-  if (settings?.gstin) headerText += `  |  GSTIN: ${settings.gstin}`;
-  doc.text(headerText, 20, 28);
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.text("INVOICE", 190, 22, { align: "right" });
-
-  // Reset text color
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.setFontSize(9);
+  doc.text(`Invoice No:`, 125, 36);
+  doc.setFont("helvetica", "bold");
+  doc.text(`#${invoice.id.substring(0, 8).toUpperCase()}`, 185, 36, { align: "right" });
 
-  // Invoice Meta
+  doc.setFont("helvetica", "normal");
+  doc.text(`Date:`, 125, 42);
+  doc.setFont("helvetica", "bold");
+  doc.text(`${new Date(invoice.created_at).toLocaleDateString()}`, 185, 42, { align: "right" });
+  
+  doc.setFont("helvetica", "normal");
+  doc.text(`Status:`, 125, 48);
+  doc.setFont("helvetica", "bold");
+  const isPaid = invoice.status === "paid";
+  if (isPaid) {
+    doc.setTextColor(22, 163, 74); // Green
+  } else {
+    doc.setTextColor(220, 38, 38); // Red
+  }
+  doc.text(`${(invoice.status || "unpaid").toUpperCase()}`, 185, 48, { align: "right" });
+
+  // Bill To Section
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text("BILL TO:", 20, Math.max(currentY + 10, 65));
+  
+  const billToY = Math.max(currentY + 16, 71);
   doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("Invoice To:", 20, 55);
+  doc.text(invoice.customer_name || "Valued Customer", 20, billToY);
   doc.setFont("helvetica", "normal");
-  doc.text(invoice.customer_name || "Valued Customer", 20, 60);
-  doc.text(`Mobile: ${invoice.customer_mobile || "N/A"}`, 20, 65);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Invoice details:", 130, 55);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Invoice ID: ${invoice.id.substring(0, 8).toUpperCase()}`, 130, 60);
-  doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 130, 65);
-  doc.text(`Payment Status: ${(invoice.status || "unpaid").toUpperCase()}`, 130, 70);
-  doc.text(`Method: ${(invoice.payment_method || "cash").toUpperCase()}`, 130, 75);
+  doc.text(`Mobile: ${invoice.customer_mobile || "N/A"}`, 20, billToY + 5);
 
   // Table Items
   let items: Array<{ description: string; cost: number }> = [];
@@ -317,53 +402,97 @@ export function generateGenericInvoicePDF(
   }
 
   if (items.length === 0) {
-    items = [{ description: "General Repair Services", cost: invoice.amount }];
+    items = [{ description: "General Services", cost: invoice.amount }];
   }
 
   const tableRows = items.map((item, index) => [
     index + 1,
     item.description,
     1,
-    `Rs. ${item.cost}`,
-    `Rs. ${item.cost}`,
+    `Rs. ${Number(item.cost).toFixed(2)}`,
+    `Rs. ${Number(item.cost).toFixed(2)}`,
   ]);
 
   autoTable(doc, {
-    startY: 85,
-    head: [["S.No", "Description", "Qty", "Unit Price", "Total"]],
+    startY: billToY + 15,
+    head: [["#", "Item Description", "Qty", "Unit Price", "Total"]],
     body: tableRows,
-    theme: "striped",
+    theme: "grid",
     headStyles: {
       fillColor: primaryColor as any,
       textColor: [255, 255, 255] as any,
       fontStyle: "bold",
+      fontSize: 10,
     },
-    styles: {
+    bodyStyles: {
+      textColor: textColor as any,
       fontSize: 9,
-      cellPadding: 3,
+    },
+    alternateRowStyles: {
+      fillColor: lightBg as any,
+    },
+    columnStyles: {
+      0: { cellWidth: 15 },
+      2: { cellWidth: 20, halign: 'center' },
+      3: { cellWidth: 35, halign: 'right' },
+      4: { cellWidth: 35, halign: 'right' },
     },
   });
 
   const finalY = (doc as any).lastAutoTable?.finalY || 120;
 
-  // Totals
-  doc.setFont("helvetica", "bold");
+  // Totals Section
+  doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+  doc.roundedRect(120, finalY + 10, 70, 35, 3, 3, "F");
+
   doc.setFontSize(10);
-  doc.text("Grand Total:", 130, finalY + 10);
-  doc.text(`Rs. ${invoice.amount}`, 190, finalY + 10, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.text("Subtotal:", 125, finalY + 20);
+  doc.text(`Rs. ${invoice.amount.toFixed(2)}`, 185, finalY + 20, { align: "right" });
+  
+  doc.text("Tax (0%):", 125, finalY + 27);
+  doc.text(`Rs. 0.00`, 185, finalY + 27, { align: "right" });
+
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(125, finalY + 32, 185, finalY + 32);
+
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Grand Total:", 125, finalY + 40);
+  doc.text(`Rs. ${invoice.amount.toFixed(2)}`, 185, finalY + 40, { align: "right" });
+
+  // Payment Details Info
+  doc.setFontSize(10);
+  doc.setTextColor(30, 41, 59);
+  doc.text("Payment Information", 20, finalY + 15);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.text(`Method: ${(invoice.payment_method || "cash").toUpperCase()}`, 20, finalY + 22);
 
   // Footer / Terms
+  const pageHeight = doc.internal.pageSize.height;
+  
+  doc.setLineWidth(0.2);
+  doc.line(20, pageHeight - 35, 190, pageHeight - 35);
+  
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59);
+  doc.text("Terms & Conditions", 20, pageHeight - 28);
+  
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text("Terms & Conditions:", 20, 260);
-  doc.text("1. All sales are final. Warranty claims require presenting this invoice.", 20, 264);
-  doc.text("2. Please inspect repaired items carefully before leaving the shop.", 20, 268);
+  doc.text("1. All sales are final. Warranty claims require presenting this original invoice.", 20, pageHeight - 23);
+  doc.text("2. Please inspect repaired items carefully before leaving the premises.", 20, pageHeight - 19);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(`Thank you for doing business with ${settings?.shop_name || "us"}!`, 105, 280, { align: "center" });
+  doc.text(`Thank you for doing business with ${(settings as any)?.shop_name || settings?.shopName || "us"}!`, 105, pageHeight - 10, { align: "center" });
 
   return doc;
 }

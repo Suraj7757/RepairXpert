@@ -39,6 +39,7 @@ import {
   Megaphone,
   LogOut,
   Home,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -124,10 +125,21 @@ export function Sidebar({ links = [] }: SidebarProps) {
     if (role === "super_admin") {
       return [
         {
-          label: "Administration",
+          label: "Platform",
           items: [
-            { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
-            { to: "/dev-panel", label: "Developer Panel", icon: Settings },
+            { to: "/admin", label: "Admin Dashboard", icon: LayoutDashboard },
+            { to: "/admin#applications", label: "Shop Applications", icon: Store },
+            { to: "/admin#users", label: "Users", icon: Users },
+            { to: "/admin#payments", label: "Payments", icon: IndianRupee },
+            { to: "/admin#promos", label: "Promo Codes", icon: Gift },
+            { to: "/admin#ads", label: "Ads", icon: Megaphone },
+          ],
+        },
+        {
+          label: "Developer",
+          items: [
+            { to: "/dev-panel", label: "Developer Panel", icon: Shield },
+            { to: "/settings", label: "Settings", icon: Settings },
           ],
         },
       ];
@@ -137,14 +149,25 @@ export function Sidebar({ links = [] }: SidebarProps) {
           label: "Customer Hub",
           items: [
             { to: "/customer", label: "Dashboard", icon: Home },
-            { to: "/marketplace", label: "Browse Shop", icon: ShoppingBag },
-            { to: "/cart", label: "My Cart", icon: ShoppingCart },
-            { to: "/my-orders", label: "My Orders", icon: Package },
+            { to: "/customer/marketplace", label: "Browse Shop", icon: ShoppingBag },
+            { to: "/customer/cart", label: "My Cart", icon: ShoppingCart },
+            { to: "/customer/orders", label: "My Orders", icon: Package },
+            { to: "/customer/bookings", label: "My Bookings", icon: CalendarCheck },
+            { to: "/customer/book", label: "Book a Repair", icon: Wrench },
+            { to: "/customer/ai-diagnostic", label: "AI Diagnostic", icon: BrainCircuit },
             { to: "/track", label: "Track Order", icon: Smartphone },
-            { to: "/settings", label: "Settings", icon: Settings },
+          ],
+        },
+        {
+          label: "Account",
+          items: [
+            { to: "/customer/wallet", label: "Wallet & Rewards", icon: Wallet },
+            { to: "/become-shopkeeper", label: "Become a Shopkeeper", icon: Store },
+            { to: "/customer/settings", label: "Settings", icon: Settings },
           ],
         },
       ];
+
     } else {
       // shopkeeper or staff
       const rawGroups = [

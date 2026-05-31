@@ -42,6 +42,8 @@ const BookingsAdmin = lazy(() => import("@/features/booking/BookingsAdmin"));
 const PublicBooking = lazy(() => import("@/features/booking/PublicBooking"));
 const WholesaleDashboard = lazy(() => import("@/features/wholesale/WholesaleDashboard"));
 const CustomerDashboard = lazy(() => import("@/features/customer/CustomerDashboard"));
+const CustomerBookings = lazy(() => import("@/features/customer/CustomerBookings"));
+const BookRepair = lazy(() => import("@/features/customer/BookRepair"));
 const AiDiagnosticCenter = lazy(() => import("@/features/ai/AiDiagnosticCenter"));
 const MarketingDashboard = lazy(() => import("@/features/marketing/MarketingDashboard"));
 const Marketplace = lazy(() => import("@/features/marketplace/Marketplace"));
@@ -182,6 +184,36 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/customer/bookings"
+            element={
+              <ProtectedRoute>
+                <CustomerBookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/book"
+            element={
+              <ProtectedRoute>
+                <BookRepair />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/wallet"
+            element={
+              <ProtectedRoute>
+                <WalletPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/customer/marketplace" element={<Marketplace />} />
+          <Route path="/customer/orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+          <Route path="/customer/cart" element={<Cart />} />
+          <Route path="/customer/ai-diagnostic" element={<ProtectedRoute><AiDiagnosticCenter /></ProtectedRoute>} />
+          <Route path="/customer/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+
           <Route path="/track" element={<TrackOrder />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ShopkeeperRoute><Dashboard /></ShopkeeperRoute>} />
