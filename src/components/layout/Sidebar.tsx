@@ -125,10 +125,21 @@ export function Sidebar({ links = [] }: SidebarProps) {
     if (role === "super_admin") {
       return [
         {
-          label: "Administration",
+          label: "Platform",
           items: [
-            { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
-            { to: "/dev-panel", label: "Developer Panel", icon: Settings },
+            { to: "/admin", label: "Admin Dashboard", icon: LayoutDashboard },
+            { to: "/admin#applications", label: "Shop Applications", icon: Store },
+            { to: "/admin#users", label: "Users", icon: Users },
+            { to: "/admin#payments", label: "Payments", icon: IndianRupee },
+            { to: "/admin#promos", label: "Promo Codes", icon: Gift },
+            { to: "/admin#ads", label: "Ads", icon: Megaphone },
+          ],
+        },
+        {
+          label: "Developer",
+          items: [
+            { to: "/dev-panel", label: "Developer Panel", icon: Shield },
+            { to: "/settings", label: "Settings", icon: Settings },
           ],
         },
       ];
