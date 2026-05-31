@@ -63,7 +63,7 @@ export default function MarketingDashboard() {
       if (!shopId) return;
 
       // Get referral stats from database
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("referral_program")
         .select("*")
         .eq("shop_id", shopId);
@@ -74,7 +74,7 @@ export default function MarketingDashboard() {
       }
 
       if (data && data.length > 0) {
-        const stats = data[0];
+        const stats: any = data[0];
         setReferralStats({
           total_referrals: stats.total_referrals || 0,
           total_rewards_given: stats.total_rewards_given || 0,
@@ -94,7 +94,7 @@ export default function MarketingDashboard() {
       if (!shopId) return;
 
       // Fetch all referrals for this shop
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("referral_program_details")
         .select("*")
         .eq("shop_id", shopId)
@@ -124,7 +124,7 @@ export default function MarketingDashboard() {
 
     try {
       // Log the broadcast message for audit trail
-      const { error: logError } = await supabase.from("activity_log").insert({
+      const { error: logError } = await (supabase as any).from("activity_log").insert({
         shop_id: shopId,
         action: "broadcast_sent",
         description: `WhatsApp broadcast sent to ${customers.length} customers`,

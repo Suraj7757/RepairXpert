@@ -599,7 +599,7 @@ function QRPaymentsCard() {
   const fetchQrs = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("qr_codes")
       .select("*")
       .order("created_at", { ascending: true });
@@ -619,7 +619,7 @@ function QRPaymentsCard() {
       toast.error("Name and UPI ID are required");
       return;
     }
-    const { error } = await supabase.from("qr_codes").insert({
+    const { error } = await (supabase as any).from("qr_codes").insert({
       name: name.trim(),
       upi_id: upiId.trim(),
       user_id: user?.id,
