@@ -641,7 +641,7 @@ function QRPaymentsCard() {
       toast.error("Name and UPI ID are required");
       return;
     }
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("qr_codes")
       .update({ name: newName.trim(), upi_id: newUpiId.trim() })
       .eq("id", id);
@@ -656,7 +656,7 @@ function QRPaymentsCard() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("qr_codes").delete().eq("id", id);
+    const { error } = await (supabase as any).from("qr_codes").delete().eq("id", id);
     if (error) {
       toast.error("Failed to delete QR Code: " + error.message);
     } else {

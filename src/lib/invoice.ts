@@ -104,7 +104,7 @@ export function generateInvoicePDF(
     theme: "plain",
     styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fontStyle: "bold", fillColor: [240, 240, 240], textColor: [0,0,0], lineWidth: 0.1, lineColor: [200, 200, 200] },
-    bodyStyles: { borderBottomWidth: 0.1, borderBottomColor: [200, 200, 200] }
+    bodyStyles: { lineWidth: 0.1, lineColor: [200, 200, 200] } as any
   });
 
   currentY = (doc as any).lastAutoTable?.finalY || currentY + 10;
@@ -230,7 +230,7 @@ export function generateSellInvoicePDF(
     theme: "plain",
     styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fontStyle: "bold", fillColor: [240, 240, 240], textColor: [0,0,0], lineWidth: 0.1, lineColor: [200, 200, 200] },
-    bodyStyles: { borderBottomWidth: 0.1, borderBottomColor: [200, 200, 200] }
+    bodyStyles: { lineWidth: 0.1, lineColor: [200, 200, 200] } as any
   });
 
   currentY = (doc as any).lastAutoTable?.finalY || currentY + 10;
@@ -308,7 +308,7 @@ export function generateGenericInvoicePDF(
   doc.setTextColor(30, 41, 59); // Dark slate
   doc.setFontSize(26);
   doc.setFont("helvetica", "bold");
-  doc.text(settings?.shop_name || "ServiceHub", 20, 25);
+  doc.text((settings as any)?.shop_name || settings?.shopName || "ServiceHub", 20, 25);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -476,7 +476,7 @@ export function generateGenericInvoicePDF(
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text(`Thank you for doing business with ${settings?.shop_name || "us"}!`, 105, pageHeight - 10, { align: "center" });
+  doc.text(`Thank you for doing business with ${(settings as any)?.shop_name || settings?.shopName || "us"}!`, 105, pageHeight - 10, { align: "center" });
 
   return doc;
 }
