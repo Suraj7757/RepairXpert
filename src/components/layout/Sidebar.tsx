@@ -137,14 +137,25 @@ export function Sidebar({ links = [] }: SidebarProps) {
           label: "Customer Hub",
           items: [
             { to: "/customer", label: "Dashboard", icon: Home },
-            { to: "/marketplace", label: "Browse Shop", icon: ShoppingBag },
-            { to: "/cart", label: "My Cart", icon: ShoppingCart },
-            { to: "/my-orders", label: "My Orders", icon: Package },
+            { to: "/customer/marketplace", label: "Browse Shop", icon: ShoppingBag },
+            { to: "/customer/cart", label: "My Cart", icon: ShoppingCart },
+            { to: "/customer/orders", label: "My Orders", icon: Package },
+            { to: "/customer/bookings", label: "My Bookings", icon: CalendarCheck },
+            { to: "/customer/book", label: "Book a Repair", icon: Wrench },
+            { to: "/customer/ai-diagnostic", label: "AI Diagnostic", icon: BrainCircuit },
             { to: "/track", label: "Track Order", icon: Smartphone },
-            { to: "/settings", label: "Settings", icon: Settings },
+          ],
+        },
+        {
+          label: "Account",
+          items: [
+            { to: "/customer/wallet", label: "Wallet & Rewards", icon: Wallet },
+            { to: "/become-shopkeeper", label: "Become a Shopkeeper", icon: Store },
+            { to: "/customer/settings", label: "Settings", icon: Settings },
           ],
         },
       ];
+
     } else {
       // shopkeeper or staff
       const rawGroups = [
