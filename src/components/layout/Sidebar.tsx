@@ -270,10 +270,10 @@ export function Sidebar({ links = [] }: SidebarProps) {
 
   const handleCreate = (type: "job" | "sell" | "customer" | "inventory") => {
     setCreateOpen(false);
-    if (type === "job") navigate("/shop/jobs#new");
-    else if (type === "sell") navigate("/shop/sells#new");
-    else if (type === "customer") navigate("/shop/customers#new");
-    else if (type === "inventory") navigate("/shop/inventory#new");
+    if (type === "job") navigate("/jobs#new");
+    else if (type === "sell") navigate("/sells#new");
+    else if (type === "customer") navigate("/customers#new");
+    else if (type === "inventory") navigate("/inventory#new");
   };
 
   return (
