@@ -8,14 +8,13 @@ import { Package, Store, MapPin, ShoppingCart, ArrowRight } from "lucide-react";
 
 interface Listing {
   id: string;
-  seller_id: string;
-  title: string;
+  user_id: string;
+  name: string;
   category: string;
-  price: number;
-  mrp: number;
-  stock: number;
-  images: string[] | null;
-  featured: boolean;
+  sell_price: number;
+  cost_price: number;
+  quantity: number;
+  image_url: string | null;
 }
 
 export default function LiveMarketplaceShowcase() {
@@ -26,16 +25,15 @@ export default function LiveMarketplaceShowcase() {
   useEffect(() => {
     (async () => {
       const { data } = await (supabase as any)
-        .from("marketplace_listings")
-        .select("id, seller_id, title, category, price, mrp, stock, images, featured")
-        .eq("active", true)
-        .gt("stock", 0)
-        .order("featured", { ascending: false })
+        .from("inventory")
+        .select("id, user_id, name, category, sell_price, cost_price, quantity, image_url")
+        .eq("is_marketplace_listed", true)
+        .gt("quantity", 0)
         .order("created_at", { ascending: false })
         .limit(8);
       const rows = data || [];
       setListings(rows);
-      const ids = Array.from(new Set(rows.map((r: any) => r.seller_id)));
+      const ids = Array.from(new Set(rows.map((r: any) => r.user_id)));
       if (ids.length) {
         const { data: shopRows } = await (supabase as any)
           .from("shop_settings")
@@ -70,29 +68,28 @@ export default function LiveMarketplaceShowcase() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {listings.map((l) => {
-          const s = shops[l.seller_id] || {};
+          const s = shops[l.user_id] || {};
           const mapHref = s.map_url || (s.map_lat && s.map_lng ? `https://www.google.com/maps?q=${s.map_lat},${s.map_lng}` : null);
           return (
             <Card key={l.id} className="group hover:shadow-lg transition overflow-hidden">
               <Link to={`/marketplace/${l.id}`}>
                 <div className="aspect-square bg-muted relative overflow-hidden">
-                  {l.images?.[0] ? (
-                    <img src={l.images[0]} alt={l.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                  {l.image_url ? (
+                    <img src={l.image_url} alt={l.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Package className="h-12 w-12 text-muted-foreground" />
                     </div>
                   )}
-                  {l.featured && <Badge className="absolute top-2 left-2">Featured</Badge>}
                 </div>
               </Link>
               <CardContent className="p-3 space-y-2">
                 <Link to={`/marketplace/${l.id}`}>
-                  <h3 className="font-semibold text-sm line-clamp-2 hover:text-primary">{l.title}</h3>
+                  <h3 className="font-semibold text-sm line-clamp-2 hover:text-primary">{l.name}</h3>
                 </Link>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-bold text-primary">₹{l.price}</span>
-                  {l.mrp > l.price && <span className="text-xs line-through text-muted-foreground">₹{l.mrp}</span>}
+                  <span className="text-lg font-bold text-primary">₹{l.sell_price}</span>
+                  {l.cost_price > l.sell_price && <span className="text-xs line-through text-muted-foreground">₹{l.cost_price}</span>}
                 </div>
                 <div className="text-[11px] text-muted-foreground space-y-0.5 border-t pt-1.5">
                   <div className="flex items-center gap-1 font-medium text-foreground/80 line-clamp-1">

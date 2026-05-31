@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Tu ServiceHub ka expert AI Assistant hai — senior mobile/laptop/AC/TV/fridge technician + CRM guide.
+const SYSTEM_PROMPT = `Tu Servixo ka expert AI Assistant hai — senior mobile/laptop/AC/TV/fridge technician + CRM guide.
 
 KAAM:
 - Repair queries: probable causes, parts, estimated cost (INR), step-by-step diagnosis Hinglish me

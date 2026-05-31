@@ -74,8 +74,10 @@ export default function DevPanel() {
         return acc;
       }, {});
       setSystemConfig(configMap || {});
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("Failed to fetch system data:", errorMsg);
+      toast.error("Failed to sync system data: " + errorMsg);
     } finally {
       setLoading(false);
     }
@@ -85,12 +87,12 @@ export default function DevPanel() {
     const newVal = !systemConfig.maintenance?.enabled;
     const { error } = await supabase
       .from("system_config")
-      .upsert({ 
-        id: "maintenance", 
+      .update({ 
         value: { enabled: newVal, message: systemConfig.maintenance?.message || "System under maintenance" } 
-      } as any);
+      } as any)
+      .eq("id", "maintenance");
     
-    if (error) toast.error("Failed to update maintenance mode");
+    if (error) toast.error("Failed to update maintenance mode: " + error.message);
     else {
       toast.success(`Maintenance mode ${newVal ? "enabled" : "disabled"}`);
       fetchSystemData();

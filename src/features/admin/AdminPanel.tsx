@@ -110,6 +110,7 @@ export default function AdminPanel() {
   // Edit User details
   const [editPlan, setEditPlan] = useState("free");
   const [editPlanExpiry, setEditPlanExpiry] = useState("");
+  const [activeTab, setActiveTab] = useState("applications");
 
   const isAdmin = isSuperAdmin;
 
@@ -227,39 +228,93 @@ export default function AdminPanel() {
   };
 
   const handleCreateAd = async () => {
-    if (!adTitle || !user) return;
+    if (!adTitle || !user) {
+      toast.error("Ad title is required");
+      return;
+    }
+    
+    const reward = parseFloat(adReward);
+    const limit = parseInt(adLimit);
+    
+    if (isNaN(reward) || reward <= 0) {
+      toast.error("Reward amount must be a positive number");
+      return;
+    }
+    
+    if (isNaN(limit) || limit <= 0) {
+      toast.error("Daily limit must be a positive number");
+      return;
+    }
+    
     const { error } = await supabase.from("ads").insert({
       title: adTitle,
       description: adDesc,
-      reward_amount: parseFloat(adReward) || 0.5,
-      daily_limit: parseInt(adLimit) || 10,
+      reward_amount: reward,
+      daily_limit: limit,
       link_url: adLink,
       created_by: user.id,
     } as any);
-    if (error) toast.error("Failed to create ad");
-    else {
-      toast.success("Ad created");
+    
+    if (error) {
+      toast.error("Failed to create ad: " + (error.message || "Unknown error"));
+    } else {
+      toast.success("Ad created successfully");
       setAdOpen(false);
       setAdTitle("");
       setAdDesc("");
+      setAdReward("0.5");
+      setAdLimit("10");
+      setAdLink("");
       fetchAll();
     }
   };
 
   const handleCreatePromo = async () => {
-    if (!promoCode || !user) return;
+    if (!promoCode || !user) {
+      toast.error("Promo code is required");
+      return;
+    }
+    
+    const validity = parseInt(promoValidity);
+    const limit = parseInt(promoLimit);
+    
+    if (isNaN(validity) || validity <= 0) {
+      toast.error("Validity must be a positive number");
+      return;
+    }
+    
+    if (isNaN(limit) || limit <= 0) {
+      toast.error("Usage limit must be a positive number");
+      return;
+    }
+    
+    if (promoCode.trim().length === 0) {
+      toast.error("Promo code cannot be empty");
+      return;
+    }
+    
+    if (promoExpiry && new Date(promoExpiry) < new Date()) {
+      toast.error("Expiry date must be in the future");
+      return;
+    }
+    
     const { error } = await supabase.from("promo_codes").insert({
-      code: promoCode.toUpperCase(),
-      validity_days: parseInt(promoValidity) || 7,
-      usage_limit: parseInt(promoLimit) || 1,
+      code: promoCode.toUpperCase().trim(),
+      validity_days: validity,
+      usage_limit: limit,
       created_by: user.id,
       expiry_date: promoExpiry ? new Date(promoExpiry).toISOString() : null,
     } as any);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Promo code created");
+    
+    if (error) {
+      toast.error("Failed to create promo: " + (error.message || "Unknown error"));
+    } else {
+      toast.success("Promo code created successfully");
       setPromoOpen(false);
       setPromoCode("");
+      setPromoValidity("7");
+      setPromoLimit("1");
+      setPromoExpiry("");
       fetchAll();
     }
   };
@@ -452,14 +507,18 @@ export default function AdminPanel() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { icon: Users, label: "Total Users", value: users.length, color: "from-blue-500 to-indigo-600", shadow: "shadow-blue-500/20" },
-            { icon: Store, label: "Active Shops", value: users.filter((u: any) => u.account_type === "shopkeeper").length, color: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-500/20" },
-            { icon: IndianRupee, label: "Pending Payments", value: paymentSubs.filter((p) => p.status === "pending").length, color: "from-amber-400 to-orange-500", shadow: "shadow-amber-500/20" },
-            { icon: TrendingUp, label: "Total Revenue", value: `₹${allPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0).toLocaleString()}`, color: "from-green-400 to-emerald-600", shadow: "shadow-green-500/20" },
-            { icon: Gift, label: "Referrals", value: referrals.length, color: "from-purple-400 to-violet-600", shadow: "shadow-purple-500/20" },
-            { icon: Tag, label: "Promo Codes", value: promoCodes.length, color: "from-cyan-400 to-blue-500", shadow: "shadow-cyan-500/20" },
+            { icon: Users, label: "Total Users", value: users.length, color: "from-blue-500 to-indigo-600", shadow: "shadow-blue-500/20", tab: "users" },
+            { icon: Store, label: "Active Shops", value: users.filter((u: any) => u.account_type === "shopkeeper").length, color: "from-emerald-400 to-teal-500", shadow: "shadow-emerald-500/20", tab: "applications" },
+            { icon: IndianRupee, label: "Pending Payments", value: paymentSubs.filter((p) => p.status === "pending").length, color: "from-amber-400 to-orange-500", shadow: "shadow-amber-500/20", tab: "payments" },
+            { icon: TrendingUp, label: "Total Revenue", value: `₹${allPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0).toLocaleString()}`, color: "from-green-400 to-emerald-600", shadow: "shadow-green-500/20", tab: "analytics" },
+            { icon: Gift, label: "Referrals", value: referrals.length, color: "from-purple-400 to-violet-600", shadow: "shadow-purple-500/20", tab: "users" },
+            { icon: Tag, label: "Promo Codes", value: promoCodes.length, color: "from-cyan-400 to-blue-500", shadow: "shadow-cyan-500/20", tab: "promos" },
           ].map((stat) => (
-            <Card key={stat.label} className="border-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden relative ring-1 ring-white/20 dark:ring-white/10">
+            <Card 
+              key={stat.label} 
+              onClick={() => setActiveTab(stat.tab)}
+              className="border-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden relative ring-1 ring-white/20 dark:ring-white/10 cursor-pointer"
+            >
               <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${stat.color} opacity-10 rounded-bl-full group-hover:scale-150 transition-transform duration-500`} />
               <CardContent className="p-4 relative z-10">
                 <div className="flex items-start justify-between">
@@ -476,7 +535,7 @@ export default function AdminPanel() {
           ))}
         </div>
 
-        <Tabs defaultValue="applications">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-4 md:grid-cols-9 w-full">
             <TabsTrigger value="applications" className="flex items-center gap-1 relative">
               <Store className="h-3 w-3" /> Shop Apps
@@ -928,7 +987,7 @@ export default function AdminPanel() {
                                 variant="destructive"
                                 onClick={async () => {
                                   if (!confirm("Are you sure you want to PERMANENTLY delete this user? This cannot be undone.")) return;
-                                  const { error } = await supabase.from('profiles').delete().eq('user_id', u.user_id);
+                                  const { error } = await (supabase as any).rpc('delete_user_by_admin', { target_user_id: u.user_id });
                                   if (error) toast.error("Delete failed: " + error.message);
                                   else {
                                     toast.success("User permanently deleted");
@@ -1307,21 +1366,22 @@ export default function AdminPanel() {
                     variant={maintenance ? "destructive" : "outline"}
                     onClick={async () => {
                       const newStatus = !maintenance;
-                      await supabase.from("system_config").upsert({
-                        id: "maintenance",
-                        value: { enabled: newStatus },
-                      });
-                      setMaintenance(newStatus);
-                      toast(
-                        newStatus
-                          ? "Maintenance Mode Enabled"
-                          : "Maintenance Mode Disabled",
-                        {
-                          description: newStatus
-                            ? "Non-admins are now blocked."
-                            : "All users can now login.",
-                        },
-                      );
+                      const { error } = await supabase
+                        .from("system_config")
+                        .update({
+                          value: { enabled: newStatus }
+                        } as any)
+                        .eq("id", "maintenance");
+                      if (error) {
+                        toast.error("Failed to update maintenance mode: " + error.message);
+                      } else {
+                        setMaintenance(newStatus);
+                        toast.success(
+                          newStatus
+                            ? "Maintenance Mode Enabled (Non-admins are now blocked)"
+                            : "Maintenance Mode Disabled (All users can now login)"
+                        );
+                      }
                     }}
                   >
                     {maintenance ? "Disable Maintenance" : "Enable Maintenance"}

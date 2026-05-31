@@ -60,16 +60,28 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
-    (supabase as any)
-      .from("booking_requests")
-      .select("id, status")
-      .eq("user_id", user.id)
-      .then(({ data }: any) => {
+    const fetchBookings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("booking_requests")
+          .select("id, status")
+          .eq("user_id", user.id);
+        
+        if (error) {
+          console.error("Failed to fetch bookings:", error.message);
+          return;
+        }
+        
         if (data) {
           setTotalBookings(data.length);
           setPendingBookings(data.filter((b: any) => b.status === "pending").length);
         }
-      });
+      } catch (err) {
+        console.error("Error fetching bookings:", err instanceof Error ? err.message : String(err));
+      }
+    };
+    
+    fetchBookings();
   }, [user]);
 
   const splitEnabled = settings?.revenue_split_enabled !== false;

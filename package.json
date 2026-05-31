@@ -1,5 +1,5 @@
 {
-  "name": "servicehub",
+  "name": "servixo",
   "private": true,
   "version": "3.0.0",
   "type": "module",
@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cap:init": "npx cap init ServiceHub com.servicehub.app --web-dir dist",
+    "cap:init": "npx cap init Servixo com.servixo.app --web-dir dist",
     "cap:add:android": "npx cap add android",
     "cap:sync": "npx cap sync",
     "cap:open:android": "npx cap open android",
@@ -21,8 +21,8 @@
     "electron:build": "npm run build && electron-builder --win --x64"
   },
   "build": {
-    "appId": "com.servicehub.app",
-    "productName": "ServiceHub",
+    "appId": "com.servixo.app",
+    "productName": "Servixo",
     "directories": { "output": "release" },
     "files": ["dist/**/*", "electron/**/*"],
     "win": {

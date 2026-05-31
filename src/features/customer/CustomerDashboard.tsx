@@ -10,6 +10,13 @@ import {
   Search, Package, Store, CalendarCheck, Phone, CheckCircle2,
   Clock, ChevronRight, ShoppingBag, Wrench,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/services/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -20,6 +27,7 @@ export default function CustomerDashboard() {
   const navigate = useNavigate();
   const [trackingId, setTrackingId] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
+  const [marketplaceOrders, setMarketplaceOrders] = useState<any[]>([]);
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [shopApplication, setShopApplication] = useState<any>(undefined); // undefined = loading
@@ -32,6 +40,7 @@ export default function CustomerDashboard() {
     device_model: "",
     problem_description: "",
     preferred_date: "",
+    preferred_time: "",
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -39,12 +48,18 @@ export default function CustomerDashboard() {
   const fetchDashboardData = async () => {
     if (!user?.email) return;
     setLoading(true);
-    const [ordersRes, shopsRes, appRes] = await Promise.all([
+    const [ordersRes, marketplaceOrdersRes, shopsRes, appRes] = await Promise.all([
       (supabase as any)
         .from("booking_requests")
         .select("*")
         .eq("customer_email", user.email)
         .order("created_at", { ascending: false }),
+      (supabase as any)
+        .from("marketplace_orders")
+        .select("*")
+        .eq("buyer_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5),
       (supabase as any)
         .from("shop_settings")
         .select("user_id, shop_name, address, phone, booking_slug")
@@ -58,6 +73,7 @@ export default function CustomerDashboard() {
     ]);
 
     setOrders(ordersRes.data || []);
+    setMarketplaceOrders(marketplaceOrdersRes.data || []);
     setShops(shopsRes.data || []);
     setShopApplication(appRes.data ?? null);
     if (shopsRes.data && shopsRes.data.length > 0) {
@@ -66,7 +82,16 @@ export default function CustomerDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchDashboardData(); }, [user?.id]);
+  useEffect(() => {
+    fetchDashboardData();
+    if (!user) return;
+    const ch = (supabase as any)
+      .channel(`customer-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "marketplace_orders", filter: `buyer_id=eq.${user.id}` }, () => fetchDashboardData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "booking_requests", filter: `customer_email=eq.${user.email}` }, () => fetchDashboardData())
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+  }, [user?.id, user?.email]);
 
   const submitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +110,7 @@ export default function CustomerDashboard() {
         device_model: form.device_model,
         problem_description: prefix + form.problem_description,
         preferred_date: form.preferred_date || null,
+        preferred_time: form.preferred_time || null,
         user_id: selectedShopId,
       });
       if (error) { toast.error(error.message); return; }
@@ -150,7 +176,7 @@ export default function CustomerDashboard() {
                     <CheckCircle2 className="h-16 w-16 mx-auto text-emerald-500" />
                     <h2 className="text-2xl font-bold">Request Sent!</h2>
                     <p className="text-muted-foreground">The shop will contact you shortly.</p>
-                    <Button onClick={() => { setSubmitted(false); setForm({ device_brand: "", device_model: "", problem_description: "", preferred_date: "" }); }}>
+                    <Button onClick={() => { setSubmitted(false); setForm({ device_brand: "", device_model: "", problem_description: "", preferred_date: "", preferred_time: "" }); }}>
                       Create Another Request
                     </Button>
                   </div>
@@ -194,6 +220,25 @@ export default function CustomerDashboard() {
                         rows={3} required
                       />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Preferred Date (Optional)</Label>
+                        <Input type="date" min={new Date().toISOString().slice(0, 10)} value={form.preferred_date} onChange={(e) => setForm({ ...form, preferred_date: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Preferred Time (Optional)</Label>
+                        <Select value={form.preferred_time} onValueChange={(v) => setForm({ ...form, preferred_time: v })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Time" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Morning (10 AM - 1 PM)">Morning (10 AM - 1 PM)</SelectItem>
+                            <SelectItem value="Afternoon (1 PM - 4 PM)">Afternoon (1 PM - 4 PM)</SelectItem>
+                            <SelectItem value="Evening (4 PM - 7 PM)">Evening (4 PM - 7 PM)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <Button type="submit" className="w-full font-bold" size="lg" disabled={submitting}>
                       {submitting ? "Submitting..." : `Submit ${requestType === "repair" ? "Repair" : "Buy"} Request`}
                     </Button>
@@ -232,6 +277,42 @@ export default function CustomerDashboard() {
                           <span className={`text-[10px] px-2.5 py-1 rounded-full font-black border shrink-0 ${statusColor[o.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
                             {(o.status || "pending").replace("_", " ").toUpperCase()}
                           </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Marketplace Orders Snippet */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ShoppingBag className="h-5 w-5" /> Recent Shop Orders
+                </CardTitle>
+                {marketplaceOrders.length > 0 && (
+                  <Button asChild variant="link" size="sm" className="px-0">
+                    <Link to="/my-orders">View All</Link>
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                {marketplaceOrders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">No marketplace orders yet.</p>
+                ) : (
+                  <div className="space-y-3 pt-2">
+                    {marketplaceOrders.map((o) => (
+                      <div key={o.id} className="p-3 rounded-xl border flex items-center justify-between hover:bg-muted/30 transition-colors">
+                        <div>
+                          <p className="font-bold font-mono text-sm">{o.order_number}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-sm">₹{o.total}</p>
+                          <Badge variant="outline" className="text-[10px] uppercase">
+                            {o.fulfillment_status.replace(/_/g, " ")}
+                          </Badge>
                         </div>
                       </div>
                     ))}
@@ -281,7 +362,7 @@ export default function CustomerDashboard() {
                     <p className="font-black text-amber-800">Own a Repair Shop?</p>
                   </div>
                   <p className="text-xs text-amber-700 mb-3">
-                    Register on ServiceHub and get online bookings from customers.
+                    Register on Servixo and get online bookings from customers.
                   </p>
                   <ul className="space-y-1 mb-4 text-xs text-amber-700">
                     {["Online booking page", "Manage repair jobs", "Staff management", "Sales & inventory"].map((f) => (
@@ -327,7 +408,7 @@ export default function CustomerDashboard() {
                   <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
                   <p className="font-black text-emerald-700">Shop Approved! 🎉</p>
                   <p className="text-xs text-emerald-600">
-                    <strong>{shopApplication.shop_name}</strong> is live on ServiceHub
+                    <strong>{shopApplication.shop_name}</strong> is live on Servixo
                   </p>
                   <Button className="w-full bg-emerald-600 hover:bg-emerald-700 font-black"
                     onClick={() => navigate("/dashboard")}>

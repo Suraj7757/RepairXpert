@@ -146,8 +146,9 @@ export default function Settings() {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    const isValidPassword = newPassword.length >= 8 && /[a-zA-Z]/.test(newPassword) && /\d/.test(newPassword) && /[^a-zA-Z0-9]/.test(newPassword);
+    if (!isValidPassword) {
+      toast.error("Password must be at least 8 characters, alphanumeric, with a special character.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -273,7 +274,7 @@ export default function Settings() {
               <Label>New Password</Label>
               <Input
                 type="password"
-                placeholder="Min 6 characters"
+                placeholder="Min 8 chars, alphanumeric & special"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
@@ -418,7 +419,7 @@ export default function Settings() {
                   <Input
                     value={shopName}
                     onChange={(e) => setShopName(e.target.value)}
-                    placeholder="e.g. ServiceHub Central"
+                    placeholder="e.g. Servixo Central"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -599,7 +600,7 @@ function QRPaymentsCard() {
   const fetchQrs = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("qr_codes")
       .select("*")
       .order("created_at", { ascending: true });
@@ -619,7 +620,7 @@ function QRPaymentsCard() {
       toast.error("Name and UPI ID are required");
       return;
     }
-    const { error } = await supabase.from("qr_codes").insert({
+    const { error } = await (supabase as any).from("qr_codes").insert({
       name: name.trim(),
       upi_id: upiId.trim(),
       user_id: user?.id,
@@ -641,7 +642,7 @@ function QRPaymentsCard() {
       toast.error("Name and UPI ID are required");
       return;
     }
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("qr_codes")
       .update({ name: newName.trim(), upi_id: newUpiId.trim() })
       .eq("id", id);
@@ -656,7 +657,7 @@ function QRPaymentsCard() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("qr_codes").delete().eq("id", id);
+    const { error } = await (supabase as any).from("qr_codes").delete().eq("id", id);
     if (error) {
       toast.error("Failed to delete QR Code: " + error.message);
     } else {

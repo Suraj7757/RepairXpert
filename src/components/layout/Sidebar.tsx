@@ -240,17 +240,17 @@ export function Sidebar({ links = [] }: SidebarProps) {
 
   const openWhatsApp = () => {
     window.open(
-      `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with ServiceHub")}`,
+      `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with Servixo")}`,
       "_blank",
     );
   };
 
   const handleCreate = (type: "job" | "sell" | "customer" | "inventory") => {
     setCreateOpen(false);
-    if (type === "job") navigate("/shop/jobs#new");
-    else if (type === "sell") navigate("/shop/sells#new");
-    else if (type === "customer") navigate("/shop/customers#new");
-    else if (type === "inventory") navigate("/shop/inventory#new");
+    if (type === "job") navigate("/jobs#new");
+    else if (type === "sell") navigate("/sells#new");
+    else if (type === "customer") navigate("/customers#new");
+    else if (type === "inventory") navigate("/inventory#new");
   };
 
   return (
@@ -270,7 +270,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
             {!collapsed && (
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-sidebar-foreground tracking-tight">
-                  ServiceHub
+                  Servixo
                 </span>
                 <span className="text-[10px] text-sidebar-muted font-medium uppercase tracking-widest">
                   v3.0 Pro
@@ -493,7 +493,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
       <AlertDialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Logout from ServiceHub?</AlertDialogTitle>
+            <AlertDialogTitle>Logout from Servixo?</AlertDialogTitle>
             <AlertDialogDescription>
               Aap apne account se logout ho jayenge. Dobara login karne ke liye email aur password chahiye hoga.
             </AlertDialogDescription>

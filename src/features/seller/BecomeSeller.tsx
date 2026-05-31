@@ -105,7 +105,7 @@ export default function BecomeSeller() {
           </div>
           <div>
             <h1 className="text-3xl font-black text-emerald-700">Approved! 🎉</h1>
-            <p className="text-emerald-600 mt-2">Your shop <strong>{application.shop_name}</strong> is now active on ServiceHub!</p>
+            <p className="text-emerald-600 mt-2">Your shop <strong>{application.shop_name}</strong> is now active on Servixo!</p>
           </div>
           <Card className="text-left shadow-xl border-emerald-200">
             <CardContent className="p-5 space-y-2 text-sm">
@@ -256,7 +256,7 @@ export default function BecomeSeller() {
             </div>
             <div>
               <h1 className="text-2xl font-black">Become a Shopkeeper</h1>
-              <p className="text-white/70 text-sm">Register your repair shop on ServiceHub</p>
+              <p className="text-white/70 text-sm">Register your repair shop on Servixo</p>
             </div>
           </div>
         </div>
@@ -384,7 +384,7 @@ export default function BecomeSeller() {
               </Card>
 
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-                ⚠️ Your application will be reviewed by the ServiceHub admin team. Approval usually takes 12–24 hours.
+                ⚠️ Your application will be reviewed by the Servixo admin team. Approval usually takes 12–24 hours.
               </div>
 
               <div className="flex gap-3">

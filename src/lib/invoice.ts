@@ -28,7 +28,7 @@ export function generateInvoicePDF(
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text(settings.shopName || "ServiceHub", 40, 10, { align: "center" });
+  doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
@@ -128,7 +128,7 @@ export function generateInvoicePDF(
   doc.text("Thank you for choosing us!", 40, currentY, { align: "center" });
   currentY += 3;
   doc.text(
-    `Visit again to ${settings.shopName || "ServiceHub"}`,
+    `Visit again to ${settings.shopName || "Servixo"}`,
     40,
     currentY,
     { align: "center" },
@@ -157,7 +157,7 @@ export function generateSellInvoicePDF(
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text(settings.shopName || "ServiceHub", 40, 10, { align: "center" });
+  doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
@@ -270,7 +270,7 @@ export function generateGenericInvoicePDF(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text(settings?.shop_name || "ServiceHub Pro", 20, 18);
+  doc.text(settings?.shop_name || "Servixo Pro", 20, 18);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");

@@ -23,6 +23,11 @@ export default function SellerSignup() {
       toast.error("Please fill all the fields");
       return;
     }
+    const isValidPassword = password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password) && /[^a-zA-Z0-9]/.test(password);
+    if (!isValidPassword) {
+      toast.error("Password must be at least 8 characters, alphanumeric, with a special character.");
+      return;
+    }
     setLoading(true);
     const { error } = await signUp(email, password, displayName, mobile, "shopkeeper");
     setLoading(false);
@@ -49,7 +54,7 @@ export default function SellerSignup() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50 dark:bg-gray-900/50 p-4">
       <Link to="/" className="flex items-center gap-2 mb-8 text-primary font-bold text-2xl">
         <Store className="w-8 h-8" />
-        ServiceHub Partners
+        Servixo Partners
       </Link>
       
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary">
@@ -134,11 +139,11 @@ export default function SellerSignup() {
               <Input 
                 id="password" 
                 type="password" 
-                placeholder="Create a strong password" 
+                placeholder="Min 8 chars, alphanumeric & special" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

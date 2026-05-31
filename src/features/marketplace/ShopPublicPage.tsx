@@ -4,7 +4,17 @@ import { supabase } from "@/services/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, MapPin, Phone, Star, Package, ArrowLeft, Calendar, ShoppingCart } from "lucide-react";
+import { Store, MapPin, Phone, Star, Package, ArrowLeft, Calendar, ShoppingCart, Wrench, Smartphone, Laptop, Tv2, Printer, Watch, Headphones, Clock } from "lucide-react";
+
+const CATEGORY_ICONS: Record<string, any> = {
+  "Mobile Repair": Smartphone,
+  "Laptop Repair": Laptop,
+  "TV / LED Repair": Tv2,
+  "Printer Repair": Printer,
+  "Smartwatch Repair": Watch,
+  "Audio Devices": Headphones,
+  Other: Wrench,
+};
 
 export default function ShopPublicPage() {
   const { slug } = useParams();
@@ -12,6 +22,7 @@ export default function ShopPublicPage() {
   const [listings, setListings] = useState<any[]>([]);
   const [rating, setRating] = useState<{ count: number; average: number } | null>(null);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,23 +31,25 @@ export default function ShopPublicPage() {
       if (!shopData) { setLoading(false); return; }
       setShop(shopData);
 
-      const [{ data: full }, { data: ls }, { data: rs }, { data: revs }] = await Promise.all([
+      const [{ data: full }, { data: ls }, { data: rs }, { data: revs }, { data: svcs }] = await Promise.all([
         (supabase as any).from("shop_settings").select("address, phone, map_url, map_lat, map_lng").eq("user_id", shopData.user_id).maybeSingle(),
-        (supabase as any).from("marketplace_listings").select("*").eq("seller_id", shopData.user_id).eq("active", true).gt("stock", 0).order("featured", { ascending: false }).order("created_at", { ascending: false }),
+        (supabase as any).from("inventory").select("*").eq("user_id", shopData.user_id).eq("is_marketplace_listed", true).gt("quantity", 0).order("created_at", { ascending: false }),
         (supabase as any).rpc("get_shop_rating_summary", { _user_id: shopData.user_id }),
         (supabase as any).from("shop_reviews").select("rating, comment, customer_name, created_at").eq("user_id", shopData.user_id).eq("status", "approved").order("created_at", { ascending: false }).limit(20),
+        (supabase as any).from("services").select("*").eq("user_id", shopData.user_id).eq("status", "Active").order("popular", { ascending: false }),
       ]);
       setShop({ ...shopData, ...(full || {}) });
       setListings(ls || []);
       setRating(rs || { count: 0, average: 0 });
       setReviews(revs || []);
+      setServices(svcs || []);
       setLoading(false);
 
       // SEO: title, description, canonical, Open Graph
       const url = `${window.location.origin}/shop/${slug}`;
-      const title = `${shopData.shop_name} — ServiceHub`;
-      const desc = `${shopData.shop_name}${shopData.address ? ` at ${shopData.address}` : ""}. Browse products, book repairs and contact the shop directly on ServiceHub.`;
-      const image = (ls && ls[0]?.images?.[0]) || `${window.location.origin}/placeholder.svg`;
+      const title = `${shopData.shop_name} — Servixo`;
+      const desc = `${shopData.shop_name}${shopData.address ? ` at ${shopData.address}` : ""}. Browse products, book repairs and contact the shop directly on Servixo.`;
+      const image = (ls && ls[0]?.image_url) || `${window.location.origin}/placeholder.svg`;
 
       document.title = title;
       const upsert = (selector: string, attrs: Record<string, string>) => {
@@ -118,23 +131,23 @@ export default function ShopPublicPage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {listings.map((l) => {
-                const discount = l.mrp > l.price ? Math.round((1 - l.price / l.mrp) * 100) : 0;
+                const discount = l.cost_price > l.sell_price ? Math.round((1 - l.sell_price / l.cost_price) * 100) : 0;
                 return (
                   <Card key={l.id} className="group hover:shadow-md transition overflow-hidden">
                     <Link to={`/marketplace/${l.id}`}>
                       <div className="aspect-square bg-muted relative overflow-hidden">
-                        {l.images?.[0] ? (
-                          <img src={l.images[0]} alt={l.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        {l.image_url ? (
+                          <img src={l.image_url} alt={l.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center"><Package className="h-12 w-12 text-muted-foreground" /></div>
                         )}
                         {discount > 0 && <Badge variant="destructive" className="absolute top-2 right-2">{discount}% OFF</Badge>}
                       </div>
                       <CardContent className="p-3 space-y-1">
-                        <h3 className="text-sm font-semibold line-clamp-2 min-h-[2.5rem] hover:text-primary">{l.title}</h3>
+                        <h3 className="text-sm font-semibold line-clamp-2 min-h-[2.5rem] hover:text-primary">{l.name}</h3>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-base font-bold text-primary">₹{l.price}</span>
-                          {l.mrp > l.price && <span className="text-xs line-through text-muted-foreground">₹{l.mrp}</span>}
+                          <span className="text-base font-bold text-primary">₹{l.sell_price}</span>
+                          {l.cost_price > l.sell_price && <span className="text-xs line-through text-muted-foreground">₹{l.cost_price}</span>}
                         </div>
                       </CardContent>
                     </Link>
@@ -142,8 +155,54 @@ export default function ShopPublicPage() {
                 );
               })}
             </div>
-          )}
+          )
+        }
         </section>
+
+        {services.length > 0 && (
+          <section className="pt-4 border-t">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Services available at this shop</h2>
+              {shop.booking_enabled && (
+                <Button asChild size="sm" variant="outline">
+                  <Link to={`/book/${slug}`}><Calendar className="h-4 w-4 mr-1" /> Book Custom Repair</Link>
+                </Button>
+              )}
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {services.map((s) => {
+                const Icon = CATEGORY_ICONS[s.category] || Wrench;
+                return (
+                  <Card key={s.id} className="group hover:shadow-md transition">
+                    <CardContent className="p-4 flex gap-3.5 items-start">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 space-y-1 min-w-0">
+                        <div className="flex items-start justify-between gap-1">
+                          <h3 className="font-bold text-sm truncate">{s.name}</h3>
+                          {s.popular && <Badge variant="secondary" className="text-[10px] py-0 px-1 bg-amber-500/10 text-amber-700 border-amber-500/25">Popular</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">{s.description || "Professional repair service from experts."}</p>
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t mt-2">
+                          <div className="space-y-0.5">
+                            <div className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Clock className="h-3 w-3" /> {s.tat}</div>
+                            <div className="text-xs font-bold text-primary">₹{s.base_price}{s.max_price ? ` - ₹${s.max_price}` : ""}</div>
+                          </div>
+                          {shop.booking_enabled && (
+                            <Button asChild size="sm" className="h-7 text-xs">
+                              <Link to={`/book/${slug}?service=${encodeURIComponent(s.name)}`}>Book</Link>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {reviews.length > 0 && (
           <section>

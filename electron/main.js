@@ -12,7 +12,7 @@ function createWindow() {
       nodeIntegration: false,
     },
     titleBarStyle: 'hiddenInset',
-    title: 'ServiceHub',
+    title: 'Servixo',
     backgroundColor: '#1e293b',
     show: false,
   });

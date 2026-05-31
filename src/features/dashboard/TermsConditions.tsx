@@ -14,7 +14,7 @@ export default function TermsConditions() {
                 1. Acceptance of Terms
               </h2>
               <p>
-                By accessing and using ServiceHub, you agree to comply with and be
+                By accessing and using Servixo, you agree to comply with and be
                 bound by these Terms and Conditions.
               </p>
             </section>

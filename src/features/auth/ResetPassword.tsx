@@ -23,6 +23,10 @@ import { useNavigate } from "react-router-dom";
 
 type PageState = "loading" | "form" | "success";
 
+const isValidPassword = (pwd: string) => {
+  return pwd.length >= 8 && /[a-zA-Z]/.test(pwd) && /\d/.test(pwd) && /[^a-zA-Z0-9]/.test(pwd);
+};
+
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -59,8 +63,8 @@ export default function ResetPassword() {
 
   const handleReset = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!password || password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (!password || !isValidPassword(password)) {
+      toast.error("Password must be at least 8 characters, alphanumeric, with a special character.");
       return;
     }
     if (password !== confirm) {
@@ -156,7 +160,7 @@ export default function ResetPassword() {
             Set New Password
           </CardTitle>
           <CardDescription className="uppercase text-[10px] font-bold tracking-[0.2em] text-muted-foreground">
-            Reset Your ServiceHub Account Access
+            Reset Your Servixo Account Access
           </CardDescription>
         </CardHeader>
 
@@ -171,7 +175,7 @@ export default function ResetPassword() {
                 <Input
                   className="pl-10 h-12 bg-muted/30 border-0 focus-visible:ring-1 transition-all"
                   type="password"
-                  placeholder="Minimum 6 characters"
+                  placeholder="Min 8 chars, alphanumeric & special"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -204,7 +208,7 @@ export default function ResetPassword() {
             {password &&
               confirm &&
               password === confirm &&
-              password.length >= 6 && (
+              isValidPassword(password) && (
                 <p className="text-xs text-green-600 font-semibold text-center flex items-center justify-center gap-1">
                   <CheckCircle className="h-3.5 w-3.5" /> Passwords match
                 </p>
@@ -231,7 +235,7 @@ export default function ResetPassword() {
       </Card>
 
       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] opacity-50">
-        ServiceHub Secure Recovery Portal
+        Servixo Secure Recovery Portal
       </p>
     </div>
   );

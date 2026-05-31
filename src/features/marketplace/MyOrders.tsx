@@ -57,17 +57,25 @@ export default function MyOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = async () => {
     if (!user) { setLoading(false); return; }
-    (async () => {
-      const { data } = await (supabase as any)
-        .from("marketplace_orders")
-        .select("*")
-        .eq("buyer_id", user.id)
-        .order("created_at", { ascending: false });
-      setOrders(data || []);
-      setLoading(false);
-    })();
+    const { data } = await (supabase as any)
+      .from("marketplace_orders")
+      .select("*")
+      .eq("buyer_id", user.id)
+      .order("created_at", { ascending: false });
+    setOrders(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+    if (!user) return;
+    const ch = (supabase as any)
+      .channel(`buyer-mo-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "marketplace_orders", filter: `buyer_id=eq.${user.id}` }, () => load())
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
   }, [user?.id]);
 
   if (!user) return (

@@ -127,14 +127,27 @@ export default function SellerOrders() {
                     </div>
                   </div>
                   {o.notes && <p className="text-xs text-muted-foreground italic">Note: {o.notes}</p>}
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <span className="text-xs text-muted-foreground">Update status:</span>
-                    <Select value={o.fulfillment_status} onValueChange={(v) => updateStatus(o.id, v)}>
-                      <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center gap-2 pt-2 border-t mt-3 flex-wrap">
+                    {o.fulfillment_status === "placed" ? (
+                      <>
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => updateStatus(o.id, "confirmed")}>
+                          Accept Order
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => updateStatus(o.id, "cancelled")}>
+                          Reject Order
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-xs text-muted-foreground">Update status:</span>
+                        <Select value={o.fulfillment_status} onValueChange={(v) => updateStatus(o.id, v)}>
+                          <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {STATUSES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
                     {o.buyer_mobile && (
                       <Button size="sm" variant="outline" asChild>
                         <a href={`https://wa.me/91${o.buyer_mobile.replace(/\D/g, "").slice(-10)}?text=${encodeURIComponent(`Hi ${o.buyer_name}, regarding order ${o.order_number}:`)}`} target="_blank" rel="noreferrer">

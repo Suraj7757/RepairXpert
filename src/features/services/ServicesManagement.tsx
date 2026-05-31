@@ -1,5 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { supabase } from "@/services/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -274,7 +276,9 @@ const BLANK: Omit<Service, "id" | "createdAt" | "jobsCompleted"> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ServicesManagement() {
-  const [services, setServices] = useState<Service[]>(SEED_SERVICES);
+  const { user } = useAuth();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("All");
   const [filterStatus, setFilterStatus] = useState<string>("All");
@@ -283,6 +287,90 @@ export default function ServicesManagement() {
   const [form, setForm] = useState(BLANK);
   const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
   const [activeTab, setActiveTab] = useState<"grid" | "table">("grid");
+
+  const loadServices = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("services")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast.error(error.message);
+      } else if (data) {
+        if (data.length === 0) {
+          // Auto-seed default services for new shopkeeper
+          const seedPayload = SEED_SERVICES.map((s) => ({
+            user_id: user.id,
+            name: s.name,
+            category: s.category,
+            base_price: s.basePrice,
+            max_price: s.maxPrice,
+            tat: s.tat,
+            status: s.status,
+            description: s.description,
+            popular: s.popular,
+            jobs_completed: s.jobsCompleted,
+          }));
+          const { error: seedError } = await (supabase as any).from("services").insert(seedPayload);
+          if (seedError) {
+            console.error("Seeding error:", seedError);
+          } else {
+            // reload
+            const { data: reloaded } = await (supabase as any)
+              .from("services")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false });
+            if (reloaded) {
+              setServices(
+                reloaded.map((s: any) => ({
+                  id: s.id,
+                  name: s.name,
+                  category: s.category as ServiceCategory,
+                  basePrice: Number(s.base_price),
+                  maxPrice: Number(s.max_price),
+                  tat: s.tat,
+                  status: s.status as ServiceStatus,
+                  description: s.description || "",
+                  popular: s.popular,
+                  createdAt: s.created_at ? new Date(s.created_at).toISOString().split("T")[0] : "",
+                  jobsCompleted: s.jobs_completed || 0,
+                }))
+              );
+            }
+          }
+        } else {
+          setServices(
+            data.map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              category: s.category as ServiceCategory,
+              basePrice: Number(s.base_price),
+              maxPrice: Number(s.max_price),
+              tat: s.tat,
+              status: s.status as ServiceStatus,
+              description: s.description || "",
+              popular: s.popular,
+              createdAt: s.created_at ? new Date(s.created_at).toISOString().split("T")[0] : "",
+              jobsCompleted: s.jobs_completed || 0,
+            }))
+          );
+        }
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to load services");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadServices();
+  }, [user?.id]);
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -340,7 +428,7 @@ export default function ServicesManagement() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) {
       toast.error("Service name is required");
       return;
@@ -354,46 +442,89 @@ export default function ServicesManagement() {
       return;
     }
 
+    const payload = {
+      name: form.name,
+      category: form.category,
+      base_price: form.basePrice,
+      max_price: form.maxPrice,
+      tat: form.tat,
+      status: form.status,
+      description: form.description,
+      popular: form.popular,
+    };
+
     if (editing) {
-      setServices((prev) =>
-        prev.map((s) => (s.id === editing.id ? { ...s, ...form } : s)),
-      );
-      toast.success("Service updated successfully");
+      const { error } = await (supabase as any)
+        .from("services")
+        .update(payload)
+        .eq("id", editing.id);
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Service updated successfully");
+        loadServices();
+        setDialogOpen(false);
+      }
     } else {
-      const newService: Service = {
-        ...form,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString().split("T")[0],
-        jobsCompleted: 0,
-      };
-      setServices((prev) => [...prev, newService]);
-      toast.success("New service added");
+      const { error } = await (supabase as any)
+        .from("services")
+        .insert({
+          ...payload,
+          user_id: user?.id,
+          jobs_completed: 0,
+        });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("New service added");
+        loadServices();
+        setDialogOpen(false);
+      }
     }
-    setDialogOpen(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setServices((prev) => prev.filter((s) => s.id !== deleteTarget.id));
-    toast.success("Service removed");
-    setDeleteTarget(null);
+    const { error } = await (supabase as any)
+      .from("services")
+      .delete()
+      .eq("id", deleteTarget.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Service removed");
+      loadServices();
+      setDeleteTarget(null);
+    }
   };
 
-  const togglePopular = (id: string) => {
-    setServices((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, popular: !s.popular } : s)),
-    );
+  const togglePopular = async (id: string) => {
+    const service = services.find((s) => s.id === id);
+    if (!service) return;
+    const { error } = await (supabase as any)
+      .from("services")
+      .update({ popular: !service.popular })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      loadServices();
+    }
   };
 
-  const toggleStatus = (id: string) => {
-    setServices((prev) =>
-      prev.map((s) => {
-        if (s.id !== id) return s;
-        const next: ServiceStatus =
-          s.status === "Active" ? "Inactive" : "Active";
-        return { ...s, status: next };
-      }),
-    );
+  const toggleStatus = async (id: string) => {
+    const service = services.find((s) => s.id === id);
+    if (!service) return;
+    const nextStatus = service.status === "Active" ? "Inactive" : "Active";
+    const { error } = await (supabase as any)
+      .from("services")
+      .update({ status: nextStatus })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      loadServices();
+    }
   };
 
   return (

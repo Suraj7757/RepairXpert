@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wrench, CheckCircle2, Phone, Mail, Cpu, AlertTriangle, Clock, Smartphone, Laptop, Monitor, Tv, RefrigeratorIcon, Wind } from "lucide-react";
 import { toast } from "sonner";
 import { ShopReviews } from "./ShopReviews";
@@ -40,6 +41,7 @@ export default function PublicBooking() {
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [step, setStep] = useState(1); // 1=device, 2=contact, 3=problem
+  const [shopServices, setShopServices] = useState<any[]>([]);
   const [form, setForm] = useState({
     customer_name: "",
     customer_mobile: "",
@@ -50,6 +52,7 @@ export default function PublicBooking() {
     service_type: "",
     problem_description: "",
     preferred_date: "",
+    preferred_time: "",
     is_urgent: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,9 +62,26 @@ export default function PublicBooking() {
       if (!slug) return;
       const { data } = await (supabase as any).rpc("get_shop_by_slug", { _slug: slug });
       setShop(data);
+      if (data?.user_id) {
+        // Fetch services for this shopkeeper
+        const { data: svcs } = await (supabase as any)
+          .from("services")
+          .select("name, base_price, max_price, tat")
+          .eq("user_id", data.user_id)
+          .eq("status", "Active");
+        setShopServices(svcs || []);
+      }
       setLoading(false);
     })();
   }, [slug]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const preselectedService = params.get("service");
+    if (preselectedService) {
+      setForm((prev) => ({ ...prev, service_type: preselectedService }));
+    }
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +106,7 @@ export default function PublicBooking() {
         service_type: form.service_type || null,
         problem_description: form.problem_description,
         preferred_date: form.preferred_date || null,
+        preferred_time: form.preferred_time || null,
         is_urgent: form.is_urgent,
         user_id: shop.user_id,
       });
@@ -104,7 +125,7 @@ export default function PublicBooking() {
     setForm({
       customer_name: "", customer_mobile: "", customer_email: "",
       device_type: "", device_brand: "", device_model: "",
-      service_type: "", problem_description: "", preferred_date: "", is_urgent: false,
+      service_type: "", problem_description: "", preferred_date: "", preferred_time: "", is_urgent: false,
     });
   };
 
@@ -146,12 +167,12 @@ export default function PublicBooking() {
             {form.device_type && <p className="text-muted-foreground">Type: {form.device_type}</p>}
             {form.service_type && <p className="text-muted-foreground">Service: {form.service_type}</p>}
             <p className="text-muted-foreground">Problem: {form.problem_description}</p>
-            {form.preferred_date && <p className="text-muted-foreground">Preferred: {new Date(form.preferred_date).toLocaleDateString("en-IN")}</p>}
+            {form.preferred_date && <p className="text-muted-foreground">Preferred: {new Date(form.preferred_date).toLocaleDateString("en-IN")} {form.preferred_time && `at ${form.preferred_time}`}</p>}
             {form.is_urgent && <Badge className="bg-red-100 text-red-600">⚡ Urgent</Badge>}
           </CardContent>
         </Card>
         <Button onClick={resetForm} variant="outline" className="w-full">Submit Another Request</Button>
-        <p className="text-xs text-muted-foreground">Powered by ServiceHub</p>
+        <p className="text-xs text-muted-foreground">Powered by Servixo</p>
       </div>
     </div>
   );
@@ -233,20 +254,40 @@ export default function PublicBooking() {
                   <div>
                     <Label className="text-xs font-bold">Service Required</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {SERVICE_TYPES.map((s) => (
-                        <button
-                          type="button"
-                          key={s}
-                          onClick={() => setForm({ ...form, service_type: form.service_type === s ? "" : s })}
-                          className={`text-left px-3 py-2 rounded-lg text-xs border-2 transition-all ${
-                            form.service_type === s
-                              ? "border-primary bg-primary/10 font-bold text-primary"
-                              : "border-transparent bg-muted/40 hover:border-border"
-                          }`}
-                        >
-                          {s}
-                        </button>
-                      ))}
+                      {shopServices.length > 0 ? (
+                        shopServices.map((s) => (
+                          <button
+                            type="button"
+                            key={s.name}
+                            onClick={() => setForm({ ...form, service_type: form.service_type === s.name ? "" : s.name })}
+                            className={`text-left px-3 py-2 rounded-lg text-xs border-2 transition-all flex flex-col gap-0.5 ${
+                              form.service_type === s.name
+                                ? "border-primary bg-primary/10 font-bold text-primary"
+                                : "border-transparent bg-muted/40 hover:border-border"
+                            }`}
+                          >
+                            <span className="font-semibold">{s.name}</span>
+                            <span className="text-[10px] text-muted-foreground">
+                              ₹{s.base_price}{s.max_price ? ` - ₹${s.max_price}` : ""} • {s.tat}
+                            </span>
+                          </button>
+                        ))
+                      ) : (
+                        SERVICE_TYPES.map((s) => (
+                          <button
+                            type="button"
+                            key={s}
+                            onClick={() => setForm({ ...form, service_type: form.service_type === s ? "" : s })}
+                            className={`text-left px-3 py-2 rounded-lg text-xs border-2 transition-all ${
+                              form.service_type === s
+                                ? "border-primary bg-primary/10 font-bold text-primary"
+                                : "border-transparent bg-muted/40 hover:border-border"
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -329,15 +370,30 @@ export default function PublicBooking() {
                       className="mt-1"
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs font-bold flex items-center gap-1"><Clock className="h-3 w-3" /> Preferred Visit Date <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                    <Input
-                      type="date"
-                      value={form.preferred_date}
-                      onChange={(e) => setForm({ ...form, preferred_date: e.target.value })}
-                      min={new Date().toISOString().slice(0, 10)}
-                      className="mt-1"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-bold flex items-center gap-1"><Clock className="h-3 w-3" /> Preferred Date <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                      <Input
+                        type="date"
+                        value={form.preferred_date}
+                        onChange={(e) => setForm({ ...form, preferred_date: e.target.value })}
+                        min={new Date().toISOString().slice(0, 10)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-bold flex items-center gap-1">Time Slot <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                      <Select value={form.preferred_time} onValueChange={(v) => setForm({ ...form, preferred_time: v })}>
+                        <SelectTrigger className="mt-1 bg-background text-sm">
+                          <SelectValue placeholder="Select Time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Morning (10 AM - 1 PM)">Morning (10 AM - 1 PM)</SelectItem>
+                          <SelectItem value="Afternoon (1 PM - 4 PM)">Afternoon (1 PM - 4 PM)</SelectItem>
+                          <SelectItem value="Evening (4 PM - 7 PM)">Evening (4 PM - 7 PM)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   {/* Urgent toggle */}
                   <button
@@ -365,6 +421,7 @@ export default function PublicBooking() {
                   <p><span className="text-muted-foreground">Mobile:</span> <strong>{form.customer_mobile}</strong></p>
                   <p><span className="text-muted-foreground">Device:</span> <strong>{form.device_brand} {form.device_model} {form.device_type ? `(${form.device_type})` : ""}</strong></p>
                   {form.service_type && <p><span className="text-muted-foreground">Service:</span> <strong>{form.service_type}</strong></p>}
+                  {form.preferred_date && <p><span className="text-muted-foreground">Time:</span> <strong>{new Date(form.preferred_date).toLocaleDateString("en-IN")} {form.preferred_time ? `- ${form.preferred_time}` : ""}</strong></p>}
                   {form.is_urgent && <Badge className="bg-red-100 text-red-600 border-red-200">⚡ Urgent</Badge>}
                 </CardContent>
               </Card>
@@ -382,7 +439,7 @@ export default function PublicBooking() {
         <div className="mt-6">
           <ShopReviews shopUserId={shop.user_id} />
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-4">Powered by ServiceHub</p>
+        <p className="text-center text-xs text-muted-foreground mt-4">Powered by Servixo</p>
       </div>
     </div>
   );

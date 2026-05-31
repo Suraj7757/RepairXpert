@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,8 @@ import {
   Pencil,
   Info,
   ScanLine,
+  Globe,
+  EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BarcodeScanner } from "@/components/common/BarcodeScanner";
@@ -63,6 +65,32 @@ export default function Inventory() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === "#new") {
+        setEditingItem(null);
+        setForm({
+          name: "",
+          sku: "",
+          category: "Accessories",
+          quantity: "",
+          minStock: "5",
+          costPrice: "",
+          sellPrice: "",
+          gstPercent: "18",
+          is_marketplace_listed: false,
+          description: "",
+          image_url: "",
+        });
+        setOpen(true);
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    };
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   const handleScanned = (code: string) => {
     setSearch(code);
@@ -368,6 +396,9 @@ export default function Inventory() {
                   <th className="text-left p-4 font-bold text-muted-foreground uppercase tracking-widest text-[10px]">
                     Selling Price
                   </th>
+                  <th className="p-4 font-bold text-muted-foreground uppercase tracking-widest text-[10px] text-center hidden sm:table-cell">
+                    Marketplace
+                  </th>
                   <th className="p-4 font-bold text-muted-foreground uppercase tracking-widest text-[10px] text-center">
                     Actions
                   </th>
@@ -429,6 +460,23 @@ export default function Inventory() {
                       <p className="text-[10px] text-muted-foreground font-medium">
                         GST {item.gst_percent}% incl.
                       </p>
+                    </td>
+                    <td className="p-4 hidden sm:table-cell">
+                      <div className="flex flex-col items-center gap-1">
+                        <Switch
+                          checked={!!item.is_marketplace_listed}
+                          onCheckedChange={async (checked) => {
+                            await supabase.from("inventory").update({ is_marketplace_listed: checked, deleted: item.deleted || false }).eq("id", item.id);
+                            toast.success(checked ? "Listed on marketplace" : "Removed from marketplace");
+                            refetch();
+                          }}
+                        />
+                        <span className={`text-[9px] font-bold flex items-center gap-0.5 ${
+                          item.is_marketplace_listed ? "text-emerald-600" : "text-muted-foreground"
+                        }`}>
+                          {item.is_marketplace_listed ? <><Globe className="h-2.5 w-2.5" /> Live</> : <><EyeOff className="h-2.5 w-2.5" /> Hidden</>}
+                        </span>
+                      </div>
                     </td>
                     <td className="p-4">
                       <div className="flex justify-center gap-2">

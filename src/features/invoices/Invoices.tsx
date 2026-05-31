@@ -308,7 +308,7 @@ export default function Invoices() {
                               inv.amount,
                               inv.id,
                               desc || "Services Billed",
-                              settings?.shop_name || "ServiceHub"
+                              settings?.shop_name || "Servixo"
                             );
                           }}
                           className="rounded-xl h-9 w-9 text-green-500 hover:text-green-600 hover:bg-green-500/10 border-green-500/20"
@@ -577,7 +577,7 @@ export default function Invoices() {
                         detailInvoice.amount,
                         detailInvoice.id,
                         desc || "Services Billed",
-                        settings?.shop_name || "ServiceHub"
+                        settings?.shop_name || "Servixo"
                       );
                     }}
                     className="rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold flex items-center gap-2 shadow-lg shadow-green-600/15"

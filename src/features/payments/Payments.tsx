@@ -134,15 +134,18 @@ export default function Payments() {
 
   const handleEditPayment = async () => {
     if (!selectedPayment || !user || savingEdit) return;
+    
     const amount = parseFloat(editAmount);
-    if (!isFinite(amount) || amount < 0) {
-      toast.error("Enter a valid amount");
+    if (!isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid positive amount");
       return;
     }
+    
     if (editMethod === "UPI/QR" && !editQr) {
-      toast.error("Select a QR receiver");
+      toast.error("Please select a QR receiver for UPI/QR payments");
       return;
     }
+    
     setSavingEdit(true);
     try {
       const splitEnabled = settings?.revenue_split_enabled !== false;
@@ -165,10 +168,11 @@ export default function Payments() {
       if (error) throw error;
       refetch();
       setEditOpen(false);
-      toast.success("Payment updated");
+      toast.success("Payment updated successfully");
     } catch (err: any) {
-      console.error(err);
-      toast.error(err?.message || "Failed to save payment");
+      const errorMsg = err?.message || "Failed to save payment";
+      console.error("Payment edit error:", errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSavingEdit(false);
     }

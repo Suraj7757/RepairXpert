@@ -288,6 +288,7 @@ export default function BookingsAdmin() {
                               <div className="bg-white rounded-lg p-2 border">
                                 <p className="text-muted-foreground">Preferred</p>
                                 <p className="font-bold">{new Date(b.preferred_date).toLocaleDateString("en-IN")}</p>
+                                {b.preferred_time && <p className="text-[10px] text-muted-foreground">{b.preferred_time}</p>}
                               </div>
                             )}
                           </div>
@@ -450,7 +451,7 @@ export default function BookingsAdmin() {
                   { label: "Model", value: detailBooking.device_model || "—" },
                   { label: "Device Type", value: detailBooking.device_type || "—" },
                   { label: "Service", value: detailBooking.service_type || "—" },
-                  { label: "Preferred Date", value: detailBooking.preferred_date ? new Date(detailBooking.preferred_date).toLocaleDateString("en-IN") : "—" },
+                  { label: "Preferred Date", value: detailBooking.preferred_date ? `${new Date(detailBooking.preferred_date).toLocaleDateString("en-IN")} ${detailBooking.preferred_time ? `(${detailBooking.preferred_time})` : ""}` : "—" },
                   { label: "Submitted", value: new Date(detailBooking.created_at).toLocaleString("en-IN") },
                   { label: "Status", value: STATUS_CONFIG[detailBooking.status]?.label || detailBooking.status },
                 ].map(({ label, value }) => (

@@ -1,10 +1,10 @@
-// Capacitor configuration for ServiceHub Android APK
+// Capacitor configuration for Servixo Android APK
 // Install @capacitor/cli and @capacitor/core before building:
 //   npm install @capacitor/core @capacitor/cli
 
 const config = {
-  appId: 'com.servicehub.app',
-  appName: 'ServiceHub',
+  appId: 'com.servixo.app',
+  appName: 'Servixo',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

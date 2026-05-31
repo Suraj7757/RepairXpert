@@ -154,9 +154,10 @@ function AppRoutes() {
                 ? <Navigate to={home} replace />
                 : isSuperAdmin
                   ? <Navigate to="/admin" replace />
-                  : <Landing />
+                  : <Marketplace />
             }
           />
+          <Route path="/features" element={<Landing />} />
 
           <Route
             path="/auth"

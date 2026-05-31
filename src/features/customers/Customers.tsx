@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,23 @@ export default function Customers() {
   const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === "#new") {
+        setEditingCustomer(null);
+        setName("");
+        setMobile("");
+        setEmail("");
+        setAddress("");
+        setOpen(true);
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    };
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   const filtered = customers.filter(
     (c: any) =>

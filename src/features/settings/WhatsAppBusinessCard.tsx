@@ -70,7 +70,7 @@ export function WhatsAppBusinessCard() {
       body: {
         to: testTo,
         type: "test",
-        message: "Test message from ServiceHub WhatsApp Business setup ✅",
+        message: "Test message from Servixo WhatsApp Business setup ✅",
       },
     });
     if (error) {
