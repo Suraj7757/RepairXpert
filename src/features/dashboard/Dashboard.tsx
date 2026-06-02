@@ -62,7 +62,7 @@ export default function Dashboard() {
     if (!user) return;
     const fetchBookings = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from("booking_requests")
           .select("id, status")
           .eq("user_id", user.id);
