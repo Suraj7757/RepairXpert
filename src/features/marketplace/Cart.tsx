@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/services/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShoppingCart, Trash2, Package, ShieldCheck, CheckCircle } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Trash2, Package, ShieldCheck, CheckCircle, Store } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
