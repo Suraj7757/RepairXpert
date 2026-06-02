@@ -144,11 +144,7 @@ export function generateInvoicePDF(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
   doc.text(
-<<<<<<< HEAD
     `Visit again to ${settings.shopName || "Servixo"}`,
-=======
-    `ServiceHub - Powered by Technology`,
->>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
     40,
     currentY,
     { align: "center" },
@@ -177,11 +173,7 @@ export function generateSellInvoicePDF(
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-<<<<<<< HEAD
   doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
-=======
-  doc.text(settings.shopName || "ServiceHub", 40, 12, { align: "center" });
->>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
