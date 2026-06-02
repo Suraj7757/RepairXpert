@@ -337,11 +337,7 @@ export function generateGenericInvoicePDF(
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-<<<<<<< HEAD
-  doc.text(settings?.shop_name || "Servixo Pro", 20, 18);
-=======
   doc.text("TAX INVOICE", 185, 27, { align: "right" });
->>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
 
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
   doc.setFontSize(9);
