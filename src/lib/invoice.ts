@@ -28,11 +28,7 @@ export function generateInvoicePDF(
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-<<<<<<< HEAD
   doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
-=======
-  doc.text(settings.shopName || "ServiceHub", 40, 12, { align: "center" });
->>>>>>> 71f9384f89129ed98332e7e440e41262350571bb
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
