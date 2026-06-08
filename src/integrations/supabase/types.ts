@@ -1236,6 +1236,62 @@ export type Database = {
           },
         ]
       }
+      service_bookings: {
+        Row: {
+          created_at: string
+          customer_address: string | null
+          customer_mobile: string
+          customer_name: string
+          estimated_price: number | null
+          id: string
+          notes: string | null
+          preferred_date: string | null
+          service_id: string | null
+          service_name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_address?: string | null
+          customer_mobile: string
+          customer_name: string
+          estimated_price?: number | null
+          id?: string
+          notes?: string | null
+          preferred_date?: string | null
+          service_id?: string | null
+          service_name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_address?: string | null
+          customer_mobile?: string
+          customer_name?: string
+          estimated_price?: number | null
+          id?: string
+          notes?: string | null
+          preferred_date?: string | null
+          service_id?: string | null
+          service_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "shop_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settlement_cycles: {
         Row: {
           admin_share: number
@@ -1320,6 +1376,54 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_services: {
+        Row: {
+          active: boolean
+          bookable: boolean
+          category: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          icon: string | null
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          bookable?: boolean
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          bookable?: boolean
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       shop_settings: {
         Row: {
           address: string
@@ -1333,6 +1437,7 @@ export type Database = {
           map_lng: number | null
           map_url: string | null
           phone: string
+          public_listing: boolean
           qr_receivers: string[]
           revenue_split_enabled: boolean | null
           shop_name: string
@@ -1353,6 +1458,7 @@ export type Database = {
           map_lng?: number | null
           map_url?: string | null
           phone?: string
+          public_listing?: boolean
           qr_receivers?: string[]
           revenue_split_enabled?: boolean | null
           shop_name?: string
@@ -1373,6 +1479,7 @@ export type Database = {
           map_lng?: number | null
           map_url?: string | null
           phone?: string
+          public_listing?: boolean
           qr_receivers?: string[]
           revenue_split_enabled?: boolean | null
           shop_name?: string
@@ -1789,6 +1896,7 @@ export type Database = {
         Returns: string
       }
       get_marketplace_listing: { Args: { _id: string }; Returns: Json }
+      get_public_shop_details: { Args: { _slug: string }; Returns: Json }
       get_shop_by_slug: { Args: { _slug: string }; Returns: Json }
       get_shop_rating_summary: { Args: { _user_id: string }; Returns: Json }
       has_role: {
@@ -1834,6 +1942,23 @@ export type Database = {
           _shipping?: number
         }
         Returns: string
+      }
+      public_shops_directory: {
+        Args: { _limit?: number; _search?: string }
+        Returns: {
+          address: string
+          booking_enabled: boolean
+          booking_slug: string
+          map_lat: number
+          map_lng: number
+          phone: string
+          product_count: number
+          rating_avg: number
+          rating_count: number
+          service_count: number
+          shop_name: string
+          user_id: string
+        }[]
       }
       redeem_loyalty_points: {
         Args: { _customer_id: string; _points: number }
