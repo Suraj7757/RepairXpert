@@ -311,22 +311,50 @@ export default function TrackOrder({
         </div>
 
         {/* Search Bar */}
-        <div className="flex gap-2 bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg border">
+        <div className="flex gap-2 glass rounded-2xl p-2 shadow-card border border-border/50">
           <Input
             placeholder="e.g. JSAM0042K9X"
             value={trackingId}
             onChange={(e) => setTrackingId(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleTrack()}
-            className="border-0 shadow-none font-mono h-10 focus-visible:ring-0 bg-transparent"
+            className="border-0 shadow-none font-mono h-10 focus-visible:ring-0 bg-transparent text-foreground"
           />
           <Button
             onClick={handleTrack}
             disabled={loading}
-            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 rounded-xl px-5"
+            className="bg-gradient-primary hover:opacity-90 text-primary-foreground rounded-xl px-5 shadow-glow"
           >
             <Search className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Shop banner — visible once result loaded */}
+        {!loading && result && merchantSettings?.shop_name && (
+          <Card className="border-border/50 bg-card/60 backdrop-blur">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-accent flex items-center justify-center shrink-0">
+                <Shield className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">Order at</p>
+                <p className="font-bold text-sm truncate text-foreground">{merchantSettings.shop_name}</p>
+                {merchantSettings.address && (
+                  <p className="text-[11px] text-muted-foreground truncate">{merchantSettings.address}</p>
+                )}
+              </div>
+              {merchantSettings.phone && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => (window.location.href = `tel:${merchantSettings.phone}`)}
+                >
+                  <PhoneCall className="h-3.5 w-3.5" /> Call
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {loading && (
           <div className="text-center py-10">
