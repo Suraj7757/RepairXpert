@@ -71,6 +71,7 @@ const mainItems = [
 
 const secondaryItems = [
   { title: "Services", url: "/services", icon: ConciergeBell },
+  { title: "Bookable Services", url: "/shop-services", icon: Wrench },
   { title: "AI Diagnostic", url: "/ai-diagnostics", icon: BrainCircuit },
   { title: "Marketing", url: "/marketing", icon: Megaphone },
   { title: "Inventory", url: "/inventory", icon: Package },
