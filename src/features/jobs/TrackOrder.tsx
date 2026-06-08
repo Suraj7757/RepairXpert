@@ -188,68 +188,57 @@ export default function TrackOrder({
 
   const downloadInvoicePDF = () => {
     if (!result) return;
+    const shopName = (merchantSettings?.shop_name || "RepairXpert").toUpperCase();
+    const shopPhone = merchantSettings?.phone || "";
+    const shopAddr = merchantSettings?.address || "";
     const doc = new jsPDF();
-    // Header
+    // Header — branded with shop, footer with RepairXpert
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 42, "F");
     doc.setFillColor(79, 70, 229);
-    doc.rect(0, 0, 210, 40, "F");
+    doc.rect(0, 42, 210, 2, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("TEKYSYS SERVICE CENTER", 14, 18);
-    doc.setFontSize(10);
+    doc.text(shopName, 14, 18);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Professional Repair & Service", 14, 27);
-    doc.text(`Invoice: ${result.tracking_id}`, 14, 34);
+    if (shopAddr) doc.text(shopAddr.slice(0, 80), 14, 25);
+    if (shopPhone) doc.text(`Phone: ${shopPhone}`, 14, 31);
+    doc.text(`Invoice: ${result.tracking_id}`, 14, 38);
 
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
-    doc.text(
-      `Date: ${new Date(result.created_at).toLocaleDateString("en-IN")}`,
-      14,
-      52,
-    );
-    doc.text(`Status: ${result.status}`, 14, 59);
+    doc.text(`Date: ${new Date(result.created_at).toLocaleDateString("en-IN")}`, 14, 54);
+    doc.text(`Status: ${result.status}`, 14, 61);
 
     if (result.type === "job") {
-      doc.text(`Customer: ${result.customer_name}`, 14, 66);
-      doc.text(
-        `Device: ${result.device_brand} ${result.device_model || ""}`,
-        14,
-        73,
-      );
+      doc.text(`Customer: ${result.customer_name}`, 14, 68);
+      doc.text(`Device: ${result.device_brand} ${result.device_model || ""}`, 14, 75);
       autoTable(doc, {
-        startY: 82,
+        startY: 84,
         head: [["Description", "Status", "Amount"]],
-        body: [
-          [
-            result.problem,
-            result.status,
-            `Rs.${Number(result.estimated_cost).toLocaleString()}`,
-          ],
-        ],
+        body: [[result.problem, result.status, `Rs.${Number(result.estimated_cost).toLocaleString()}`]],
         theme: "striped",
         headStyles: { fillColor: [79, 70, 229] },
       });
     } else {
-      doc.text(`Item: ${result.item_name}`, 14, 66);
+      doc.text(`Item: ${result.item_name}`, 14, 68);
       autoTable(doc, {
-        startY: 74,
+        startY: 76,
         head: [["Item", "Quantity", "Total"]],
-        body: [
-          [
-            result.item_name,
-            String(result.quantity),
-            `Rs.${Number(result.total).toLocaleString()}`,
-          ],
-        ],
+        body: [[result.item_name, String(result.quantity), `Rs.${Number(result.total).toLocaleString()}`]],
         theme: "striped",
         headStyles: { fillColor: [79, 70, 229] },
       });
     }
 
     doc.setFontSize(9);
-    doc.setTextColor(150, 150, 150);
-    doc.text("Thank you for choosing TEKYSYS! 🙏", 14, 280);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Thank you for choosing ${merchantSettings?.shop_name || "us"}! 🙏`, 14, 275);
+    doc.setFontSize(8);
+    doc.setTextColor(160, 160, 160);
+    doc.text("Powered by RepairXpert • repairxpert.lovable.app", 14, 282);
     doc.save(`Invoice-${result.tracking_id}.pdf`);
   };
 
@@ -258,18 +247,24 @@ export default function TrackOrder({
       toast.error("Please give a rating");
       return;
     }
+    if (!result?.user_id) {
+      toast.error("Shop reference missing");
+      return;
+    }
     try {
-      await supabase.from("customer_feedback").insert({
-        job_id: result?.job_id || result?.id,
-        tracking_id: result?.tracking_id,
-        rating,
-        review_text: reviewText,
+      const { error } = await supabase.from("shop_reviews").insert({
+        user_id: result.user_id,
+        job_id: result?.tracking_id || null,
         customer_name: result?.customer_name || "Guest",
+        rating,
+        comment: reviewText || null,
+        status: "pending",
       });
+      if (error) throw error;
       setFeedbackSubmitted(true);
       toast.success("Thank you for your feedback! ⭐");
-    } catch {
-      toast.error("Failed to submit feedback");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to submit feedback");
     }
   };
 
