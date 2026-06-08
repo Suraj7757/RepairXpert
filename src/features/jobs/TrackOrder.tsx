@@ -516,9 +516,9 @@ export default function TrackOrder({
                     <div className="relative">
                       <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-muted" />
                       <div
-                        className="absolute left-4 top-4 w-0.5 bg-gradient-to-b from-violet-600 to-indigo-600 transition-all duration-700"
+                        className="absolute left-4 top-4 w-0.5 bg-gradient-primary transition-all duration-700"
                         style={{
-                          height: `${Math.max(0, currentStep) * 33.33}%`,
+                          height: `${(Math.max(0, currentStep) / Math.max(1, JOB_STATUSES.length - 1)) * 100}%`,
                         }}
                       />
                       <div className="space-y-4">
