@@ -188,68 +188,57 @@ export default function TrackOrder({
 
   const downloadInvoicePDF = () => {
     if (!result) return;
+    const shopName = (merchantSettings?.shop_name || "RepairXpert").toUpperCase();
+    const shopPhone = merchantSettings?.phone || "";
+    const shopAddr = merchantSettings?.address || "";
     const doc = new jsPDF();
-    // Header
+    // Header — branded with shop, footer with RepairXpert
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 42, "F");
     doc.setFillColor(79, 70, 229);
-    doc.rect(0, 0, 210, 40, "F");
+    doc.rect(0, 42, 210, 2, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("TEKYSYS SERVICE CENTER", 14, 18);
-    doc.setFontSize(10);
+    doc.text(shopName, 14, 18);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Professional Repair & Service", 14, 27);
-    doc.text(`Invoice: ${result.tracking_id}`, 14, 34);
+    if (shopAddr) doc.text(shopAddr.slice(0, 80), 14, 25);
+    if (shopPhone) doc.text(`Phone: ${shopPhone}`, 14, 31);
+    doc.text(`Invoice: ${result.tracking_id}`, 14, 38);
 
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
-    doc.text(
-      `Date: ${new Date(result.created_at).toLocaleDateString("en-IN")}`,
-      14,
-      52,
-    );
-    doc.text(`Status: ${result.status}`, 14, 59);
+    doc.text(`Date: ${new Date(result.created_at).toLocaleDateString("en-IN")}`, 14, 54);
+    doc.text(`Status: ${result.status}`, 14, 61);
 
     if (result.type === "job") {
-      doc.text(`Customer: ${result.customer_name}`, 14, 66);
-      doc.text(
-        `Device: ${result.device_brand} ${result.device_model || ""}`,
-        14,
-        73,
-      );
+      doc.text(`Customer: ${result.customer_name}`, 14, 68);
+      doc.text(`Device: ${result.device_brand} ${result.device_model || ""}`, 14, 75);
       autoTable(doc, {
-        startY: 82,
+        startY: 84,
         head: [["Description", "Status", "Amount"]],
-        body: [
-          [
-            result.problem,
-            result.status,
-            `Rs.${Number(result.estimated_cost).toLocaleString()}`,
-          ],
-        ],
+        body: [[result.problem, result.status, `Rs.${Number(result.estimated_cost).toLocaleString()}`]],
         theme: "striped",
         headStyles: { fillColor: [79, 70, 229] },
       });
     } else {
-      doc.text(`Item: ${result.item_name}`, 14, 66);
+      doc.text(`Item: ${result.item_name}`, 14, 68);
       autoTable(doc, {
-        startY: 74,
+        startY: 76,
         head: [["Item", "Quantity", "Total"]],
-        body: [
-          [
-            result.item_name,
-            String(result.quantity),
-            `Rs.${Number(result.total).toLocaleString()}`,
-          ],
-        ],
+        body: [[result.item_name, String(result.quantity), `Rs.${Number(result.total).toLocaleString()}`]],
         theme: "striped",
         headStyles: { fillColor: [79, 70, 229] },
       });
     }
 
     doc.setFontSize(9);
-    doc.setTextColor(150, 150, 150);
-    doc.text("Thank you for choosing TEKYSYS! 🙏", 14, 280);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Thank you for choosing ${merchantSettings?.shop_name || "us"}! 🙏`, 14, 275);
+    doc.setFontSize(8);
+    doc.setTextColor(160, 160, 160);
+    doc.text("Powered by RepairXpert • repairxpert.lovable.app", 14, 282);
     doc.save(`Invoice-${result.tracking_id}.pdf`);
   };
 
@@ -258,18 +247,24 @@ export default function TrackOrder({
       toast.error("Please give a rating");
       return;
     }
+    if (!result?.user_id) {
+      toast.error("Shop reference missing");
+      return;
+    }
     try {
-      await supabase.from("customer_feedback").insert({
-        job_id: result?.job_id || result?.id,
-        tracking_id: result?.tracking_id,
-        rating,
-        review_text: reviewText,
+      const { error } = await (supabase as any).from("shop_reviews").insert({
+        user_id: result.user_id,
+        job_id: result?.tracking_id || null,
         customer_name: result?.customer_name || "Guest",
+        rating,
+        comment: reviewText || null,
+        status: "pending",
       });
+      if (error) throw error;
       setFeedbackSubmitted(true);
       toast.success("Thank you for your feedback! ⭐");
-    } catch {
-      toast.error("Failed to submit feedback");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to submit feedback");
     }
   };
 
@@ -285,50 +280,81 @@ export default function TrackOrder({
 
   return (
     <div
-      className={`${isModal ? "p-4" : "min-h-screen p-4"} bg-gradient-to-br from-slate-50 via-white to-violet-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950`}
+      className={`${isModal ? "p-4" : "min-h-screen p-4"} bg-background relative overflow-hidden`}
     >
       {!isModal && (
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Home
-        </Link>
+        <>
+          <div className="absolute inset-0 bg-gradient-hero opacity-60 pointer-events-none" />
+          <Link
+            to="/"
+            className="relative inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Home
+          </Link>
+        </>
       )}
 
       <div
-        className={`w-full max-w-lg mx-auto space-y-5 ${!isModal ? "pt-4" : ""}`}
+        className={`relative w-full max-w-lg mx-auto space-y-5 ${!isModal ? "pt-4" : ""}`}
       >
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/30">
-            <Smartphone className="h-8 w-8 text-white" />
+          <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
+            <Smartphone className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-black bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-display font-black bg-gradient-primary bg-clip-text text-transparent">
             Track Your Order
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter your Job or Sell tracking ID below
+            RepairXpert · Job, Sell or Marketplace ID
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="flex gap-2 bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-lg border">
+        <div className="flex gap-2 glass rounded-2xl p-2 shadow-card border border-border/50">
           <Input
             placeholder="e.g. JSAM0042K9X"
             value={trackingId}
             onChange={(e) => setTrackingId(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleTrack()}
-            className="border-0 shadow-none font-mono h-10 focus-visible:ring-0 bg-transparent"
+            className="border-0 shadow-none font-mono h-10 focus-visible:ring-0 bg-transparent text-foreground"
           />
           <Button
             onClick={handleTrack}
             disabled={loading}
-            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 rounded-xl px-5"
+            className="bg-gradient-primary hover:opacity-90 text-primary-foreground rounded-xl px-5 shadow-glow"
           >
             <Search className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Shop banner — visible once result loaded */}
+        {!loading && result && merchantSettings?.shop_name && (
+          <Card className="border-border/50 bg-card/60 backdrop-blur">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-accent flex items-center justify-center shrink-0">
+                <Shield className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">Order at</p>
+                <p className="font-bold text-sm truncate text-foreground">{merchantSettings.shop_name}</p>
+                {merchantSettings.address && (
+                  <p className="text-[11px] text-muted-foreground truncate">{merchantSettings.address}</p>
+                )}
+              </div>
+              {merchantSettings.phone && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => (window.location.href = `tel:${merchantSettings.phone}`)}
+                >
+                  <PhoneCall className="h-3.5 w-3.5" /> Call
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {loading && (
           <div className="text-center py-10">
@@ -490,9 +516,9 @@ export default function TrackOrder({
                     <div className="relative">
                       <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-muted" />
                       <div
-                        className="absolute left-4 top-4 w-0.5 bg-gradient-to-b from-violet-600 to-indigo-600 transition-all duration-700"
+                        className="absolute left-4 top-4 w-0.5 bg-gradient-primary transition-all duration-700"
                         style={{
-                          height: `${Math.max(0, currentStep) * 33.33}%`,
+                          height: `${(Math.max(0, currentStep) / Math.max(1, JOB_STATUSES.length - 1)) * 100}%`,
                         }}
                       />
                       <div className="space-y-4">
@@ -679,40 +705,34 @@ export default function TrackOrder({
                       />
                       <Button
                         onClick={async () => {
-                          if (!utr.trim()) {
-                            toast.error("Enter UTR number");
+                          if (!utr.trim() || utr.trim().length < 6) {
+                            toast.error("Enter a valid UTR / Txn ID");
                             return;
                           }
                           setSubmittingPay(true);
-                          const { error } = await (supabase as any)
-                            .from("customer_payments")
-                            .insert({
-                              user_id: result.user_id,
-                              tracking_id: result.tracking_id,
-                              amount,
-                              utr_number: utr,
-                              customer_name: result.customer_name || "Guest",
-                              status: "pending",
-                            });
-                          if (error)
-                            toast.error("Failed to submit. Try again.");
-                          else {
-                            toast.success(
-                              "Payment submitted! Shop will verify soon.",
-                            );
-                            setPayOpen(false);
-                            setUtr("");
+                          const phone = (merchantSettings?.phone || "").replace(/\D/g, "");
+                          const msg = encodeURIComponent(
+                            `Hi ${merchantSettings?.shop_name || "Shop"},\n\nPayment sent for ${result.tracking_id}\nAmount: ₹${amount}\nUTR / Txn ID: ${utr}\nCustomer: ${result.customer_name || "Guest"}\n\nPlease confirm. Thank you!`,
+                          );
+                          if (phone) {
+                            const waNum = phone.length === 10 ? `91${phone}` : phone;
+                            window.open(`https://wa.me/${waNum}?text=${msg}`, "_blank");
+                            toast.success("Opening WhatsApp — shop will verify your payment.");
+                          } else {
+                            toast.success("UTR noted. Please share it with the shop directly.");
                           }
+                          setPayOpen(false);
+                          setUtr("");
                           setSubmittingPay(false);
                         }}
                         disabled={submittingPay}
-                        className="bg-violet-600 hover:bg-violet-700 text-white"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                       >
-                        Submit
+                        Send to Shop
                       </Button>
                     </div>
                     <p className="text-[10px] text-center text-muted-foreground">
-                      Shop owner will verify and update your status.
+                      UTR will be sent on WhatsApp to the shop for verification.
                     </p>
                   </div>
                 </CardContent>

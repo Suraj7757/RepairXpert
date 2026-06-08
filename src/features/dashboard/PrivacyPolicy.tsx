@@ -25,7 +25,7 @@ export default function PrivacyPolicy() {
               </h2>
               <p>
                 We use the information we collect to operate, maintain, and
-                provide the features of the Servixo CRM. This includes tracking
+                provide the features of the RepairXpert CRM. This includes tracking
                 repair jobs, managing inventory, and generating invoices.
               </p>
             </section>

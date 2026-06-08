@@ -85,7 +85,7 @@ export default function Landing() {
             </div>
             <div className="flex flex-col">
               <span className="font-black text-xl tracking-tight text-white group-hover:text-indigo-400 transition-colors">
-                SERVIXO
+                REPAIRXPERT
               </span>
               <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold -mt-1">
                 CRM & POS Ecosystem
@@ -97,7 +97,7 @@ export default function Landing() {
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Features</a>
             <a href="#workflow" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">How It Works</a>
-            <a href="#comparison" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Why Servixo</a>
+            <a href="#comparison" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Why RepairXpert</a>
             <a href="#pricing" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Pricing</a>
             <a href="#faq" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">FAQ</a>
             <Link to="/marketplace" className="text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
@@ -158,7 +158,7 @@ export default function Landing() {
           </h1>
           
           <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-            Servixo helps repair shops, retailers, and service businesses manage customers, repairs, inventory, billing, and online orders with ease.
+            RepairXpert helps repair shops, retailers, and service businesses manage customers, repairs, inventory, billing, and online orders with ease.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -499,7 +499,7 @@ export default function Landing() {
               Compare and Choose Wisely
             </h2>
             <p className="text-slate-400 text-sm mt-3">
-              How Servixo stacks up against generic tools and spreadsheets.
+              How RepairXpert stacks up against generic tools and spreadsheets.
             </p>
           </div>
 
@@ -510,7 +510,7 @@ export default function Landing() {
                   <th className="p-5 font-black text-slate-200">Feature Focus</th>
                   <th className="p-5 font-black text-slate-400">Excel / Paper Logs</th>
                   <th className="p-5 font-black text-slate-400">Generic Retail CRM</th>
-                  <th className="p-5 font-black text-indigo-400 bg-indigo-600/5">Servixo CRM</th>
+                  <th className="p-5 font-black text-indigo-400 bg-indigo-600/5">RepairXpert CRM</th>
                 </tr>
               </thead>
               <tbody>
@@ -548,7 +548,7 @@ export default function Landing() {
         <div className="grid md:grid-cols-3 gap-6">
           {[
             {
-              quote: "Servixo's automated WhatsApp feature saved us hours of customer support calls. Once the repair is complete, they immediately get a pickup reminder with payment link.",
+              quote: "RepairXpert's automated WhatsApp feature saved us hours of customer support calls. Once the repair is complete, they immediately get a pickup reminder with payment link.",
               name: "Suraj Patra",
               role: "Owner of Mobile Tech Lab, Kolkata",
               rating: 5
@@ -707,15 +707,15 @@ export default function Landing() {
             Frequently Asked Questions
           </h2>
           <p className="text-slate-400 text-sm mt-3">
-            Find answers to commonly asked questions about Servixo CRM.
+            Find answers to commonly asked questions about RepairXpert CRM.
           </p>
         </div>
 
         <div className="space-y-4">
           {[
             {
-              q: "Can I use Servixo on multiple mobile and tablet screens?",
-              a: "Yes! Servixo is fully responsive and optimized for mobile screens. You can add it to your home screen as a PWA, enabling quick access and offline status logging."
+              q: "Can I use RepairXpert on multiple mobile and tablet screens?",
+              a: "Yes! RepairXpert is fully responsive and optimized for mobile screens. You can add it to your home screen as a PWA, enabling quick access and offline status logging."
             },
             {
               q: "How does the WhatsApp notification system work?",
@@ -752,7 +752,7 @@ export default function Landing() {
       <footer className="bg-slate-950 border-t border-white/5 text-slate-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
           <div>
-            <h4 className="font-bold text-white mb-4">Servixo Platform</h4>
+            <h4 className="font-bold text-white mb-4">RepairXpert Platform</h4>
             <div className="flex flex-col gap-2.5">
               <a href="#features" className="hover:text-white transition-colors">Key Features</a>
               <a href="#workflow" className="hover:text-white transition-colors">System Steppers</a>
@@ -784,7 +784,7 @@ export default function Landing() {
           </div>
         </div>
         <div className="border-t border-white/5 py-6 text-center text-xs text-slate-600">
-          © {new Date().getFullYear()} Servixo • Built for next-gen repair ecosystems • All rights reserved.
+          © {new Date().getFullYear()} RepairXpert • Built for next-gen repair ecosystems • All rights reserved.
         </div>
       </footer>
     </div>

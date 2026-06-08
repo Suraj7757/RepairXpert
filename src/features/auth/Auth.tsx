@@ -256,7 +256,7 @@ export default function Auth() {
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                <span>Your Servixo account is now active</span>
+                <span>Your RepairXpert account is now active</span>
               </div>
             </div>
             <Button
@@ -402,7 +402,7 @@ export default function Auth() {
                 <Wrench className="h-10 w-10 text-primary-foreground" />
               </div>
               <CardTitle className="text-4xl font-black tracking-tighter">
-                Servixo
+                RepairXpert
               </CardTitle>
               <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
                 {mode === "login" && "Premium Business Access"}
@@ -715,7 +715,7 @@ export default function Auth() {
           <div className="space-y-2">
             <h3 className="text-3xl font-black tracking-tight">
               Why choose{" "}
-              <span className="text-primary italic">Servixo?</span>
+              <span className="text-primary italic">RepairXpert?</span>
             </h3>
             <p className="text-muted-foreground">
               The most advanced multi-service management platform.
@@ -785,7 +785,7 @@ export default function Auth() {
       </div>
 
       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] opacity-50">
-        Secured by Servixo Enterprise Infrastructure
+        Secured by RepairXpert Enterprise Infrastructure
       </p>
     </div>
   );

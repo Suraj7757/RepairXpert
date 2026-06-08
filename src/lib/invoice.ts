@@ -28,7 +28,7 @@ export function generateInvoicePDF(
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
+  doc.text(settings.shopName || "RepairXpert", 40, 10, { align: "center" });
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
@@ -144,7 +144,7 @@ export function generateInvoicePDF(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
   doc.text(
-    `Visit again to ${settings.shopName || "Servixo"}`,
+    `Visit again to ${settings.shopName || "RepairXpert"}`,
     40,
     currentY,
     { align: "center" },
@@ -173,7 +173,7 @@ export function generateSellInvoicePDF(
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(settings.shopName || "Servixo", 40, 10, { align: "center" });
+  doc.text(settings.shopName || "RepairXpert", 40, 10, { align: "center" });
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");

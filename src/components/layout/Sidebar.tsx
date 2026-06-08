@@ -263,7 +263,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
 
   const openWhatsApp = () => {
     window.open(
-      `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with Servixo")}`,
+      `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent("Hello, I need help with RepairXpert")}`,
       "_blank",
     );
   };
@@ -293,7 +293,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
             {!collapsed && (
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-sidebar-foreground tracking-tight">
-                  Servixo
+                  RepairXpert
                 </span>
                 <span className="text-[10px] text-sidebar-muted font-medium uppercase tracking-widest">
                   v3.0 Pro
@@ -516,7 +516,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
       <AlertDialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Logout from Servixo?</AlertDialogTitle>
+            <AlertDialogTitle>Logout from RepairXpert?</AlertDialogTitle>
             <AlertDialogDescription>
               Aap apne account se logout ho jayenge. Dobara login karne ke liye email aur password chahiye hoga.
             </AlertDialogDescription>

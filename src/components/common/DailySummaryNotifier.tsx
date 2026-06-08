@@ -29,7 +29,7 @@ async function showSummary(userId: string) {
     0,
   );
 
-  new Notification("Servixo — Daily Summary", {
+  new Notification("RepairXpert — Daily Summary", {
     body: `📋 ${pending} pending jobs · 💰 ₹${todayRevenue.toFixed(0)} today`,
     icon: "/favicon.ico",
     tag: "rx-daily-summary",

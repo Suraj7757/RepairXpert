@@ -41,7 +41,7 @@ export function InstallPWAPrompt() {
           <Download className="h-5 w-5 text-primary-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">Install Servixo</p>
+          <p className="font-semibold text-sm">Install RepairXpert</p>
           <p className="text-xs text-muted-foreground mt-0.5">
             Home screen pe add karein, app jaise use karein — fast & offline.
           </p>
