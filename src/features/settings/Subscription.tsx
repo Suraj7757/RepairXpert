@@ -516,7 +516,7 @@ export default function Subscription() {
               <div className="bg-muted rounded-lg p-6 text-center space-y-4">
                 <div className="bg-white p-4 rounded-2xl inline-block shadow-lg mx-auto">
                   <QRCodeSVG
-                    value={`upi://pay?pa=${UPI_ID}&pn=Servixo%20CRM&am=${getPlans(billingCycle).find((p) => p.id === selectedPlan)?.price}&cu=INR`}
+                    value={`upi://pay?pa=${UPI_ID}&pn=RepairXpert%20CRM&am=${getPlans(billingCycle).find((p) => p.id === selectedPlan)?.price}&cu=INR`}
                     size={200}
                     level="H"
                     includeMargin={true}

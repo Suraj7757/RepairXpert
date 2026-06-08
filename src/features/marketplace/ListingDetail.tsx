@@ -357,7 +357,7 @@ export default function ListingDetail() {
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-[#212121]">{s.shop_name || "Verified Repair Shop"}</h4>
-                    <p className="text-[10px] text-[#2874f0] font-bold">Verified Servixo Partner Store</p>
+                    <p className="text-[10px] text-[#2874f0] font-bold">Verified RepairXpert Partner Store</p>
                   </div>
                 </div>
 

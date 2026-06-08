@@ -45,7 +45,7 @@ export function Chatbot() {
       id: "welcome",
       role: "assistant",
       content:
-        "Namaste! 🙏 Mai **Servixo AI Assistant** hu. Repair sawal, parts cost, ya app feature — kuch bhi puchein.\n\n**Try karein:**\n- *Samsung M31 charging issue*\n- *Mera tracking ID JSAM0042K9X kaha hai?*\n- *New job kaise banaye?*\n- *Subscription kaise renew karu?*",
+        "Namaste! 🙏 Mai **RepairXpert AI Assistant** hu. Repair sawal, parts cost, ya app feature — kuch bhi puchein.\n\n**Try karein:**\n- *Samsung M31 charging issue*\n- *Mera tracking ID JSAM0042K9X kaha hai?*\n- *New job kaise banaye?*\n- *Subscription kaise renew karu?*",
     },
   ]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -113,7 +113,7 @@ export function Chatbot() {
             {
               role: "system",
               content:
-                "You are Servixo AI, a helpful and professional CRM assistant for repair and service shops. You answer in concise Hindi-English mix (Hinglish) or English. You help users understand how to manage jobs, inventory, sales, and track repairs.",
+                "You are RepairXpert AI, a helpful and professional CRM assistant for repair and service shops. You answer in concise Hindi-English mix (Hinglish) or English. You help users understand how to manage jobs, inventory, sales, and track repairs.",
             },
             ...history,
           ],
@@ -156,7 +156,7 @@ export function Chatbot() {
               </div>
               <div>
                 <CardTitle className="text-sm font-bold text-white">
-                  Servixo AI
+                  RepairXpert AI
                 </CardTitle>
                 <div className="flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />

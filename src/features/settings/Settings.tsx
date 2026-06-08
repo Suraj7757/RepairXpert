@@ -419,7 +419,7 @@ export default function Settings() {
                   <Input
                     value={shopName}
                     onChange={(e) => setShopName(e.target.value)}
-                    placeholder="e.g. Servixo Central"
+                    placeholder="e.g. RepairXpert Central"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">

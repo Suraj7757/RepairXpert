@@ -60,7 +60,7 @@ export default function Cart() {
         <Card className="max-w-md w-full text-center p-8 bg-slate-950 border-slate-800 rounded-3xl">
           <ShoppingCart className="h-16 w-16 mx-auto text-indigo-400 mb-4" />
           <h2 className="text-xl font-bold mb-2">Login to view cart</h2>
-          <p className="text-sm text-slate-500 mb-6">You need to sign in to your Servixo account to see saved items.</p>
+          <p className="text-sm text-slate-500 mb-6">You need to sign in to your RepairXpert account to see saved items.</p>
           <Button asChild className="bg-indigo-600 hover:bg-indigo-700 font-bold rounded-xl px-6">
             <Link to="/auth">Sign In Now</Link>
           </Button>

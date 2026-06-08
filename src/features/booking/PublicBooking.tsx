@@ -172,7 +172,7 @@ export default function PublicBooking() {
           </CardContent>
         </Card>
         <Button onClick={resetForm} variant="outline" className="w-full">Submit Another Request</Button>
-        <p className="text-xs text-muted-foreground">Powered by Servixo</p>
+        <p className="text-xs text-muted-foreground">Powered by RepairXpert</p>
       </div>
     </div>
   );
@@ -439,7 +439,7 @@ export default function PublicBooking() {
         <div className="mt-6">
           <ShopReviews shopUserId={shop.user_id} />
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-4">Powered by Servixo</p>
+        <p className="text-center text-xs text-muted-foreground mt-4">Powered by RepairXpert</p>
       </div>
     </div>
   );
