@@ -252,7 +252,7 @@ export default function TrackOrder({
       return;
     }
     try {
-      const { error } = await supabase.from("shop_reviews").insert({
+      const { error } = await (supabase as any).from("shop_reviews").insert({
         user_id: result.user_id,
         job_id: result?.tracking_id || null,
         customer_name: result?.customer_name || "Guest",
