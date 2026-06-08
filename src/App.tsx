@@ -292,6 +292,8 @@ function AppRoutes() {
           <Route path="/my-listings" element={<ShopkeeperRoute><SellerListings /></ShopkeeperRoute>} />
           <Route path="/seller-orders" element={<ShopkeeperRoute><SellerOrders /></ShopkeeperRoute>} />
           <Route path="/shop/:slug" element={<ShopPublicPage />} />
+          <Route path="/shops" element={<PublicShops />} />
+          <Route path="/shop-services" element={<ShopkeeperRoute><ShopServicesManagement /></ShopkeeperRoute>} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsConditions />} />
           <Route
