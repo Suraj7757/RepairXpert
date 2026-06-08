@@ -59,6 +59,8 @@ const NotificationsPage = lazy(() => import("@/features/notifications/Notificati
 import { homePathFor } from "@/lib/accountType";
 const SellerOrders = lazy(() => import("@/features/marketplace/SellerOrders"));
 const ShopPublicPage = lazy(() => import("@/features/marketplace/ShopPublicPage"));
+const PublicShops = lazy(() => import("@/features/marketplace/PublicShops"));
+const ShopServicesManagement = lazy(() => import("@/features/services/ShopServicesManagement"));
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Chatbot } from "@/components/common/Chatbot";
 import { TawkChat } from "@/components/common/TawkChat";
