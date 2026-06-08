@@ -674,40 +674,34 @@ export default function TrackOrder({
                       />
                       <Button
                         onClick={async () => {
-                          if (!utr.trim()) {
-                            toast.error("Enter UTR number");
+                          if (!utr.trim() || utr.trim().length < 6) {
+                            toast.error("Enter a valid UTR / Txn ID");
                             return;
                           }
                           setSubmittingPay(true);
-                          const { error } = await (supabase as any)
-                            .from("customer_payments")
-                            .insert({
-                              user_id: result.user_id,
-                              tracking_id: result.tracking_id,
-                              amount,
-                              utr_number: utr,
-                              customer_name: result.customer_name || "Guest",
-                              status: "pending",
-                            });
-                          if (error)
-                            toast.error("Failed to submit. Try again.");
-                          else {
-                            toast.success(
-                              "Payment submitted! Shop will verify soon.",
-                            );
-                            setPayOpen(false);
-                            setUtr("");
+                          const phone = (merchantSettings?.phone || "").replace(/\D/g, "");
+                          const msg = encodeURIComponent(
+                            `Hi ${merchantSettings?.shop_name || "Shop"},\n\nPayment sent for ${result.tracking_id}\nAmount: ₹${amount}\nUTR / Txn ID: ${utr}\nCustomer: ${result.customer_name || "Guest"}\n\nPlease confirm. Thank you!`,
+                          );
+                          if (phone) {
+                            const waNum = phone.length === 10 ? `91${phone}` : phone;
+                            window.open(`https://wa.me/${waNum}?text=${msg}`, "_blank");
+                            toast.success("Opening WhatsApp — shop will verify your payment.");
+                          } else {
+                            toast.success("UTR noted. Please share it with the shop directly.");
                           }
+                          setPayOpen(false);
+                          setUtr("");
                           setSubmittingPay(false);
                         }}
                         disabled={submittingPay}
-                        className="bg-violet-600 hover:bg-violet-700 text-white"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
                       >
-                        Submit
+                        Send to Shop
                       </Button>
                     </div>
                     <p className="text-[10px] text-center text-muted-foreground">
-                      Shop owner will verify and update your status.
+                      UTR will be sent on WhatsApp to the shop for verification.
                     </p>
                   </div>
                 </CardContent>
