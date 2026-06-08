@@ -157,6 +157,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_quotes: {
+        Row: {
+          created_at: string
+          device: string
+          id: string
+          image_url: string | null
+          problem: string
+          quote: Json
+          selected_shop_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device: string
+          id?: string
+          image_url?: string | null
+          problem: string
+          quote: Json
+          selected_shop_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string
+          id?: string
+          image_url?: string | null
+          problem?: string
+          quote?: Json
+          selected_shop_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       automation_settings: {
         Row: {
           auto_whatsapp_status: boolean
@@ -314,6 +347,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customer_addresses: {
+        Row: {
+          city: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          label: string
+          lat: number | null
+          line1: string
+          lng: number | null
+          pincode: string | null
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          lat?: number | null
+          line1: string
+          lng?: number | null
+          pincode?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          lat?: number | null
+          line1?: string
+          lng?: number | null
+          pincode?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       customer_orders: {
         Row: {
@@ -1728,6 +1800,20 @@ export type Database = {
       }
       is_not_banned: { Args: never; Returns: boolean }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
+      nearby_shops: {
+        Args: { _lat: number; _lng: number; _radius_km?: number }
+        Returns: {
+          address: string
+          booking_enabled: boolean
+          booking_slug: string
+          distance_km: number
+          map_lat: number
+          map_lng: number
+          phone: string
+          shop_name: string
+          user_id: string
+        }[]
+      }
       next_job_id: {
         Args: { _brand?: string; _user_id: string }
         Returns: string
