@@ -280,30 +280,33 @@ export default function TrackOrder({
 
   return (
     <div
-      className={`${isModal ? "p-4" : "min-h-screen p-4"} bg-gradient-to-br from-slate-50 via-white to-violet-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950`}
+      className={`${isModal ? "p-4" : "min-h-screen p-4"} bg-background relative overflow-hidden`}
     >
       {!isModal && (
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Home
-        </Link>
+        <>
+          <div className="absolute inset-0 bg-gradient-hero opacity-60 pointer-events-none" />
+          <Link
+            to="/"
+            className="relative inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Home
+          </Link>
+        </>
       )}
 
       <div
-        className={`w-full max-w-lg mx-auto space-y-5 ${!isModal ? "pt-4" : ""}`}
+        className={`relative w-full max-w-lg mx-auto space-y-5 ${!isModal ? "pt-4" : ""}`}
       >
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/30">
-            <Smartphone className="h-8 w-8 text-white" />
+          <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
+            <Smartphone className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-black bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-display font-black bg-gradient-primary bg-clip-text text-transparent">
             Track Your Order
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter your Job or Sell tracking ID below
+            RepairXpert · Job, Sell or Marketplace ID
           </p>
         </div>
 
