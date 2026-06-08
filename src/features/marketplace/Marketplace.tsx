@@ -187,8 +187,11 @@ export default function Marketplace() {
             <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
               <Link to="/customer/book"><Sparkles className="h-4 w-4 mr-1.5 text-accent" /> AI Book</Link>
             </Button>
+            <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+              <Link to="/shops"><Store className="h-4 w-4 mr-1.5" /> Shops</Link>
+            </Button>
             <Button variant="ghost" size="sm" asChild className="hidden lg:inline-flex">
-              <Link to="/features"><Store className="h-4 w-4 mr-1.5" /> For Shops</Link>
+              <Link to="/features"><ShieldCheck className="h-4 w-4 mr-1.5" /> For Shops</Link>
             </Button>
 
             <div className="relative">
