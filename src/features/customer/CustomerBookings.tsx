@@ -26,16 +26,39 @@ export default function CustomerBookings() {
 
   useEffect(() => {
     const load = async () => {
-      if (!user?.email) return;
+      if (!user) return;
       setLoading(true);
-      const { data } = await (supabase as any)
-        .from("booking_requests")
-        .select("*")
-        .eq("customer_email", user.email)
-        .order("created_at", { ascending: false });
-      setBookings(data || []);
 
-      const shopIds = Array.from(new Set((data || []).map((b: any) => b.user_id)));
+      const { data: profile } = await (supabase as any)
+        .from("profiles")
+        .select("phone")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const mobile = profile?.phone || "";
+
+      const [reqRes, svcRes] = await Promise.all([
+        user.email
+          ? (supabase as any).from("booking_requests").select("*").eq("customer_email", user.email).order("created_at", { ascending: false })
+          : Promise.resolve({ data: [] }),
+        mobile
+          ? (supabase as any).from("service_bookings").select("*").eq("customer_mobile", mobile).order("created_at", { ascending: false })
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const reqMapped = (reqRes.data || []).map((b: any) => ({ ...b, _kind: "repair" }));
+      const svcMapped = (svcRes.data || []).map((b: any) => ({
+        ...b,
+        _kind: "service",
+        device_brand: b.service_name,
+        device_model: "",
+        problem_description: b.notes || "",
+      }));
+      const merged = [...reqMapped, ...svcMapped].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setBookings(merged);
+
+      const shopIds = Array.from(new Set(merged.map((b: any) => b.user_id)));
       if (shopIds.length) {
         const { data: sd } = await (supabase as any)
           .from("shop_settings")
