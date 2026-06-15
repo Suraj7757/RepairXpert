@@ -1979,6 +1979,10 @@ export type Database = {
         | "Delivered"
         | "Rejected"
         | "Unrepairable"
+        | "Re-work"
+        | "Returned"
+        | "Cancelled"
+        | "Diagnosed"
       payment_method: "Cash" | "UPI/QR" | "Due"
     }
     CompositeTypes: {
@@ -2115,6 +2119,10 @@ export const Constants = {
         "Delivered",
         "Rejected",
         "Unrepairable",
+        "Re-work",
+        "Returned",
+        "Cancelled",
+        "Diagnosed",
       ],
       payment_method: ["Cash", "UPI/QR", "Due"],
     },
