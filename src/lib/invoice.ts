@@ -263,12 +263,16 @@ export function generateSellInvoicePDF(
   currentY += 4;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
+  const sellTrackUrl = `${typeof window !== "undefined" ? window.location.origin : "https://repairxpert.lovable.app"}/track/${sell.sellId}`;
+  doc.text(`Track live: ${sellTrackUrl}`, 40, currentY, { align: "center" });
+  currentY += 3;
   doc.text(
-    `ServiceHub - Powered by Technology`,
+    `${settings.shopName || "RepairXpert"} — Powered by RepairXpert`,
     40,
     currentY,
     { align: "center" },
   );
+
 
   return doc;
 }
