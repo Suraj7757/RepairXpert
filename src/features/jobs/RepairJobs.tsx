@@ -257,11 +257,15 @@ export default function RepairJobs() {
   const allStatuses: JobStatus[] = [
     "Received",
     "In Progress",
+    "Re-work",
     "Ready",
     "Delivered",
     "Rejected",
     "Unrepairable",
+    "Returned",
+    "Cancelled",
   ];
+
 
   const filtered = jobs.filter((j: any) => {
     const matchSearch =
