@@ -125,6 +125,9 @@ export default function BookingsAdmin() {
     } catch (e: any) {
       toast.error(e.message || "Failed to update");
     } finally { setIsSubmitting(false); }
+  };
+
+
 
   const sendWhatsApp = (b: any, msg: string) => {
     const phone = (b.customer_mobile || "").replace(/\D/g, "");
