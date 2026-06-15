@@ -61,7 +61,7 @@ export function generateInvoicePDF(
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.text(`Job ID: #${job.jobId.substring(0, 8)}`, 5, currentY);
+  doc.text(`Tracking: ${job.jobId}`, 5, currentY);
   doc.text(
     `Date: ${new Date(job.createdAt).toLocaleDateString()}`,
     75,
@@ -69,6 +69,7 @@ export function generateInvoicePDF(
     { align: "right" },
   );
   currentY += 5;
+
 
   doc.setLineWidth(0.2);
   doc.line(5, currentY, 75, currentY);
@@ -143,6 +144,9 @@ export function generateInvoicePDF(
   currentY += 4;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
+  const trackUrl = `${typeof window !== "undefined" ? window.location.origin : "https://repairxpert.lovable.app"}/track/${job.jobId}`;
+  doc.text(`Track live: ${trackUrl}`, 40, currentY, { align: "center" });
+  currentY += 3;
   doc.text(
     `Visit again to ${settings.shopName || "RepairXpert"}`,
     40,
@@ -152,6 +156,7 @@ export function generateInvoicePDF(
 
   return doc;
 }
+
 
 export function downloadInvoice(
   job: RepairJob,
@@ -206,7 +211,7 @@ export function generateSellInvoicePDF(
 
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.text(`Invoice ID: #${sell.sellId.substring(0, 8)}`, 5, currentY);
+  doc.text(`Tracking: ${sell.sellId}`, 5, currentY);
   doc.text(
     `Date: ${new Date(sell.createdAt).toLocaleDateString()}`,
     75,
@@ -214,6 +219,7 @@ export function generateSellInvoicePDF(
     { align: "right" },
   );
   currentY += 5;
+
 
   autoTable(doc, {
     startY: currentY,

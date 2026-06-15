@@ -136,7 +136,8 @@ type JobStatus =
   | "Rejected"
   | "Unrepairable"
   | "Returned"
-  | "Re-work";
+  | "Re-work"
+  | "Cancelled";
 type PaymentMethod = "Cash" | "UPI/QR" | "Due";
 
 const statusColors: Record<string, string> = {
@@ -154,19 +155,51 @@ const statusColors: Record<string, string> = {
     "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   Returned:
     "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+  Cancelled:
+    "bg-zinc-100 text-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400",
 };
 
-// Define allowed next statuses for each status
+// Hybrid workflow: forward through pipeline, rollback to any previous step, Cancelled anytime.
+const PIPELINE: JobStatus[] = [
+  "Received",
+  "In Progress",
+  "Re-work",
+  "Ready",
+  "Delivered",
+];
+const TERMINAL_FORWARD: JobStatus[] = ["Rejected", "Unrepairable", "Returned"];
+
+function allowedNext(current: JobStatus): JobStatus[] {
+  const idx = PIPELINE.indexOf(current);
+  const out = new Set<JobStatus>();
+  if (idx >= 0) {
+    // forward (next pipeline step)
+    if (idx < PIPELINE.length - 1) out.add(PIPELINE[idx + 1]);
+    // rollback to any previous pipeline step
+    for (let i = 0; i < idx; i++) out.add(PIPELINE[i]);
+    // terminal forwards from any active step
+    TERMINAL_FORWARD.forEach((s) => out.add(s));
+  } else {
+    // From terminal/cancelled — only allow re-open back to Received
+    out.add("Received");
+  }
+  // Cancel anytime (unless already delivered)
+  if (current !== "Delivered" && current !== "Cancelled") out.add("Cancelled");
+  return Array.from(out);
+}
+
 const nextStatuses: Record<JobStatus, JobStatus[]> = {
-  Received: ["In Progress", "Rejected"],
-  "In Progress": ["Ready", "Unrepairable", "Re-work"],
-  "Re-work": ["In Progress", "Ready"],
-  Ready: ["Delivered"],
-  Rejected: ["Returned"],
-  Unrepairable: ["Returned"],
-  Delivered: [],
-  Returned: [],
+  Received: allowedNext("Received"),
+  "In Progress": allowedNext("In Progress"),
+  "Re-work": allowedNext("Re-work"),
+  Ready: allowedNext("Ready"),
+  Delivered: allowedNext("Delivered"),
+  Rejected: allowedNext("Rejected"),
+  Unrepairable: allowedNext("Unrepairable"),
+  Returned: allowedNext("Returned"),
+  Cancelled: allowedNext("Cancelled"),
 };
+
 
 export default function RepairJobs() {
   const { user } = useAuth();
