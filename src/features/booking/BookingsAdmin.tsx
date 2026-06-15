@@ -32,6 +32,8 @@ import {
   RotateCcw,
   AlertCircle,
   RefreshCw,
+  IndianRupee,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -60,6 +62,7 @@ export default function BookingsAdmin() {
   const [slug, setSlug] = useState("");
   const [enabled, setEnabled] = useState(false);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [serviceBookings, setServiceBookings] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<StatusTab>("all");
@@ -70,13 +73,15 @@ export default function BookingsAdmin() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const [shopRes, bookRes] = await Promise.all([
+    const [shopRes, bookRes, svcRes] = await Promise.all([
       (supabase as any).from("shop_settings").select("booking_slug, booking_enabled").eq("user_id", user.id).maybeSingle(),
       (supabase as any).from("booking_requests").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      (supabase as any).from("service_bookings").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
     setSlug(shopRes.data?.booking_slug || "");
     setEnabled(shopRes.data?.booking_enabled || false);
     setBookings(bookRes.data || []);
+    setServiceBookings(svcRes.data || []);
     setLoading(false);
   };
 
@@ -109,6 +114,20 @@ export default function BookingsAdmin() {
       toast.error(error.message || "Failed to update status");
     } finally { setIsSubmitting(false); }
   };
+
+  const updateServiceBookingStatus = async (id: string, status: string) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await (supabase as any).from("service_bookings").update({ status }).eq("id", id);
+      if (error) throw error;
+      toast.success(`Status → ${status}`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update");
+    } finally { setIsSubmitting(false); }
+  };
+
+
 
   const sendWhatsApp = (b: any, msg: string) => {
     const phone = (b.customer_mobile || "").replace(/\D/g, "");
@@ -194,6 +213,59 @@ export default function BookingsAdmin() {
             )}
           </CardContent>
         </Card>
+
+        {/* Service Bookings (from public shop page) */}
+        {serviceBookings.length > 0 && (
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-accent" /> Service Bookings from Shop Page
+                <Badge variant="secondary" className="ml-auto">{serviceBookings.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {serviceBookings.map((sb) => (
+                <div key={sb.id} className="p-3 rounded-xl border flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold">{sb.customer_name}</p>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{sb.customer_mobile}</span>
+                      <Badge variant="outline" className="capitalize text-[10px]">{sb.status || "pending"}</Badge>
+                    </div>
+                    <p className="text-sm mt-1"><span className="font-semibold">{sb.service_name}</span>
+                      {sb.estimated_price ? <span className="ml-2 inline-flex items-center text-primary font-bold"><IndianRupee className="h-3 w-3" />{sb.estimated_price}</span> : null}
+                    </p>
+                    {sb.notes && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{sb.notes}</p>}
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {new Date(sb.created_at).toLocaleString("en-IN")}
+                      {sb.preferred_date && <> · Prefers {new Date(sb.preferred_date).toLocaleString("en-IN")}</>}
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {sb.status === "pending" && (
+                      <>
+                        <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => { updateServiceBookingStatus(sb.id, "accepted"); sendWhatsApp(sb, `✅ Hi ${sb.customer_name}, your booking for ${sb.service_name} is accepted. We'll contact you shortly.`); }}>
+                          <Check className="h-3 w-3 mr-1" /> Accept
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 text-xs text-rose-600 border-rose-200" onClick={() => updateServiceBookingStatus(sb.id, "rejected")}>
+                          <X className="h-3 w-3 mr-1" /> Reject
+                        </Button>
+                      </>
+                    )}
+                    {sb.status === "accepted" && (
+                      <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700" onClick={() => { updateServiceBookingStatus(sb.id, "completed"); sendWhatsApp(sb, `🎉 Hi ${sb.customer_name}, your ${sb.service_name} is completed. Thank you!`); }}>
+                        <Check className="h-3 w-3 mr-1" /> Complete
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" className="h-7 text-xs text-green-600" onClick={() => sendWhatsApp(sb, `Hi ${sb.customer_name}, regarding your ${sb.service_name} booking.`)}>
+                      <MessageCircle className="h-3 w-3 mr-1" /> WA
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Bookings List */}
         <div className="space-y-4">
