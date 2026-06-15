@@ -62,6 +62,7 @@ export default function BookingsAdmin() {
   const [slug, setSlug] = useState("");
   const [enabled, setEnabled] = useState(false);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [serviceBookings, setServiceBookings] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<StatusTab>("all");
