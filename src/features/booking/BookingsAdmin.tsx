@@ -32,6 +32,8 @@ import {
   RotateCcw,
   AlertCircle,
   RefreshCw,
+  IndianRupee,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
