@@ -115,6 +115,17 @@ export default function BookingsAdmin() {
     } finally { setIsSubmitting(false); }
   };
 
+  const updateServiceBookingStatus = async (id: string, status: string) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await (supabase as any).from("service_bookings").update({ status }).eq("id", id);
+      if (error) throw error;
+      toast.success(`Status → ${status}`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update");
+    } finally { setIsSubmitting(false); }
+
   const sendWhatsApp = (b: any, msg: string) => {
     const phone = (b.customer_mobile || "").replace(/\D/g, "");
     if (!phone) { toast.error("No mobile number on this booking"); return; }
