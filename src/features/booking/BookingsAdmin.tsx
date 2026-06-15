@@ -73,13 +73,15 @@ export default function BookingsAdmin() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const [shopRes, bookRes] = await Promise.all([
+    const [shopRes, bookRes, svcRes] = await Promise.all([
       (supabase as any).from("shop_settings").select("booking_slug, booking_enabled").eq("user_id", user.id).maybeSingle(),
       (supabase as any).from("booking_requests").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      (supabase as any).from("service_bookings").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
     setSlug(shopRes.data?.booking_slug || "");
     setEnabled(shopRes.data?.booking_enabled || false);
     setBookings(bookRes.data || []);
+    setServiceBookings(svcRes.data || []);
     setLoading(false);
   };
 
