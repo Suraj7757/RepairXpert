@@ -195,6 +195,7 @@ export function Sidebar({ links = [] }: SidebarProps) {
           items: [
             { to: "/payments", label: "Payments", icon: IndianRupee },
             { to: "/settlements", label: "Settlements", icon: ArrowLeftRight },
+            { to: "/reconciliation", label: "Reconciliation", icon: Scale },
             { to: "/expenses", label: "Expenses", icon: TrendingDown },
             { to: "/wallet", label: "Wallet", icon: Wallet },
           ],
