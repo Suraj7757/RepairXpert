@@ -228,6 +228,7 @@ function AppRoutes() {
           <Route path="/jobs" element={<ShopkeeperRoute><RepairJobs /></ShopkeeperRoute>} />
           <Route path="/payments" element={<ShopkeeperRoute><Payments /></ShopkeeperRoute>} />
           <Route path="/settlements" element={<ShopkeeperRoute><StaffGuard><Settlements /></StaffGuard></ShopkeeperRoute>} />
+          <Route path="/reconciliation" element={<ShopkeeperRoute><StaffGuard><Reconciliation /></StaffGuard></ShopkeeperRoute>} />
           <Route path="/inventory" element={<ShopkeeperRoute><Inventory /></ShopkeeperRoute>} />
           <Route path="/sells" element={<ShopkeeperRoute><Sells /></ShopkeeperRoute>} />
           <Route path="/reports" element={<ShopkeeperRoute><StaffGuard><Reports /></StaffGuard></ShopkeeperRoute>} />
