@@ -14,6 +14,7 @@ const Customers = lazy(() => import("@/features/customers/Customers"));
 const RepairJobs = lazy(() => import("@/features/jobs/RepairJobs"));
 const Payments = lazy(() => import("@/features/payments/Payments"));
 const Settlements = lazy(() => import("@/features/payments/Settlements"));
+const Reconciliation = lazy(() => import("@/features/payments/Reconciliation"));
 const Inventory = lazy(() => import("@/features/inventory/Inventory"));
 const Sells = lazy(() => import("@/features/inventory/Sells"));
 const Reports = lazy(() => import("@/features/dashboard/Reports"));
