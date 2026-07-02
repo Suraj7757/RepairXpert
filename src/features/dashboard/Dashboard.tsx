@@ -124,10 +124,14 @@ export default function Dashboard() {
       (s: number, p: any) => s + Number(p.staff_share),
       0,
     );
+    const TERMINAL = ["Delivered", "Rejected", "Unrepairable", "Returned", "Cancelled"];
     return {
       totalJobs: jobs.length,
-      activeJobs: jobs.filter((j: any) => j.status !== "Delivered").length,
+      activeJobs: jobs.filter((j: any) => !TERMINAL.includes(j.status)).length,
       completedJobs: jobs.filter((j: any) => j.status === "Delivered").length,
+      reworkJobs: jobs.filter((j: any) => j.status === "Re-work").length,
+      cancelledJobs: jobs.filter((j: any) => j.status === "Cancelled").length,
+      returnedJobs: jobs.filter((j: any) => j.status === "Returned").length,
       totalRevenue,
       unsettledEarnings,
       cashTotal,
@@ -147,23 +151,16 @@ export default function Dashboard() {
   ].filter((d) => d.value > 0);
 
   const statusData = [
-    {
-      name: "Received",
-      count: jobs.filter((j: any) => j.status === "Received").length,
-    },
-    {
-      name: "In Progress",
-      count: jobs.filter((j: any) => j.status === "In Progress").length,
-    },
-    {
-      name: "Ready",
-      count: jobs.filter((j: any) => j.status === "Ready").length,
-    },
-    {
-      name: "Delivered",
-      count: jobs.filter((j: any) => j.status === "Delivered").length,
-    },
-  ];
+    { name: "Received", count: jobs.filter((j: any) => j.status === "Received").length },
+    { name: "In Progress", count: jobs.filter((j: any) => j.status === "In Progress").length },
+    { name: "Re-work", count: jobs.filter((j: any) => j.status === "Re-work").length },
+    { name: "Ready", count: jobs.filter((j: any) => j.status === "Ready").length },
+    { name: "Delivered", count: jobs.filter((j: any) => j.status === "Delivered").length },
+    { name: "Returned", count: jobs.filter((j: any) => j.status === "Returned").length },
+    { name: "Cancelled", count: jobs.filter((j: any) => j.status === "Cancelled").length },
+    { name: "Rejected", count: jobs.filter((j: any) => j.status === "Rejected").length },
+    { name: "Unrepairable", count: jobs.filter((j: any) => j.status === "Unrepairable").length },
+  ].filter((d) => d.count > 0);
 
   const qrPayments = payments.filter((p: any) => p.method === "UPI/QR");
   const qrTotals: Record<string, number> = {};
