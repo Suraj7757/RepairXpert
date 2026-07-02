@@ -856,16 +856,19 @@ export default function RepairJobs() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-44">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                {allStatuses.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">All Status ({jobs.length})</SelectItem>
+                {allStatuses.map((s) => {
+                  const count = jobs.filter((j: any) => j.status === s).length;
+                  return (
+                    <SelectItem key={s} value={s}>
+                      {s} ({count})
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
