@@ -604,6 +604,7 @@ export default function RepairJobs() {
       const amount = parseFloat(paymentAmount) || 0;
       const receiver = qrReceiver === "Custom" ? customQr : qrReceiver;
       const splitEnabled = settings?.revenue_split_enabled !== false;
+      const isReceived = paymentMethod !== "Due";
       const adminPct = splitEnabled
         ? (settings?.admin_share_percent ?? 50) / 100
         : 1;
@@ -625,8 +626,8 @@ export default function RepairJobs() {
         amount,
         method: paymentMethod as any,
         qr_receiver: paymentMethod === "UPI/QR" ? receiver : null,
-        admin_share: amount * adminPct,
-        staff_share: amount * staffPct,
+        admin_share: isReceived ? amount * adminPct : 0,
+        staff_share: isReceived ? amount * staffPct : 0,
       });
       // Award Loyalty Points to Customer
       if (selectedJob.customer_mobile && amount > 0) {
