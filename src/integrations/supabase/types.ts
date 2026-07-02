@@ -520,6 +520,7 @@ export type Database = {
           deleted_at: string | null
           gst_percent: number
           id: string
+          is_marketplace_listed: boolean
           min_stock: number
           name: string
           quantity: number
@@ -539,6 +540,7 @@ export type Database = {
           deleted_at?: string | null
           gst_percent?: number
           id?: string
+          is_marketplace_listed?: boolean
           min_stock?: number
           name: string
           quantity?: number
@@ -558,6 +560,7 @@ export type Database = {
           deleted_at?: string | null
           gst_percent?: number
           id?: string
+          is_marketplace_listed?: boolean
           min_stock?: number
           name?: string
           quantity?: number
