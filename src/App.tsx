@@ -14,6 +14,7 @@ const Customers = lazy(() => import("@/features/customers/Customers"));
 const RepairJobs = lazy(() => import("@/features/jobs/RepairJobs"));
 const Payments = lazy(() => import("@/features/payments/Payments"));
 const Settlements = lazy(() => import("@/features/payments/Settlements"));
+const Reconciliation = lazy(() => import("@/features/payments/Reconciliation"));
 const Inventory = lazy(() => import("@/features/inventory/Inventory"));
 const Sells = lazy(() => import("@/features/inventory/Sells"));
 const Reports = lazy(() => import("@/features/dashboard/Reports"));
@@ -227,6 +228,7 @@ function AppRoutes() {
           <Route path="/jobs" element={<ShopkeeperRoute><RepairJobs /></ShopkeeperRoute>} />
           <Route path="/payments" element={<ShopkeeperRoute><Payments /></ShopkeeperRoute>} />
           <Route path="/settlements" element={<ShopkeeperRoute><StaffGuard><Settlements /></StaffGuard></ShopkeeperRoute>} />
+          <Route path="/reconciliation" element={<ShopkeeperRoute><StaffGuard><Reconciliation /></StaffGuard></ShopkeeperRoute>} />
           <Route path="/inventory" element={<ShopkeeperRoute><Inventory /></ShopkeeperRoute>} />
           <Route path="/sells" element={<ShopkeeperRoute><Sells /></ShopkeeperRoute>} />
           <Route path="/reports" element={<ShopkeeperRoute><StaffGuard><Reports /></StaffGuard></ShopkeeperRoute>} />
