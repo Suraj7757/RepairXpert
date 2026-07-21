@@ -1052,6 +1052,116 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_order_items: {
+        Row: {
+          cost_price: number
+          created_at: string
+          id: string
+          inventory_item_id: string | null
+          item_name: string
+          line_total: number
+          po_id: string
+          quantity: number
+          sku: string | null
+        }
+        Insert: {
+          cost_price?: number
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          item_name: string
+          line_total?: number
+          po_id: string
+          quantity?: number
+          sku?: string | null
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string
+          id?: string
+          inventory_item_id?: string | null
+          item_name?: string
+          line_total?: number
+          po_id?: string
+          quantity?: number
+          sku?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          ordered_at: string | null
+          po_number: string
+          received_at: string | null
+          status: string
+          subtotal: number
+          supplier_id: string | null
+          supplier_name: string | null
+          tax: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          po_number: string
+          received_at?: string | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string | null
+          supplier_name?: string | null
+          tax?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          po_number?: string
+          received_at?: string | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string | null
+          supplier_name?: string | null
+          tax?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           created_at: string
@@ -1553,6 +1663,53 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_movements: {
+        Row: {
+          created_at: string
+          delta: number
+          id: string
+          inventory_item_id: string | null
+          item_name: string | null
+          note: string | null
+          reason: string
+          reference_id: string | null
+          reference_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delta: number
+          id?: string
+          inventory_item_id?: string | null
+          item_name?: string | null
+          note?: string | null
+          reason: string
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          inventory_item_id?: string | null
+          item_name?: string | null
+          note?: string | null
+          reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           coupon_code: string | null
@@ -1582,6 +1739,48 @@ export type Database = {
           plan?: string
           status?: string
           trial_ends_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          created_at: string
+          deleted: boolean
+          email: string | null
+          gstin: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          deleted?: boolean
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          deleted?: boolean
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -1963,6 +2162,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      receive_purchase_order: { Args: { _po_id: string }; Returns: undefined }
       redeem_loyalty_points: {
         Args: { _customer_id: string; _points: number }
         Returns: Json
