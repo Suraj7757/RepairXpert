@@ -62,6 +62,9 @@ const SellerOrders = lazy(() => import("@/features/marketplace/SellerOrders"));
 const ShopPublicPage = lazy(() => import("@/features/marketplace/ShopPublicPage"));
 const PublicShops = lazy(() => import("@/features/marketplace/PublicShops"));
 const ShopServicesManagement = lazy(() => import("@/features/services/ShopServicesManagement"));
+const Suppliers = lazy(() => import("@/features/suppliers/Suppliers"));
+const PurchaseOrders = lazy(() => import("@/features/suppliers/PurchaseOrders"));
+const StockLedger = lazy(() => import("@/features/suppliers/StockLedger"));
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Chatbot } from "@/components/common/Chatbot";
 import { TawkChat } from "@/components/common/TawkChat";
@@ -296,6 +299,9 @@ function AppRoutes() {
           <Route path="/shop/:slug" element={<ShopPublicPage />} />
           <Route path="/shops" element={<PublicShops />} />
           <Route path="/shop-services" element={<ShopkeeperRoute><ShopServicesManagement /></ShopkeeperRoute>} />
+          <Route path="/suppliers" element={<ShopkeeperRoute><Suppliers /></ShopkeeperRoute>} />
+          <Route path="/purchase-orders" element={<ShopkeeperRoute><PurchaseOrders /></ShopkeeperRoute>} />
+          <Route path="/stock-ledger" element={<ShopkeeperRoute><StockLedger /></ShopkeeperRoute>} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsConditions />} />
           <Route

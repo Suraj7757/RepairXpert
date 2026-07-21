@@ -41,6 +41,9 @@ import {
   Home,
   Store,
   Scale,
+  Truck,
+  ClipboardList,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -76,6 +79,9 @@ const secondaryItems = [
   { title: "AI Diagnostic", url: "/ai-diagnostics", icon: BrainCircuit },
   { title: "Marketing", url: "/marketing", icon: Megaphone },
   { title: "Inventory", url: "/inventory", icon: Package },
+  { title: "Suppliers", url: "/suppliers", icon: Truck },
+  { title: "Purchase Orders", url: "/purchase-orders", icon: ClipboardList },
+  { title: "Stock Ledger", url: "/stock-ledger", icon: History },
   { title: "Sells", url: "/sells", icon: ShoppingCart },
   { title: "Marketplace", url: "/marketplace", icon: ShoppingCart },
   { title: "My Listings", url: "/my-listings", icon: Package },
