@@ -48,28 +48,31 @@ export default function ListingDetail() {
 
   useEffect(() => {
     (async () => {
-      const { data: itemData, error } = await supabase
-        .from("inventory")
-        .select("*")
-        .eq("id", id)
-        .single();
-        
-      if (error || !itemData) {
+      setLoading(true);
+      const { data: res, error } = await (supabase as any).rpc("get_marketplace_listing", { _id: id });
+
+      if (error || !res?.listing) {
         toast.error("Listing not found");
         nav("/marketplace");
         return;
       }
-      
-      const { data: sellerData } = await supabase
-        .from("shop_settings")
-        .select("shop_name, address, phone, map_url, map_lat, map_lng, booking_slug, booking_enabled")
-        .eq("user_id", itemData.user_id)
-        .maybeSingle();
-        
-      setData({ listing: itemData, seller: sellerData });
+
+      const raw = res.listing;
+      setData({
+        listing: {
+          ...raw,
+          name: raw.title,
+          sell_price: Number(raw.price) || 0,
+          cost_price: Number(raw.mrp) || 0,
+          quantity: raw.stock,
+          image_url: Array.isArray(raw.images) ? raw.images[0] : null,
+        },
+        seller: res.seller,
+      });
       setLoading(false);
     })();
   }, [id]);
+
 
   useEffect(() => {
     fetchWishlistStatus();
@@ -148,7 +151,7 @@ export default function ListingDetail() {
           </Button>
 
           <Link to="/" className="font-black text-lg tracking-tight text-white flex items-baseline">
-            servixo<span className="text-[#febd69] text-xs">.in</span>
+            RepairXpert<span className="text-[#febd69] text-xs">.in</span>
           </Link>
 
           <Button asChild variant="outline" className="border-slate-700 bg-[#232f3e] text-white hover:bg-slate-800 rounded">

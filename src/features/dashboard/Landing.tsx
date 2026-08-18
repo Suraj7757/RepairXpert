@@ -197,7 +197,7 @@ export default function Landing() {
               <div className="h-3 w-3 rounded-full bg-green-500/80" />
             </div>
             <div className="bg-slate-950/80 border border-white/5 px-4 py-1.5 rounded-full text-xs font-mono text-slate-400 select-none">
-              app.servixo.com/dashboard
+              app.repairxpert.in/dashboard
             </div>
             <div className="w-12" />
           </div>
@@ -777,7 +777,7 @@ export default function Landing() {
           <div>
             <h4 className="font-bold text-white mb-4">Support & Privacy</h4>
             <div className="flex flex-col gap-2.5">
-              <a href="mailto:support@servixo.com" className="hover:text-white transition-colors">Contact Support</a>
+              <a href="mailto:support@repairxpert.in" className="hover:text-white transition-colors">Contact Support</a>
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
               <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
             </div>

@@ -26,14 +26,15 @@ interface Listing {
 }
 
 const CATEGORIES = [
-  { id: "all", label: "All", icon: Sparkles },
-  { id: "screen", label: "Screens", icon: Smartphone },
-  { id: "battery", label: "Batteries", icon: Battery },
-  { id: "charger", label: "Chargers", icon: Cable },
-  { id: "accessory", label: "Accessories", icon: Cpu },
-  { id: "tools", label: "Repair Kits", icon: Wrench },
-  { id: "general", label: "Laptops & TV", icon: Laptop },
+  { id: "all", label: "All", icon: Sparkles, match: "" },
+  { id: "spare", label: "Spare Parts", icon: Cpu, match: "spare" },
+  { id: "screen", label: "Screens", icon: Smartphone, match: "screen" },
+  { id: "battery", label: "Batteries", icon: Battery, match: "batter" },
+  { id: "charger", label: "Chargers", icon: Cable, match: "charg" },
+  { id: "accessory", label: "Accessories", icon: Laptop, match: "accessor" },
+  { id: "tools", label: "Repair Kits", icon: Wrench, match: "tool" },
 ];
+
 
 const HERO_SLIDES = [
   {
@@ -83,34 +84,47 @@ export default function Marketplace() {
   const load = async () => {
     setLoading(true);
     let q = (supabase as any)
-      .from("inventory")
-      .select("*")
-      .eq("is_marketplace_listed", true)
-      .gt("quantity", 0);
+      .from("marketplace_listings")
+      .select("id, seller_id, title, category, description, price, mrp, stock, images, created_at, featured")
+      .eq("active", true)
+      .gt("stock", 0);
 
-    if (category !== "all") q = q.eq("category", category);
-    if (search) q = q.ilike("name", `%${search}%`);
+    const catMatch = CATEGORIES.find((c) => c.id === category)?.match;
+    if (category !== "all" && catMatch) q = q.ilike("category", `%${catMatch}%`);
+    if (search) q = q.ilike("title", `%${search}%`);
 
-    if (sort === "price_asc") q = q.order("sell_price", { ascending: true });
-    else if (sort === "price_desc") q = q.order("sell_price", { ascending: false });
+
+    if (sort === "price_asc") q = q.order("price", { ascending: true });
+    else if (sort === "price_desc") q = q.order("price", { ascending: false });
+    else if (sort === "featured") q = q.order("featured", { ascending: false }).order("created_at", { ascending: false });
     else q = q.order("created_at", { ascending: false });
 
-    const { data } = await q;
-    const rows = data || [];
+    const { data, error } = await q;
+    if (error) toast.error(error.message);
+    const rows = (data || []).map((r: any) => ({
+      id: r.id,
+      user_id: r.seller_id,
+      name: r.title,
+      category: r.category,
+      sell_price: Number(r.price) || 0,
+      cost_price: Number(r.mrp) || 0,
+      quantity: r.stock,
+      image_url: Array.isArray(r.images) ? r.images[0] : "",
+      description: r.description,
+      created_at: r.created_at,
+    })) as Listing[];
     setListings(rows);
     setLoading(false);
 
-    const ids = Array.from(new Set(rows.map((r: any) => r.user_id)));
+    const ids = Array.from(new Set(rows.map((r) => r.user_id)));
     if (ids.length) {
-      const { data: shopRows } = await (supabase as any)
-        .from("shop_settings")
-        .select("user_id, shop_name, address, booking_slug, booking_enabled")
-        .in("user_id", ids);
+      const { data: shopRows } = await (supabase as any).rpc("public_shop_cards", { _ids: ids });
       const map: Record<string, any> = {};
       (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
       setShops(map);
     }
   };
+
 
   const loadCart = async () => {
     if (!user) return;

@@ -2145,6 +2145,20 @@ export type Database = {
         }
         Returns: string
       }
+      public_shop_cards: {
+        Args: { _ids: string[] }
+        Returns: {
+          address: string
+          booking_enabled: boolean
+          booking_slug: string
+          map_lat: number
+          map_lng: number
+          map_url: string
+          phone: string
+          shop_name: string
+          user_id: string
+        }[]
+      }
       public_shops_directory: {
         Args: { _limit?: number; _search?: string }
         Returns: {
