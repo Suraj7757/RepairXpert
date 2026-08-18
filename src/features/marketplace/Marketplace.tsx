@@ -26,14 +26,15 @@ interface Listing {
 }
 
 const CATEGORIES = [
-  { id: "all", label: "All", icon: Sparkles },
-  { id: "screen", label: "Screens", icon: Smartphone },
-  { id: "battery", label: "Batteries", icon: Battery },
-  { id: "charger", label: "Chargers", icon: Cable },
-  { id: "accessory", label: "Accessories", icon: Cpu },
-  { id: "tools", label: "Repair Kits", icon: Wrench },
-  { id: "general", label: "Laptops & TV", icon: Laptop },
+  { id: "all", label: "All", icon: Sparkles, match: "" },
+  { id: "spare", label: "Spare Parts", icon: Cpu, match: "spare" },
+  { id: "screen", label: "Screens", icon: Smartphone, match: "screen" },
+  { id: "battery", label: "Batteries", icon: Battery, match: "batter" },
+  { id: "charger", label: "Chargers", icon: Cable, match: "charg" },
+  { id: "accessory", label: "Accessories", icon: Laptop, match: "accessor" },
+  { id: "tools", label: "Repair Kits", icon: Wrench, match: "tool" },
 ];
+
 
 const HERO_SLIDES = [
   {
