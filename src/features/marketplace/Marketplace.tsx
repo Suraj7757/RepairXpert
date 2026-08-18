@@ -89,8 +89,10 @@ export default function Marketplace() {
       .eq("active", true)
       .gt("stock", 0);
 
-    if (category !== "all") q = q.eq("category", category);
+    const catMatch = CATEGORIES.find((c) => c.id === category)?.match;
+    if (category !== "all" && catMatch) q = q.ilike("category", `%${catMatch}%`);
     if (search) q = q.ilike("title", `%${search}%`);
+
 
     if (sort === "price_asc") q = q.order("price", { ascending: true });
     else if (sort === "price_desc") q = q.order("price", { ascending: false });
