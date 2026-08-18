@@ -151,7 +151,7 @@ export default function ListingDetail() {
           </Button>
 
           <Link to="/" className="font-black text-lg tracking-tight text-white flex items-baseline">
-            servixo<span className="text-[#febd69] text-xs">.in</span>
+            RepairXpert<span className="text-[#febd69] text-xs">.in</span>
           </Link>
 
           <Button asChild variant="outline" className="border-slate-700 bg-[#232f3e] text-white hover:bg-slate-800 rounded">
