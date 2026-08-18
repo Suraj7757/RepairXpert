@@ -25,24 +25,31 @@ export default function LiveMarketplaceShowcase() {
   useEffect(() => {
     (async () => {
       const { data } = await (supabase as any)
-        .from("inventory")
-        .select("id, user_id, name, category, sell_price, cost_price, quantity, image_url")
-        .eq("is_marketplace_listed", true)
-        .gt("quantity", 0)
+        .from("marketplace_listings")
+        .select("id, seller_id, title, category, price, mrp, stock, images")
+        .eq("active", true)
+        .gt("stock", 0)
         .order("created_at", { ascending: false })
         .limit(8);
-      const rows = data || [];
+      const rows = (data || []).map((r: any) => ({
+        id: r.id,
+        user_id: r.seller_id,
+        name: r.title,
+        category: r.category,
+        sell_price: Number(r.price) || 0,
+        cost_price: Number(r.mrp) || 0,
+        quantity: r.stock,
+        image_url: Array.isArray(r.images) ? r.images[0] : null,
+      })) as Listing[];
       setListings(rows);
-      const ids = Array.from(new Set(rows.map((r: any) => r.user_id)));
+      const ids = Array.from(new Set(rows.map((r) => r.user_id)));
       if (ids.length) {
-        const { data: shopRows } = await (supabase as any)
-          .from("shop_settings")
-          .select("user_id, shop_name, address, map_url, map_lat, map_lng")
-          .in("user_id", ids);
+        const { data: shopRows } = await (supabase as any).rpc("public_shop_cards", { _ids: ids });
         const map: Record<string, any> = {};
         (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
         setShops(map);
       }
+
       setLoading(false);
     })();
   }, []);
