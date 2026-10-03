@@ -8,6 +8,7 @@ import {
 } from "react";
 import { supabase } from "@/services/supabase";
 import { isSuperAdminEmail } from "@/lib/accountType";
+import { lovable } from "@/integrations/lovable";
 
 
 import type { User, Session } from "@supabase/supabase-js";
@@ -204,6 +205,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         hadUser = true;
+        if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+          setLoading(true);
+          setTimeout(() => {
+            fetchRole(session.user.id, session.user.email).finally(() => setLoading(false));
+          }, 0);
+          return;
+        }
         setTimeout(() => fetchRole(session.user.id, session.user.email), 0);
       } else {
         setRole(null);
@@ -304,14 +312,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: { prompt: "select_account", access_type: "offline" },
-        },
+      const result: any = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth/callback`,
       });
-      if (error) return { error: error.message };
+      if (result?.error) return { error: result.error.message || String(result.error) };
       return { error: null };
     } catch (e: any) {
       return { error: e.message || "An unexpected error occurred" };

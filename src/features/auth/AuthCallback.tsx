@@ -41,14 +41,18 @@ export default function AuthCallback() {
 
         // Determine landing route from profile
         const user = (await supabase.auth.getUser()).data.user;
-        let acct: string = "shopkeeper";
+        let acct: string = "customer";
         let isAdmin = false;
         if (user) {
           const pendingAccountType = localStorage.getItem("rx_pending_account_type");
           if (pendingAccountType) {
             // Update the profile with the requested account type
-            await supabase.from("profiles").update({ account_type: pendingAccountType } as any).eq("user_id", user.id);
             localStorage.removeItem("rx_pending_account_type");
+            if (pendingAccountType === "shopkeeper" && !isSuperAdminEmail(user.email)) {
+              toast.success("Signed in. Complete your shop application.");
+              navigate("/become-shopkeeper", { replace: true });
+              return;
+            }
           }
 
           const { data: prof } = await supabase
@@ -56,12 +60,15 @@ export default function AuthCallback() {
             .select("account_type")
             .eq("user_id", user.id)
             .maybeSingle() as any;
-          acct = prof?.account_type || "shopkeeper";
+          acct = prof?.account_type || "customer";
           isAdmin = isSuperAdminEmail(user.email);
         }
 
+        const { data: r } = user
+          ? await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle()
+          : { data: null as any };
         toast.success("Signed in successfully");
-        navigate(homePathFor(acct as any, isAdmin), { replace: true });
+        navigate(homePathFor(acct as any, isAdmin, r?.role === "staff" ? "staff" : undefined), { replace: true });
       } catch (e) {
         console.error("OAuth callback error:", e);
         toast.error("Sign-in error. Please try again.");
