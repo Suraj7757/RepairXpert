@@ -62,7 +62,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_log_repair_job_status_change ON public.repair_jobs;
 CREATE TRIGGER trg_log_repair_job_status_change
-  AFTER INSERT OR UPDATE OF status ON public.repair_jobs
+  AFTER INSERT OR UPDATE ON public.repair_jobs
   FOR EACH ROW
   EXECUTE FUNCTION public.log_repair_job_status_change();
 
@@ -203,6 +203,120 @@ BEGIN
 END;
 $$;
 
+-- Atomic payment collection and delivery. Due is not a collection method: it is
+-- the outstanding amount, derived from the actual received payment rows.
+CREATE OR REPLACE FUNCTION public.record_repair_job_payment(
+  p_repair_job_id uuid,
+  p_amount numeric,
+  p_method text,
+  p_qr_receiver text DEFAULT NULL,
+  p_mark_delivered boolean DEFAULT false
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  _job public.repair_jobs%ROWTYPE;
+  _received numeric := 0;
+  _balance numeric := 0;
+  _admin_pct numeric := 100;
+  _staff_pct numeric := 0;
+  _split_enabled boolean := false;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+  IF COALESCE(p_amount, 0) < 0 THEN
+    RAISE EXCEPTION 'Payment amount cannot be negative';
+  END IF;
+  IF p_method NOT IN ('Cash', 'UPI/QR') THEN
+    RAISE EXCEPTION 'Select a received payment method: Cash or UPI/QR';
+  END IF;
+
+  SELECT rj.* INTO _job
+  FROM public.repair_jobs rj
+  WHERE rj.id = p_repair_job_id
+    AND rj.deleted = false
+    AND (
+      rj.user_id = auth.uid()
+      OR EXISTS (
+        SELECT 1
+        FROM public.staff_members sm
+        JOIN auth.users au ON lower(au.email) = lower(sm.email)
+        WHERE sm.shop_user_id = rj.user_id
+          AND au.id = auth.uid()
+          AND COALESCE(sm.is_active, false) = true
+      )
+    )
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Repair job not found or access denied';
+  END IF;
+
+  SELECT COALESCE(SUM(p.amount), 0) INTO _received
+  FROM public.payments p
+  WHERE p.repair_job_id = _job.id
+    AND p.deleted = false
+    AND p.method::text NOT IN ('Due', 'Refunded');
+
+  _balance := GREATEST(0, COALESCE(_job.estimated_cost, 0) - _received);
+  IF COALESCE(p_amount, 0) > _balance + 0.01 THEN
+    RAISE EXCEPTION 'Amount exceeds outstanding balance of %', _balance;
+  END IF;
+
+  SELECT
+    COALESCE(ss.admin_share_percent, 100),
+    COALESCE(ss.staff_share_percent, 0),
+    COALESCE(ss.revenue_split_enabled, false)
+  INTO _admin_pct, _staff_pct, _split_enabled
+  FROM public.shop_settings ss
+  WHERE ss.user_id = _job.user_id;
+
+  IF NOT COALESCE(_split_enabled, false)
+     OR COALESCE(_admin_pct, 0) < 0
+     OR COALESCE(_staff_pct, 0) < 0
+     OR COALESCE(_admin_pct, 0) + COALESCE(_staff_pct, 0) <> 100 THEN
+    _admin_pct := 100;
+    _staff_pct := 0;
+  END IF;
+
+  IF COALESCE(p_amount, 0) > 0 THEN
+    INSERT INTO public.payments (
+      user_id, job_id, repair_job_id, amount, method, qr_receiver,
+      admin_share, staff_share
+    )
+    VALUES (
+      _job.user_id, _job.job_id, _job.id, p_amount,
+      p_method::public.payment_method,
+      CASE WHEN p_method = 'UPI/QR' THEN NULLIF(p_qr_receiver, '') ELSE NULL END,
+      p_amount * _admin_pct / 100,
+      p_amount * _staff_pct / 100
+    );
+    _received := _received + p_amount;
+  END IF;
+
+  IF p_mark_delivered THEN
+    UPDATE public.repair_jobs
+    SET status = 'Delivered'::public.job_status,
+        delivered_at = now(),
+        updated_at = now()
+    WHERE id = _job.id;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'paid_amount', _received,
+    'balance_amount', GREATEST(0, COALESCE(_job.estimated_cost, 0) - _received),
+    'delivered', p_mark_delivered
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.record_repair_job_payment(uuid, numeric, text, text, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_repair_job_payment(uuid, numeric, text, text, boolean) TO authenticated;
+
 -- Public tracking returns the repair status event list without exposing private
 -- intake data, device credentials, customer contact details or payment records.
 CREATE OR REPLACE FUNCTION public.track_order(_tracking_id text)
@@ -225,6 +339,20 @@ BEGIN
     'problem',rj.problem_description,
     'status',rj.status,
     'estimated_cost',rj.estimated_cost,
+    'paid_amount',COALESCE((
+      SELECT SUM(p.amount)
+      FROM public.payments p
+      WHERE p.repair_job_id = rj.id
+        AND p.deleted = false
+        AND p.method::text NOT IN ('Due', 'Refunded')
+    ), 0),
+    'balance_amount',GREATEST(0, rj.estimated_cost - COALESCE((
+      SELECT SUM(p.amount)
+      FROM public.payments p
+      WHERE p.repair_job_id = rj.id
+        AND p.deleted = false
+        AND p.method::text NOT IN ('Due', 'Refunded')
+    ), 0)),
     'created_at',rj.created_at,
     'delivered_at',rj.delivered_at,
     'expected_delivery_at',rj.expected_delivery_at,
