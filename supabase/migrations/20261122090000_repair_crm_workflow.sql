@@ -365,6 +365,7 @@ BEGIN
     'created_at',rj.created_at,
     'delivered_at',rj.delivered_at,
     'expected_delivery_at',rj.expected_delivery_at,
+    'user_id',rj.user_id,
     'history',COALESCE((
       SELECT jsonb_agg(jsonb_build_object(
         'from_status',h.from_status,
