@@ -47,31 +47,57 @@ export default function ListingDetail() {
   };
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      setLoading(true);
-      const { data: res, error } = await (supabase as any).rpc("get_marketplace_listing", { _id: id });
-
-      if (error || !res?.listing) {
-        toast.error("Listing not found");
-        nav("/marketplace");
+      if (!id) {
+        setLoading(false);
+        setData(null);
         return;
       }
 
-      const raw = res.listing;
+      setLoading(true);
+      const { data: raw, error } = await (supabase as any)
+        .from("inventory")
+        .select("id, user_id, name, category, description, sell_price, cost_price, quantity, image_url, is_marketplace_listed, deleted")
+        .eq("id", id)
+        .eq("is_marketplace_listed", true)
+        .eq("deleted", false)
+        .maybeSingle();
+
+      if (error || !raw) {
+        if (!cancelled) {
+          toast.error(error?.message || "Listing not found");
+          nav("/marketplace");
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: seller, error: sellerError } = await (supabase as any)
+        .from("shop_settings")
+        .select("user_id, shop_name, phone, address, booking_slug, booking_enabled")
+        .eq("user_id", raw.user_id)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (sellerError) {
+        console.warn("Could not load listing seller details:", sellerError.message);
+      }
       setData({
         listing: {
           ...raw,
-          name: raw.title,
-          sell_price: Number(raw.price) || 0,
-          cost_price: Number(raw.mrp) || 0,
-          quantity: raw.stock,
-          image_url: Array.isArray(raw.images) ? raw.images[0] : null,
+          name: raw.name,
+          sell_price: Number(raw.sell_price) || 0,
+          cost_price: Number(raw.cost_price) || 0,
+          quantity: Number(raw.quantity) || 0,
+          image_url: raw.image_url || null,
         },
-        seller: res.seller,
+        seller: seller || null,
       });
       setLoading(false);
     })();
-  }, [id]);
+    return () => { cancelled = true; };
+  }, [id, nav]);
 
 
   useEffect(() => {
