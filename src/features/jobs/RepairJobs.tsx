@@ -743,7 +743,22 @@ export default function RepairJobs() {
   };
 
   const handleInvoice = (job: any) => {
-    const payment = payments.find((p: any) => p.repair_job_id === job.id);
+    const jobPayments = payments.filter((p: any) =>
+      p.repair_job_id === job.id &&
+      !p.deleted &&
+      !["Due", "Refunded"].includes(String(p.method))
+    );
+    const firstPayment = jobPayments[0];
+    const payment = firstPayment
+      ? {
+          ...firstPayment,
+          amount: jobPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0),
+          method: jobPayments.length > 1 ? ("Multiple" as any) : firstPayment.method,
+          admin_share: jobPayments.reduce((sum: number, p: any) => sum + Number(p.admin_share || 0), 0),
+          staff_share: jobPayments.reduce((sum: number, p: any) => sum + Number(p.staff_share || 0), 0),
+          settled: jobPayments.every((p: any) => p.settled),
+        }
+      : undefined;
     const s = settings || {
       shop_name: "RepairDesk",
       phone: "",
