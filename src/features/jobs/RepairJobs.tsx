@@ -138,7 +138,7 @@ type JobStatus =
   | "Returned"
   | "Re-work"
   | "Cancelled";
-type PaymentMethod = "Cash" | "UPI/QR" | "Due";
+type PaymentMethod = "Cash" | "UPI/QR";
 
 const statusColors: Record<string, string> = {
   Received:
@@ -267,6 +267,21 @@ export default function RepairJobs() {
   ];
 
 
+  const getJobPaidAmount = (jobId: string) =>
+    payments
+      .filter((p: any) =>
+        p.repair_job_id === jobId &&
+        !p.deleted &&
+        !["Due", "Refunded"].includes(String(p.method))
+      )
+      .reduce((total: number, p: any) => total + Number(p.amount || 0), 0);
+
+  const getJobBalance = (job: any) =>
+    Math.max(0, Number(job.estimated_cost || 0) - getJobPaidAmount(job.id));
+
+  const selectedPaidAmount = selectedJob ? getJobPaidAmount(selectedJob.id) : 0;
+  const selectedBalance = selectedJob ? getJobBalance(selectedJob) : 0;
+
   const filtered = jobs.filter((j: any) => {
     const matchSearch =
       j.job_id.toLowerCase().includes(search.toLowerCase()) ||
@@ -369,6 +384,7 @@ export default function RepairJobs() {
 
       toast.success(`Job ${jobId} created`);
       refetch();
+      refetchPayments();
       setCreateOpen(false);
       setServiceType("");
       setCustomerMobile("");
@@ -435,6 +451,8 @@ export default function RepairJobs() {
           estimated_cost: parseFloat(formState.estimated_cost) || 0,
           service_category: formState.service_category,
           device_details: formState.device_details,
+          expected_delivery_at: formState.device_details?.expected_delivery_date || null,
+          intake_notes: formState.device_details?.intake_notes || "",
         } as any)
         .eq("id", selectedJob.id);
 
@@ -483,7 +501,9 @@ export default function RepairJobs() {
   const changeStatus = async (job: any, newStatus: JobStatus) => {
     if (newStatus === "Delivered") {
       setSelectedJob(job);
-      setPaymentAmount(String(job.estimated_cost));
+      setPaymentAmount(String(getJobBalance(job)));
+      setPaymentMethod("Cash");
+      setQrReceiver(settings?.qr_receivers?.[0] || "Admin QR");
       setPaymentOpen(true);
       return;
     }
@@ -599,37 +619,33 @@ export default function RepairJobs() {
 
   const handlePayment = async () => {
     if (!selectedJob || !user || isProcessing) return;
+    const amount = Number(paymentAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error("Enter a valid payment amount");
+      return;
+    }
+    if (amount > selectedBalance + 0.01) {
+      toast.error(`Payment cannot exceed outstanding balance ₹${selectedBalance.toLocaleString("en-IN")}`);
+      return;
+    }
+    if (paymentMethod === "UPI/QR" && qrReceiver === "Custom" && !customQr.trim()) {
+      toast.error("Enter the custom QR receiver name");
+      return;
+    }
+
     setIsProcessing(true);
     try {
-      const amount = parseFloat(paymentAmount) || 0;
-      const receiver = qrReceiver === "Custom" ? customQr : qrReceiver;
-      const splitEnabled = settings?.revenue_split_enabled !== false;
-      const isReceived = paymentMethod !== "Due";
-      const adminPct = splitEnabled
-        ? (settings?.admin_share_percent ?? 50) / 100
-        : 1;
-      const staffPct = splitEnabled
-        ? (settings?.staff_share_percent ?? 50) / 100
-        : 0;
-
-      await supabase
-        .from("repair_jobs")
-        .update({
-          status: "Delivered" as any,
-          delivered_at: new Date().toISOString(),
-        })
-        .eq("id", selectedJob.id);
-      await supabase.from("payments").insert({
-        user_id: user.id,
-        job_id: selectedJob.job_id,
-        repair_job_id: selectedJob.id,
-        amount,
-        method: paymentMethod as any,
-        qr_receiver: paymentMethod === "UPI/QR" ? receiver : null,
-        admin_share: isReceived ? amount * adminPct : 0,
-        staff_share: isReceived ? amount * staffPct : 0,
+      const receiver = qrReceiver === "Custom" ? customQr.trim() : qrReceiver;
+      const { error } = await (supabase as any).rpc("record_repair_job_payment", {
+        p_repair_job_id: selectedJob.id,
+        p_amount: amount,
+        p_method: paymentMethod,
+        p_qr_receiver: paymentMethod === "UPI/QR" ? receiver : null,
+        p_mark_delivered: selectedJob.status !== "Delivered",
       });
-      // Award Loyalty Points to Customer
+      if (error) throw error;
+
+      // Loyalty points are awarded only against money actually received.
       if (selectedJob.customer_mobile && amount > 0) {
         try {
           const { data: customerProfile } = await (supabase as any)
@@ -639,7 +655,7 @@ export default function RepairJobs() {
             .maybeSingle();
 
           if (customerProfile) {
-            const pointsEarned = Math.max(1, Math.floor(amount / 100)); // ₹100 spent = 1 pt
+            const pointsEarned = Math.max(1, Math.floor(amount / 100));
             const newPoints = (customerProfile.loyalty_points || 0) + pointsEarned;
 
             await (supabase as any)
@@ -658,11 +674,16 @@ export default function RepairJobs() {
           console.error("Failed to award loyalty points:", loyaltyErr);
         }
       }
+
       refetch();
       refetchPayments();
       setPaymentOpen(false);
       setSelectedJob(null);
-      toast.success(`Job ${selectedJob.job_id} delivered & payment recorded`);
+      toast.success(
+        selectedJob.status === "Delivered"
+          ? `Balance payment recorded for ${selectedJob.job_id}`
+          : `Job ${selectedJob.job_id} delivered & payment recorded`,
+      );
     } catch (error: any) {
       toast.error("Payment failed: " + error.message);
     } finally {
@@ -1299,7 +1320,7 @@ export default function RepairJobs() {
                 </div>
               </div>
 
-              <RepairCaseForm data={formState} onChange={setFormState} />
+              <RepairCaseForm data={formState} onChange={setFormState} showPaymentFields={false} />
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1341,11 +1362,30 @@ export default function RepairJobs() {
         <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Record Payment — {selectedJob?.job_id}</DialogTitle>
+              <DialogTitle>
+                {selectedJob?.status === "Delivered" ? "Collect Balance" : "Complete Delivery"} — {selectedJob?.job_id}
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground">
+                Enter only money actually received. Unpaid balance remains visible in the job record.
+              </p>
             </DialogHeader>
             <div className="grid gap-4">
+              <div className="grid grid-cols-3 gap-2 rounded-xl border bg-muted/30 p-3 text-center">
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Estimate</p>
+                  <p className="font-bold">₹{Number(selectedJob?.estimated_cost || 0).toLocaleString("en-IN")}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Received</p>
+                  <p className="font-bold text-emerald-600">₹{selectedPaidAmount.toLocaleString("en-IN")}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Balance</p>
+                  <p className="font-bold text-amber-600">₹{selectedBalance.toLocaleString("en-IN")}</p>
+                </div>
+              </div>
               <div>
-                <Label>Amount (₹)</Label>
+                <Label>Amount received now (₹)</Label>
                 <Input
                   type="number"
                   value={paymentAmount}
@@ -1364,7 +1404,6 @@ export default function RepairJobs() {
                   <SelectContent>
                     <SelectItem value="Cash">💵 Cash</SelectItem>
                     <SelectItem value="UPI/QR">📱 UPI/QR</SelectItem>
-                    <SelectItem value="Due">📋 Due</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
