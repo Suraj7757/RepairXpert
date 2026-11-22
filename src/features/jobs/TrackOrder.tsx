@@ -466,10 +466,24 @@ export default function TrackOrder({
                       />
                       <InfoBox label="Problem" value={result.problem} />
                       <InfoBox
-                        label="Amount"
-                        value={`₹${Number(result.estimated_cost).toLocaleString()}`}
+                        label="Estimate"
+                        value={`₹${Number(result.estimated_cost).toLocaleString("en-IN")}`}
                         highlight
                       />
+                      <InfoBox
+                        label="Received"
+                        value={`₹${Number(result.paid_amount || 0).toLocaleString("en-IN")}`}
+                      />
+                      <InfoBox
+                        label="Balance"
+                        value={`₹${Number(result.balance_amount ?? result.estimated_cost).toLocaleString("en-IN")}`}
+                      />
+                      {result.expected_delivery_at && (
+                        <InfoBox
+                          label="Expected Ready"
+                          value={new Date(`${result.expected_delivery_at}T00:00:00`).toLocaleDateString("en-IN")}
+                        />
+                      )}
                       <InfoBox
                         label="Created"
                         value={new Date(result.created_at).toLocaleDateString(
@@ -506,6 +520,29 @@ export default function TrackOrder({
                     </>
                   )}
                 </div>
+
+                {/* Auditable repair status history */}
+                {result.type === "job" && Array.isArray(result.history) && result.history.length > 0 && (
+                  <div className="border-t pt-4 space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Repair Update History
+                    </p>
+                    <ol className="space-y-3">
+                      {result.history.map((event: any, index: number) => (
+                        <li key={`${event.created_at}-${index}`} className="flex items-start gap-3 text-sm">
+                          <span className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold">{event.to_status}</p>
+                            {event.note && <p className="text-xs text-muted-foreground">{event.note}</p>}
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(event.created_at).toLocaleString("en-IN")}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
 
                 {/* Progress Timeline (only for jobs) */}
                 {result.type === "job" && !isRejected && (

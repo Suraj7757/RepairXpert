@@ -111,27 +111,37 @@ export function generateInvoicePDF(
   currentY = (doc as any).lastAutoTable?.finalY || currentY + 10;
   currentY += 5;
 
+  const paidAmount = Math.max(0, Number(payment?.amount || 0));
+  const balanceAmount = Math.max(0, Number(job.estimatedCost || 0) - paidAmount);
+  const paymentStatus = balanceAmount <= 0
+    ? "PAID"
+    : paidAmount > 0
+      ? "PARTIALLY PAID"
+      : "UNPAID";
+
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.text("Total Amount:", 5, currentY);
-  doc.text(
-    `Rs. ${payment ? payment.amount : job.estimatedCost}`,
-    75,
-    currentY,
-    { align: "right" },
-  );
+  doc.text(`Rs. ${Number(job.estimatedCost || 0).toLocaleString("en-IN")}`, 75, currentY, { align: "right" });
   currentY += 6;
 
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  doc.text("Amount Received:", 5, currentY);
+  doc.text(`Rs. ${paidAmount.toLocaleString("en-IN")}`, 75, currentY, { align: "right" });
+  currentY += 5;
+
+  doc.text("Balance Due:", 5, currentY);
+  doc.text(`Rs. ${balanceAmount.toLocaleString("en-IN")}`, 75, currentY, { align: "right" });
+  currentY += 5;
+
+  doc.setFont("helvetica", "bold");
+  doc.text(`Payment Status: ${paymentStatus}`, 5, currentY);
+  currentY += 4;
   if (payment) {
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Status: PAID via ${payment.method.toUpperCase()}`, 5, currentY);
-    currentY += 5;
-  } else {
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Status: UNPAID`, 5, currentY);
-    currentY += 5;
+    doc.setFont("helvetica", "normal");
+    doc.text(`Received via: ${payment.method.toUpperCase()}`, 5, currentY);
+    currentY += 4;
   }
 
   doc.setLineWidth(0.5);
@@ -144,7 +154,7 @@ export function generateInvoicePDF(
   currentY += 4;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
-  const trackUrl = `${typeof window !== "undefined" ? window.location.origin : "https://repairxpert.lovable.app"}/track/${job.jobId}`;
+  const trackUrl = `${typeof window !== "undefined" ? window.location.origin : "https://repairxpert.lovable.app"}/track?id=${encodeURIComponent(job.jobId)}`;
   doc.text(`Track live: ${trackUrl}`, 40, currentY, { align: "center" });
   currentY += 3;
   doc.text(

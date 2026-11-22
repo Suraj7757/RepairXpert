@@ -23,35 +23,63 @@ export default function LiveMarketplaceShowcase() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const { data } = await (supabase as any)
-        .from("marketplace_listings")
-        .select("id, seller_id, title, category, price, mrp, stock, images")
-        .eq("active", true)
-        .gt("stock", 0)
+      const { data, error } = await (supabase as any)
+        .from("inventory")
+        .select("id, user_id, name, category, sell_price, cost_price, quantity, image_url")
+        .eq("is_marketplace_listed", true)
+        .eq("deleted", false)
+        .gt("quantity", 0)
         .order("created_at", { ascending: false })
         .limit(8);
-      const rows = (data || []).map((r: any) => ({
-        id: r.id,
-        user_id: r.seller_id,
-        name: r.title,
-        category: r.category,
-        sell_price: Number(r.price) || 0,
-        cost_price: Number(r.mrp) || 0,
-        quantity: r.stock,
-        image_url: Array.isArray(r.images) ? r.images[0] : null,
-      })) as Listing[];
-      setListings(rows);
-      const ids = Array.from(new Set(rows.map((r) => r.user_id)));
-      if (ids.length) {
-        const { data: shopRows } = await (supabase as any).rpc("public_shop_cards", { _ids: ids });
-        const map: Record<string, any> = {};
-        (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
-        setShops(map);
+
+      if (error) {
+        console.warn("Marketplace showcase could not load inventory:", error.message);
+        if (!cancelled) {
+          setListings([]);
+          setShops({});
+          setLoading(false);
+        }
+        return;
       }
 
-      setLoading(false);
+      const rows = (data || []).map((r: any) => ({
+        id: r.id,
+        user_id: r.user_id,
+        name: r.name,
+        category: r.category || "general",
+        sell_price: Number(r.sell_price) || 0,
+        cost_price: Number(r.cost_price) || 0,
+        quantity: Number(r.quantity) || 0,
+        image_url: r.image_url || null,
+      })) as Listing[];
+      if (cancelled) return;
+      setListings(rows);
+
+      const ids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+      if (ids.length) {
+        const { data: shopRows, error: shopError } = await (supabase as any)
+          .from("shop_settings")
+          .select("user_id, shop_name, address, phone, booking_slug, booking_enabled")
+          .in("user_id", ids);
+        if (!cancelled) {
+          if (shopError) {
+            console.warn("Could not load marketplace shop details:", shopError.message);
+            setShops({});
+          } else {
+            const map: Record<string, any> = {};
+            (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
+            setShops(map);
+          }
+        }
+      } else if (!cancelled) {
+        setShops({});
+      }
+
+      if (!cancelled) setLoading(false);
     })();
+    return () => { cancelled = true; };
   }, []);
 
   if (loading || listings.length === 0) return null;

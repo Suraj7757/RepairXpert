@@ -343,7 +343,7 @@ export type Database = {
             foreignKeyName: "cart_items_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
-            referencedRelation: "marketplace_listings"
+            referencedRelation: "inventory"
             referencedColumns: ["id"]
           },
         ]
@@ -660,72 +660,6 @@ export type Database = {
           reference_type?: string | null
           type?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      marketplace_listings: {
-        Row: {
-          active: boolean
-          category: string | null
-          created_at: string
-          description: string | null
-          featured: boolean
-          id: string
-          images: string[] | null
-          inventory_item_id: string | null
-          location: string | null
-          moq: number
-          mrp: number | null
-          price: number
-          rating_avg: number | null
-          rating_count: number | null
-          seller_id: string
-          seller_type: string
-          stock: number
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          featured?: boolean
-          id?: string
-          images?: string[] | null
-          inventory_item_id?: string | null
-          location?: string | null
-          moq?: number
-          mrp?: number | null
-          price?: number
-          rating_avg?: number | null
-          rating_count?: number | null
-          seller_id: string
-          seller_type?: string
-          stock?: number
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          featured?: boolean
-          id?: string
-          images?: string[] | null
-          inventory_item_id?: string | null
-          location?: string | null
-          moq?: number
-          mrp?: number | null
-          price?: number
-          rating_avg?: number | null
-          rating_count?: number | null
-          seller_id?: string
-          seller_type?: string
-          stock?: number
-          title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -2004,7 +1938,7 @@ export type Database = {
             foreignKeyName: "wishlists_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
-            referencedRelation: "marketplace_listings"
+            referencedRelation: "inventory"
             referencedColumns: ["id"]
           },
         ]

@@ -14,7 +14,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useSupabaseQuery, useSoftDelete } from "@/hooks/useSupabaseData";
 import { supabase } from "@/services/supabase";
-import { Plus, Search, Trash2, Gift } from "lucide-react";
+import { Plus, Search, Trash2, Gift, History, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Customers() {
@@ -25,6 +25,7 @@ export default function Customers() {
     refetch,
   } = useSupabaseQuery<any>("customers");
   const { data: jobs } = useSupabaseQuery<any>("repair_jobs");
+  const { data: payments } = useSupabaseQuery<any>("payments");
   const { softDelete } = useSoftDelete();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -34,6 +35,28 @@ export default function Customers() {
   const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [historyCustomer, setHistoryCustomer] = useState<any>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const historyJobs = historyCustomer
+    ? jobs
+        .filter((j: any) =>
+          j.customer_id === historyCustomer.id ||
+          j.customer_mobile === historyCustomer.mobile
+        )
+        .sort((a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+    : [];
+
+  const paidForJob = (jobId: string) =>
+    payments
+      .filter((p: any) =>
+        p.repair_job_id === jobId &&
+        !p.deleted &&
+        !["Due", "Refunded"].includes(String(p.method))
+      )
+      .reduce((total: number, p: any) => total + Number(p.amount || 0), 0);
 
   useEffect(() => {
     const handleHash = () => {
@@ -226,6 +249,18 @@ export default function Customers() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="h-8 w-8 p-0"
+                        title="View repair history"
+                        onClick={() => {
+                          setHistoryCustomer(c);
+                          setHistoryOpen(true);
+                        }}
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="h-8 w-8 p-0 text-amber-600"
                         title="Redeem points"
                         onClick={() => redeemPoints(c)}
@@ -335,6 +370,79 @@ export default function Customers() {
                 {isSubmitting ? "Saving..." : (editingCustomer ? "Save Changes" : "Add")}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={historyOpen}
+          onOpenChange={(open) => {
+            setHistoryOpen(open);
+            if (!open) setHistoryCustomer(null);
+          }}
+        >
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Repair History — {historyCustomer?.name}</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                {historyCustomer?.mobile} · {historyJobs.length} repair job{historyJobs.length === 1 ? "" : "s"}
+              </p>
+            </DialogHeader>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="p-3 text-left">Tracking ID</th>
+                    <th className="p-3 text-left">Device / Issue</th>
+                    <th className="p-3 text-left">Status</th>
+                    <th className="p-3 text-right">Estimate</th>
+                    <th className="p-3 text-right">Received</th>
+                    <th className="p-3 text-right">Balance</th>
+                    <th className="p-3 text-left">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyJobs.map((job: any) => {
+                    const received = paidForJob(job.id);
+                    const balance = Math.max(0, Number(job.estimated_cost || 0) - received);
+                    return (
+                      <tr key={job.id} className="border-b last:border-0">
+                        <td className="p-3">
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono font-semibold text-primary">{job.job_id}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              title="Copy tracking ID"
+                              onClick={() => {
+                                navigator.clipboard.writeText(job.job_id);
+                                toast.success("Tracking ID copied");
+                              }}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <p className="font-medium">{job.device_brand} {job.device_model}</p>
+                          <p className="max-w-48 truncate text-xs text-muted-foreground">{job.problem_description}</p>
+                        </td>
+                        <td className="p-3">{job.status}</td>
+                        <td className="p-3 text-right tabular-nums">₹{Number(job.estimated_cost || 0).toLocaleString("en-IN")}</td>
+                        <td className="p-3 text-right tabular-nums text-emerald-600">₹{received.toLocaleString("en-IN")}</td>
+                        <td className="p-3 text-right tabular-nums text-amber-600">₹{balance.toLocaleString("en-IN")}</td>
+                        <td className="p-3 whitespace-nowrap text-muted-foreground">{new Date(job.created_at).toLocaleDateString("en-IN")}</td>
+                      </tr>
+                    );
+                  })}
+                  {historyJobs.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground">No repair history found for this customer.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

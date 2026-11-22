@@ -84,45 +84,62 @@ export default function Marketplace() {
   const load = async () => {
     setLoading(true);
     let q = (supabase as any)
-      .from("marketplace_listings")
-      .select("id, seller_id, title, category, description, price, mrp, stock, images, created_at, featured")
-      .eq("active", true)
-      .gt("stock", 0);
+      .from("inventory")
+      .select("id, user_id, name, category, description, sell_price, cost_price, quantity, image_url, created_at")
+      .eq("is_marketplace_listed", true)
+      .eq("deleted", false)
+      .gt("quantity", 0);
 
     const catMatch = CATEGORIES.find((c) => c.id === category)?.match;
     if (category !== "all" && catMatch) q = q.ilike("category", `%${catMatch}%`);
-    if (search) q = q.ilike("title", `%${search}%`);
+    if (search) q = q.ilike("name", `%${search}%`);
 
-
-    if (sort === "price_asc") q = q.order("price", { ascending: true });
-    else if (sort === "price_desc") q = q.order("price", { ascending: false });
-    else if (sort === "featured") q = q.order("featured", { ascending: false }).order("created_at", { ascending: false });
+    if (sort === "price_asc") q = q.order("sell_price", { ascending: true });
+    else if (sort === "price_desc") q = q.order("sell_price", { ascending: false });
     else q = q.order("created_at", { ascending: false });
 
     const { data, error } = await q;
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      setListings([]);
+      setShops({});
+      setLoading(false);
+      return;
+    }
+
     const rows = (data || []).map((r: any) => ({
       id: r.id,
-      user_id: r.seller_id,
-      name: r.title,
-      category: r.category,
-      sell_price: Number(r.price) || 0,
-      cost_price: Number(r.mrp) || 0,
-      quantity: r.stock,
-      image_url: Array.isArray(r.images) ? r.images[0] : "",
-      description: r.description,
+      user_id: r.user_id,
+      name: r.name,
+      category: r.category || "general",
+      sell_price: Number(r.sell_price) || 0,
+      cost_price: Number(r.cost_price) || 0,
+      quantity: Number(r.quantity) || 0,
+      image_url: r.image_url || "",
+      description: r.description || "",
       created_at: r.created_at,
     })) as Listing[];
     setListings(rows);
     setLoading(false);
 
-    const ids = Array.from(new Set(rows.map((r) => r.user_id)));
-    if (ids.length) {
-      const { data: shopRows } = await (supabase as any).rpc("public_shop_cards", { _ids: ids });
-      const map: Record<string, any> = {};
-      (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
-      setShops(map);
+    const ids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+    if (!ids.length) {
+      setShops({});
+      return;
     }
+
+    const { data: shopRows, error: shopError } = await (supabase as any)
+      .from("shop_settings")
+      .select("user_id, shop_name, address, phone, booking_slug, booking_enabled")
+      .in("user_id", ids);
+    if (shopError) {
+      console.warn("Could not load marketplace shop details:", shopError.message);
+      setShops({});
+      return;
+    }
+    const map: Record<string, any> = {};
+    (shopRows || []).forEach((s: any) => { map[s.user_id] = s; });
+    setShops(map);
   };
 
 

@@ -170,11 +170,13 @@ const getBrands = (cat: string) => {
 interface RepairCaseFormProps {
   data: any;
   onChange: (data: any) => void;
+  showPaymentFields?: boolean;
 }
 
 export default function RepairCaseForm({
   data,
   onChange,
+  showPaymentFields = true,
 }: RepairCaseFormProps) {
   const [activeTab, setActiveTab] = useState(data.service_category || "mobile");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -315,13 +317,23 @@ export default function RepairCaseForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold">Screen Lock</Label>
-                <Input
-                  placeholder="PIN / Pattern / Password"
-                  className="h-9"
-                  value={data.device_details?.security || ""}
-                  onChange={(e) => updateDetails({ security: e.target.value })}
-                />
+                <Label className="text-xs font-bold">Device unlock arrangement</Label>
+                <Select
+                  value={data.device_details?.unlock_status || "not_recorded"}
+                  onValueChange={(v) => updateDetails({ unlock_status: v })}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select arrangement" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_recorded">Not recorded</SelectItem>
+                    <SelectItem value="no_lock">No screen lock</SelectItem>
+                    <SelectItem value="customer_unlock_at_store">Customer will unlock at shop</SelectItem>
+                    <SelectItem value="consent_granted">Customer consent recorded</SelectItem>
+                    <SelectItem value="not_provided">Access not provided</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">Do not save PIN, pattern or password in the CRM. Ask the customer to unlock the device at the shop.</p>
               </div>
             </div>
           )}
@@ -543,6 +555,128 @@ export default function RepairCaseForm({
               />
             </div>
           </div>
+
+          {/* Intake checklist and booking commitments */}
+          <div className="space-y-3 rounded-xl border bg-background/70 p-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Device intake checklist</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold">Physical condition</Label>
+                <Select
+                  value={data.device_details?.physical_condition || "good"}
+                  onValueChange={(v) => updateDetails({ physical_condition: v })}
+                >
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="good">Good / no visible damage</SelectItem>
+                    <SelectItem value="scratched">Scratches / dents</SelectItem>
+                    <SelectItem value="cracked">Cracked screen / body</SelectItem>
+                    <SelectItem value="water_damaged">Water damage signs</SelectItem>
+                    <SelectItem value="damaged">Other physical damage</SelectItem>
+                    <SelectItem value="not_checked">Not checked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold">Power / working status</Label>
+                <Select
+                  value={data.device_details?.power_status || "not_checked"}
+                  onValueChange={(v) => updateDetails({ power_status: v })}
+                >
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="working">Working / turns on</SelectItem>
+                    <SelectItem value="intermittent">Intermittent issue</SelectItem>
+                    <SelectItem value="dead">Dead / no power</SelectItem>
+                    <SelectItem value="not_checked">Not checked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Visible damage / intake notes</Label>
+              <Textarea
+                rows={2}
+                className="min-h-[64px] text-sm"
+                placeholder="Cracks, dents, missing screws, existing faults, device condition..."
+                value={data.device_details?.intake_notes || ""}
+                onChange={(e) => updateDetails({ intake_notes: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={Boolean(data.device_details?.data_backup_requested)}
+                  onChange={(e) => updateDetails({ data_backup_requested: e.target.checked })}
+                  className="h-4 w-4 accent-primary"
+                />
+                Customer requested data backup
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={Boolean(data.device_details?.diagnostic_consent)}
+                  onChange={(e) => updateDetails({ diagnostic_consent: e.target.checked })}
+                  className="h-4 w-4 accent-primary"
+                />
+                Diagnostic / data-access consent recorded
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Expected delivery date</Label>
+              <Input
+                type="date"
+                className="h-9"
+                value={data.device_details?.expected_delivery_date || ""}
+                onChange={(e) => updateDetails({ expected_delivery_date: e.target.value })}
+              />
+            </div>
+            {showPaymentFields && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-primary">Advance received (₹)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  className="h-9 font-semibold"
+                  placeholder="0"
+                  value={data.device_details?.advance_amount || ""}
+                  onChange={(e) => updateDetails({ advance_amount: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+          {showPaymentFields && Number(data.device_details?.advance_amount || 0) > 0 && (
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold">Advance payment mode</Label>
+                <Select
+                  value={data.device_details?.advance_method || "Cash"}
+                  onValueChange={(v) => updateDetails({ advance_method: v })}
+                >
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="UPI/QR">UPI / QR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {data.device_details?.advance_method === "UPI/QR" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold">QR receiver name</Label>
+                  <Input
+                    className="h-9"
+                    placeholder="e.g. Shop QR / Technician QR"
+                    value={data.device_details?.advance_qr_receiver || ""}
+                    onChange={(e) => updateDetails({ advance_qr_receiver: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Urgency + Warranty */}
           <div className="grid grid-cols-2 gap-3">
