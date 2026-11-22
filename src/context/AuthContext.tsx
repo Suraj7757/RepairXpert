@@ -8,7 +8,6 @@ import {
 } from "react";
 import { supabase } from "@/services/supabase";
 import { isSuperAdminEmail } from "@/lib/accountType";
-import { lovable } from "@/integrations/lovable";
 
 
 import type { User, Session } from "@supabase/supabase-js";
@@ -312,13 +311,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const result: any = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+      // Use Supabase Auth directly so this works on Vercel and custom domains
+      // without depending on the Lovable editor's OAuth broker.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
-      if (result?.error) return { error: result.error.message || String(result.error) };
-      return { error: null };
-    } catch (e: any) {
-      return { error: e.message || "An unexpected error occurred" };
+
+      return { error: error?.message || null };
+    } catch (e: unknown) {
+      return {
+        error: e instanceof Error ? e.message : "Unable to start Google sign-in",
+      };
     }
   };
 
