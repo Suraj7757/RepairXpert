@@ -343,7 +343,7 @@ export type Database = {
             foreignKeyName: "cart_items_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
-            referencedRelation: "marketplace_listings"
+            referencedRelation: "inventory"
             referencedColumns: ["id"]
           },
         ]
@@ -2004,7 +2004,7 @@ export type Database = {
             foreignKeyName: "wishlists_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
-            referencedRelation: "marketplace_listings"
+            referencedRelation: "inventory"
             referencedColumns: ["id"]
           },
         ]
