@@ -46,6 +46,15 @@ export default function Settings() {
   const [mapLat, setMapLat] = useState("");
   const [mapLng, setMapLng] = useState("");
   const [mapUrl, setMapUrl] = useState("");
+  const splitTotal = (Number(adminShare) || 0) + (Number(staffShare) || 0);
+  const splitIsValid =
+    Number.isFinite(Number(adminShare)) &&
+    Number.isFinite(Number(staffShare)) &&
+    Number(adminShare) >= 0 &&
+    Number(adminShare) <= 100 &&
+    Number(staffShare) >= 0 &&
+    Number(staffShare) <= 100 &&
+    splitTotal === 100;
 
   // Profile
   const [displayName, setDisplayName] = useState("");
@@ -95,13 +104,17 @@ export default function Settings() {
   }, [user]);
 
   const handleSaveShop = async () => {
+    if (splitEnabled && !splitIsValid) {
+      toast.error("Admin and Staff share must be between 0–100 and total exactly 100%.");
+      return;
+    }
     const ok = await saveSettings({
       shop_name: shopName,
       phone,
       address,
       gstin,
-      admin_share_percent: parseInt(adminShare) || 100,
-      staff_share_percent: parseInt(staffShare) || 0,
+      admin_share_percent: splitEnabled ? Number(adminShare) : 100,
+      staff_share_percent: splitEnabled ? Number(staffShare) : 0,
       revenue_split_enabled: splitEnabled,
       qr_receivers: qrReceivers.filter((q) => q.trim()),
       upi_id: upiId,
@@ -518,24 +531,56 @@ export default function Settings() {
                   </span>
                 </div>
                 {splitEnabled && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Admin Share %</Label>
-                      <Input
-                        type="number"
-                        value={adminShare}
-                        onChange={(e) => setAdminShare(e.target.value)}
-                      />
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Shop / Admin Share %</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={adminShare}
+                          onChange={(e) => setAdminShare(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>Technician / Staff Share %</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={staffShare}
+                          onChange={(e) => setStaffShare(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label>Staff Share %</Label>
-                      <Input
-                        type="number"
-                        value={staffShare}
-                        onChange={(e) => setStaffShare(e.target.value)}
-                      />
+                    <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Split total</span>
+                        <strong className={splitIsValid ? "text-emerald-600" : "text-destructive"}>
+                          {splitTotal}% / 100%
+                        </strong>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted flex">
+                        <div
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${Math.min(100, Math.max(0, Number(adminShare) || 0))}%` }}
+                        />
+                        <div
+                          className="h-full bg-emerald-500 transition-all"
+                          style={{ width: `${Math.min(100, Math.max(0, Number(staffShare) || 0))}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Parts / material cost is deducted first. The remaining net profit is divided using these percentages.
+                      </p>
+                      {!splitIsValid && (
+                        <p className="text-xs font-medium text-destructive">
+                          Admin + Staff share must add up to exactly 100%.
+                        </p>
+                      )}
                     </div>
-                  </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -576,7 +621,7 @@ export default function Settings() {
             <AutomationSettingsCard />
             <WhatsAppBusinessCard />
 
-            <Button className="w-full" onClick={handleSaveShop}>
+            <Button className="w-full" onClick={handleSaveShop} disabled={splitEnabled && !splitIsValid}>
               <Save className="h-4 w-4 mr-1" /> Save All Settings
             </Button>
           </>
