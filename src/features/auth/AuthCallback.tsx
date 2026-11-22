@@ -7,8 +7,8 @@ import { Wrench } from "lucide-react";
 
 /**
  * Dedicated OAuth callback page.
- * Handles the `#access_token=...` fragment Supabase returns after Google redirect.
- * Works on Vercel, Lovable preview, and custom domains.
+ * Handles Supabase's implicit token hash and authorization-code callback.
+ * Works on Vercel and custom domains.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -18,24 +18,40 @@ export default function AuthCallback() {
 
     async function handle() {
       try {
-        // Supabase JS auto-parses hash on init; just wait briefly then read session
-        await new Promise((r) => setTimeout(r, 250));
-        const { data, error } = await supabase.auth.getSession();
+        // Give Supabase Auth a moment to initialise and process an implicit-flow hash.
+        await new Promise((r) => setTimeout(r, 150));
         if (cancelled) return;
 
+        let { data, error } = await supabase.auth.getSession();
+        if (cancelled) return;
+
+        // If the project returns an authorization code (PKCE), exchange it
+        // only when Supabase has not already restored a session from the URL.
+        const code = new URLSearchParams(window.location.search).get("code");
+        if (!data.session && code) {
+          const exchanged = await supabase.auth.exchangeCodeForSession(code);
+          if (exchanged.error) throw exchanged.error;
+          data = { session: exchanged.data.session, user: exchanged.data.user };
+          error = null;
+        }
+
         if (error || !data.session) {
-          // Try one more time after a short delay (network race)
+          // Retry once for slower browser storage/session initialisation.
           await new Promise((r) => setTimeout(r, 500));
           const retry = await supabase.auth.getSession();
+          if (cancelled) return;
           if (!retry.data.session) {
-            toast.error("Sign-in failed. Please try again.");
+            const callbackError =
+              new URLSearchParams(window.location.search).get("error_description") ||
+              new URLSearchParams(window.location.search).get("error");
+            toast.error(callbackError || error?.message || "Google sign-in failed. Please try again.");
             navigate("/auth", { replace: true });
             return;
           }
         }
 
-        // Clean URL hash
-        if (window.location.hash) {
+        // Remove OAuth tokens/codes from the address bar after session is restored.
+        if (window.location.hash || window.location.search) {
           window.history.replaceState(null, "", window.location.pathname);
         }
 
