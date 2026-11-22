@@ -1030,6 +1030,9 @@ export default function RepairJobs() {
                       </td>
                       <td className="p-3 font-semibold">
                         ₹{Number(job.estimated_cost).toLocaleString()}
+                        <p className="mt-0.5 text-[10px] font-normal text-muted-foreground">
+                          Paid ₹{getJobPaidAmount(job.id).toLocaleString("en-IN")} · Due ₹{getJobBalance(job).toLocaleString("en-IN")}
+                        </p>
                       </td>
                       <td className="p-3">
                         <DropdownMenu>
@@ -1054,6 +1057,19 @@ export default function RepairJobs() {
                             <DropdownMenuItem onClick={() => openEdit(job)}>
                               <Pencil className="h-4 w-4 mr-2" /> Edit
                             </DropdownMenuItem>
+                            {getJobBalance(job) > 0 && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedJob(job);
+                                  setPaymentAmount(String(getJobBalance(job)));
+                                  setPaymentMethod("Cash");
+                                  setPaymentOpen(true);
+                                }}
+                              >
+                                <span className="mr-2 font-bold">₹</span>
+                                Collect Balance · ₹{getJobBalance(job).toLocaleString("en-IN")}
+                              </DropdownMenuItem>
+                            )}
                             {allowedNext.length > 0 && (
                               <DropdownMenuSeparator />
                             )}
