@@ -44,7 +44,7 @@ export default function Settlements() {
   const [partCosts, setPartCosts] = useState<Record<string, number>>({});
 
   const filteredUnsettled = payments.filter((p: any) => {
-    if (p.settled || p.method === "Refunded") return false;
+    if (p.settled || p.method === "Refunded" || p.method === "Due") return false;
     const date = p.created_at
       ? new Date(p.created_at).toISOString().split("T")[0]
       : "";
