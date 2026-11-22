@@ -154,7 +154,7 @@ export function generateInvoicePDF(
   currentY += 4;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
-  const trackUrl = `${typeof window !== "undefined" ? window.location.origin : "https://repairxpert.lovable.app"}/track/${job.jobId}`;
+  const trackUrl = `${typeof window !== "undefined" ? window.location.origin : "https://repairxpert.lovable.app"}/track?id=${encodeURIComponent(job.jobId)}`;
   doc.text(`Track live: ${trackUrl}`, 40, currentY, { align: "center" });
   currentY += 3;
   doc.text(
