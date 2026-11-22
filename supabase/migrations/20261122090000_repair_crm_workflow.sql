@@ -117,7 +117,8 @@ BEGIN
   IF _advance < 0 THEN
     RAISE EXCEPTION 'Advance amount cannot be negative';
   END IF;
-  IF _advance > COALESCE(p_estimated_cost, 0) THEN
+  IF COALESCE(p_estimated_cost, 0) > 0
+     AND _advance > p_estimated_cost THEN
     RAISE EXCEPTION 'Advance cannot be greater than the estimated repair cost';
   END IF;
 
@@ -244,9 +245,17 @@ BEGIN
       OR EXISTS (
         SELECT 1
         FROM public.staff_members sm
-        JOIN auth.users au ON lower(au.email) = lower(sm.email)
+        JOIN auth.users au ON au.id = auth.uid()
         WHERE sm.shop_user_id = rj.user_id
-          AND au.id = auth.uid()
+          AND (
+            lower(COALESCE(sm.email, '')) = lower(COALESCE(au.email, ''))
+            OR COALESCE(sm.phone, '') = COALESCE(
+              au.phone,
+              au.raw_user_meta_data->>'mobile',
+              au.raw_user_meta_data->>'phone',
+              ''
+            )
+          )
           AND COALESCE(sm.is_active, false) = true
       )
     )
