@@ -23,24 +23,26 @@ export default function AuthCallback() {
         if (cancelled) return;
 
         let { data, error } = await supabase.auth.getSession();
+        let session = data.session;
         if (cancelled) return;
 
         // If the project returns an authorization code (PKCE), exchange it
         // only when Supabase has not already restored a session from the URL.
         const code = new URLSearchParams(window.location.search).get("code");
-        if (!data.session && code) {
+        if (!session && code) {
           const exchanged = await supabase.auth.exchangeCodeForSession(code);
           if (exchanged.error) throw exchanged.error;
-          data = { session: exchanged.data.session, user: exchanged.data.user };
+          session = exchanged.data.session;
           error = null;
         }
 
-        if (error || !data.session) {
+        if (error || !session) {
           // Retry once for slower browser storage/session initialisation.
           await new Promise((r) => setTimeout(r, 500));
           const retry = await supabase.auth.getSession();
           if (cancelled) return;
-          if (!retry.data.session) {
+          session = retry.data.session;
+          if (!session) {
             const callbackError =
               new URLSearchParams(window.location.search).get("error_description") ||
               new URLSearchParams(window.location.search).get("error");
